@@ -2,7 +2,40 @@
 
 Bill Splitter is a planned responsive web app for creating a shared bill, adding people and expenses, calculating fair shares, and settling up—without requiring anyone to create an account.
 
-> **Project status:** product and architecture planning. No application code has been started yet.
+> **Project status:** Phase 0 foundation is in progress. The application shell, design tokens, quality tooling, environment validation, local Supabase configuration, and CI workflow are ready for feature development.
+
+## Local development
+
+### Prerequisites
+
+- Node.js 22 or newer and npm
+- Docker Desktop (for the local Supabase stack)
+- Supabase CLI, run through `npx supabase`
+
+### Setup
+
+```bash
+npm install
+cp .env.example .env.local
+npx supabase start
+npm run dev
+```
+
+Copy the local API URL and anonymous key printed by `supabase start` into `.env.local`. Replace `PARTICIPANT_SESSION_SECRET` with a random value containing at least 32 characters; for example, generate one with `openssl rand -base64 32`. The development server is available at [http://localhost:3000](http://localhost:3000), and Supabase Studio is available at [http://localhost:54323](http://localhost:54323).
+
+Environment variables are validated at startup. Keep server secrets out of variables prefixed with `NEXT_PUBLIC_`; those variables are included in browser bundles.
+
+### Quality checks
+
+```bash
+npm run format:check
+npm run lint
+npm run test
+npm run build
+npm run test:e2e
+```
+
+GitHub Actions runs formatting, linting, unit tests, and a production build for pull requests. Vercel should be connected to the repository for deployment previews and configured with the three variables used by `src/env.js`. Preview and production Supabase projects must remain separate, with their matching public project values configured per Vercel environment.
 
 ## Product direction
 
@@ -90,22 +123,22 @@ Payments still happen outside the app. Showing or opening a QR never marks a bal
 
 The MVP should be one modern JavaScript application backed by managed PostgreSQL.
 
-| Area | Choice | Why |
-| --- | --- | --- |
-| Web framework | **Next.js App Router + JavaScript** | Full-stack React, server rendering, route handlers, and one deployable project without TypeScript. |
-| UI | **Tailwind CSS + shadcn/ui** | Fast, accessible UI development with project-owned components. |
-| Forms and validation | **React Hook Form + Zod** | Shared runtime validation in the browser and on the server. |
-| Database | **PostgreSQL via Supabase** | Transactions fit expense ledgers; managed PostgreSQL provides migrations and backups. |
-| Data access | **Supabase JavaScript client, server-side only for bill data** | Keeps database credentials and access rules away from the browser. |
-| Receipt extraction | **Server-side OCR adapter with structured-output validation** | Keeps provider credentials private and allows the OCR service to be changed without rewriting the bill flow. |
-| Receipt storage | **Private object storage with short-lived signed access** | Receipt images may contain sensitive information and must never be public. |
-| Payment QR storage | **Private object storage with short-lived signed access** | Prevents the owner's ABA QR from becoming a public asset while allowing bill members to view it. |
-| Anonymous sessions | **Signed HTTP-only cookies** | Remembers a participant on a device without requiring an account. |
-| Money arithmetic | **Integer minor units** | Storing cents as integers avoids floating-point errors. |
-| Testing | **Vitest + Testing Library + Playwright** | Covers calculations, components, and complete browser journeys. |
-| Hosting | **Vercel + Supabase** | Low-operations deployment with preview environments and managed backups. |
-| CI/CD | **GitHub Actions** | Runs formatting, linting, unit tests, and build checks on every pull request. |
-| Observability | **Sentry after MVP** | Adds client/server error reporting once real users arrive. |
+| Area                 | Choice                                                         | Why                                                                                                          |
+| -------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Web framework        | **Next.js App Router + JavaScript**                            | Full-stack React, server rendering, route handlers, and one deployable project without TypeScript.           |
+| UI                   | **Tailwind CSS + shadcn/ui**                                   | Fast, accessible UI development with project-owned components.                                               |
+| Forms and validation | **React Hook Form + Zod**                                      | Shared runtime validation in the browser and on the server.                                                  |
+| Database             | **PostgreSQL via Supabase**                                    | Transactions fit expense ledgers; managed PostgreSQL provides migrations and backups.                        |
+| Data access          | **Supabase JavaScript client, server-side only for bill data** | Keeps database credentials and access rules away from the browser.                                           |
+| Receipt extraction   | **Server-side OCR adapter with structured-output validation**  | Keeps provider credentials private and allows the OCR service to be changed without rewriting the bill flow. |
+| Receipt storage      | **Private object storage with short-lived signed access**      | Receipt images may contain sensitive information and must never be public.                                   |
+| Payment QR storage   | **Private object storage with short-lived signed access**      | Prevents the owner's ABA QR from becoming a public asset while allowing bill members to view it.             |
+| Anonymous sessions   | **Signed HTTP-only cookies**                                   | Remembers a participant on a device without requiring an account.                                            |
+| Money arithmetic     | **Integer minor units**                                        | Storing cents as integers avoids floating-point errors.                                                      |
+| Testing              | **Vitest + Testing Library + Playwright**                      | Covers calculations, components, and complete browser journeys.                                              |
+| Hosting              | **Vercel + Supabase**                                          | Low-operations deployment with preview environments and managed backups.                                     |
+| CI/CD                | **GitHub Actions**                                             | Runs formatting, linting, unit tests, and build checks on every pull request.                                |
+| Observability        | **Sentry after MVP**                                           | Adds client/server error reporting once real users arrive.                                                   |
 
 ### Architecture principles
 
@@ -209,29 +242,29 @@ bills ──< bill_participants
 
 ### `bills`
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | `uuid` PK | Internal identifier, never exposed as the share credential. |
-| `public_id_hash` | `text` unique | Hash of the high-entropy identifier contained in the private link. |
-| `creator_key_hash` | `text` | Hash of a separate recovery key used for destructive bill actions. |
-| `name` | `text` | Required. |
-| `currency` | `char(3)` | ISO 4217; immutable after the first expense in the MVP. |
-| `archived_at`, `expires_at` | `timestamptz` | Nullable lifecycle timestamps. |
-| `created_at`, `updated_at` | `timestamptz` | Audit timestamps. |
+| Column                      | Type          | Notes                                                              |
+| --------------------------- | ------------- | ------------------------------------------------------------------ |
+| `id`                        | `uuid` PK     | Internal identifier, never exposed as the share credential.        |
+| `public_id_hash`            | `text` unique | Hash of the high-entropy identifier contained in the private link. |
+| `creator_key_hash`          | `text`        | Hash of a separate recovery key used for destructive bill actions. |
+| `name`                      | `text`        | Required.                                                          |
+| `currency`                  | `char(3)`     | ISO 4217; immutable after the first expense in the MVP.            |
+| `archived_at`, `expires_at` | `timestamptz` | Nullable lifecycle timestamps.                                     |
+| `created_at`, `updated_at`  | `timestamptz` | Audit timestamps.                                                  |
 
 The raw share and creator keys are returned only at creation, placed in the link/session as appropriate, and never stored in plaintext. Share identifiers require at least 128 bits of cryptographically secure randomness.
 
 ### `bill_participants`
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | `uuid` PK | Stable identity referenced by financial records. |
-| `bill_id` | `uuid` FK | References `bills.id`. |
-| `display_name` | `text` | Required; unique case-insensitively within an active bill. |
-| `session_token_hash` | `text` | Nullable hash used to remember a claimed participant device. |
-| `is_creator` | `boolean` | Identifies the participant created with the bill. |
-| `deactivated_at` | `timestamptz` | Nullable; preserves historical references. |
-| `created_at`, `updated_at` | `timestamptz` | Audit timestamps. |
+| Column                     | Type          | Notes                                                        |
+| -------------------------- | ------------- | ------------------------------------------------------------ |
+| `id`                       | `uuid` PK     | Stable identity referenced by financial records.             |
+| `bill_id`                  | `uuid` FK     | References `bills.id`.                                       |
+| `display_name`             | `text`        | Required; unique case-insensitively within an active bill.   |
+| `session_token_hash`       | `text`        | Nullable hash used to remember a claimed participant device. |
+| `is_creator`               | `boolean`     | Identifies the participant created with the bill.            |
+| `deactivated_at`           | `timestamptz` | Nullable; preserves historical references.                   |
+| `created_at`, `updated_at` | `timestamptz` | Audit timestamps.                                            |
 
 Participants referenced by expenses or settlements are deactivated rather than deleted. In the MVP, one participant can be claimed by only one active device session; a visitor can instead create another participant with a distinct name.
 
@@ -239,36 +272,36 @@ Participants referenced by expenses or settlements are deactivated rather than d
 
 The MVP supports one owner-managed ABA QR per bill. Keeping payment details separate from the bill leaves room for other external payment methods later without changing the financial ledger.
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | `uuid` PK | |
-| `bill_id` | `uuid` FK | References `bills.id`; unique for active `aba_qr` methods. |
-| `owner_participant_id` | `uuid` FK | Must be the bill's active creator participant. |
-| `method_type` | enum | `aba_qr` in the MVP. |
-| `qr_storage_key` | `text` | Private, cropped QR image object key; never a public URL. |
-| `recipient_label` | `text` | Name the owner expects the banking app to display. |
-| `supported_currencies` | `text[]` | Validated subset of `KHR` and `USD`. |
-| `qr_payload_hash` | `text` | Hash used to detect duplicate uploads without storing decoded account data in logs. |
-| `created_at`, `updated_at` | `timestamptz` | Audit timestamps. |
+| Column                     | Type          | Notes                                                                               |
+| -------------------------- | ------------- | ----------------------------------------------------------------------------------- |
+| `id`                       | `uuid` PK     |                                                                                     |
+| `bill_id`                  | `uuid` FK     | References `bills.id`; unique for active `aba_qr` methods.                          |
+| `owner_participant_id`     | `uuid` FK     | Must be the bill's active creator participant.                                      |
+| `method_type`              | enum          | `aba_qr` in the MVP.                                                                |
+| `qr_storage_key`           | `text`        | Private, cropped QR image object key; never a public URL.                           |
+| `recipient_label`          | `text`        | Name the owner expects the banking app to display.                                  |
+| `supported_currencies`     | `text[]`      | Validated subset of `KHR` and `USD`.                                                |
+| `qr_payload_hash`          | `text`        | Hash used to detect duplicate uploads without storing decoded account data in logs. |
+| `created_at`, `updated_at` | `timestamptz` | Audit timestamps.                                                                   |
 
 Adding, replacing, or removing this method requires the creator recovery key. The upload flow decodes the QR when supported, rejects images without a readable QR, and asks the owner to confirm the displayed recipient and supported currencies. The owner should upload an amount-free ABA QR so the same code works for different settlement amounts; a fixed-amount QR must be clearly identified and is not shown for a different amount.
 
 ### `expenses`
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | `uuid` PK | |
-| `bill_id` | `uuid` FK | References `bills.id`. |
-| `description` | `text` | Required. |
-| `amount_minor` | `bigint` | Positive integer. |
-| `paid_by_participant_id` | `uuid` FK | References a participant in the same bill. |
-| `split_method` | enum | `equal`, `exact`, or `percentage`. |
-| `category` | `text` | Controlled application category. |
-| `expense_date` | `date` | User-selected date. |
-| `notes` | `text` | Nullable. |
-| `receipt_scan_id` | `uuid` FK | Nullable; references the confirmed scan that produced the expense. |
-| `created_by_participant_id`, `updated_by_participant_id` | `uuid` FK | Participant attribution. |
-| `deleted_at`, `created_at`, `updated_at` | `timestamptz` | Soft deletion and audit timestamps. |
+| Column                                                   | Type          | Notes                                                              |
+| -------------------------------------------------------- | ------------- | ------------------------------------------------------------------ |
+| `id`                                                     | `uuid` PK     |                                                                    |
+| `bill_id`                                                | `uuid` FK     | References `bills.id`.                                             |
+| `description`                                            | `text`        | Required.                                                          |
+| `amount_minor`                                           | `bigint`      | Positive integer.                                                  |
+| `paid_by_participant_id`                                 | `uuid` FK     | References a participant in the same bill.                         |
+| `split_method`                                           | enum          | `equal`, `exact`, or `percentage`.                                 |
+| `category`                                               | `text`        | Controlled application category.                                   |
+| `expense_date`                                           | `date`        | User-selected date.                                                |
+| `notes`                                                  | `text`        | Nullable.                                                          |
+| `receipt_scan_id`                                        | `uuid` FK     | Nullable; references the confirmed scan that produced the expense. |
+| `created_by_participant_id`, `updated_by_participant_id` | `uuid` FK     | Participant attribution.                                           |
+| `deleted_at`, `created_at`, `updated_at`                 | `timestamptz` | Soft deletion and audit timestamps.                                |
 
 Indexes: `(bill_id, expense_date DESC)` and `(paid_by_participant_id)`.
 
@@ -276,50 +309,50 @@ Indexes: `(bill_id, expense_date DESC)` and `(paid_by_participant_id)`.
 
 A scan is a temporary, editable draft until it is confirmed. OCR requests run asynchronously so slow extraction does not block a web request.
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | `uuid` PK | |
-| `bill_id` | `uuid` FK | References `bills.id`. |
-| `uploaded_by_participant_id` | `uuid` FK | Joined participant who submitted the image. |
-| `status` | enum | `uploaded`, `processing`, `needs_review`, `failed`, `confirmed`, or `expired`. |
-| `storage_key` | `text` | Private object key; never a public URL. |
-| `merchant_name` | `text` | Nullable extracted and user-editable value. |
-| `receipt_date` | `date` | Nullable extracted and user-editable value. |
-| `currency` | `char(3)` | Must match the bill currency before confirmation. |
-| `subtotal_minor`, `tax_minor`, `tip_minor`, `discount_minor`, `total_minor` | `bigint` | Nullable draft totals in integer minor units. |
-| `adjustment_method` | enum | `proportional`, `equal`, or `custom`; controls receipt-level charges and discounts. |
-| `provider`, `provider_request_id` | `text` | Nullable operational metadata; excludes raw credentials and image URLs. |
-| `error_code` | `text` | Nullable safe error category for retry and support. |
-| `expires_at`, `confirmed_at`, `created_at`, `updated_at` | `timestamptz` | Draft lifecycle and audit timestamps. |
+| Column                                                                      | Type          | Notes                                                                               |
+| --------------------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------------- |
+| `id`                                                                        | `uuid` PK     |                                                                                     |
+| `bill_id`                                                                   | `uuid` FK     | References `bills.id`.                                                              |
+| `uploaded_by_participant_id`                                                | `uuid` FK     | Joined participant who submitted the image.                                         |
+| `status`                                                                    | enum          | `uploaded`, `processing`, `needs_review`, `failed`, `confirmed`, or `expired`.      |
+| `storage_key`                                                               | `text`        | Private object key; never a public URL.                                             |
+| `merchant_name`                                                             | `text`        | Nullable extracted and user-editable value.                                         |
+| `receipt_date`                                                              | `date`        | Nullable extracted and user-editable value.                                         |
+| `currency`                                                                  | `char(3)`     | Must match the bill currency before confirmation.                                   |
+| `subtotal_minor`, `tax_minor`, `tip_minor`, `discount_minor`, `total_minor` | `bigint`      | Nullable draft totals in integer minor units.                                       |
+| `adjustment_method`                                                         | enum          | `proportional`, `equal`, or `custom`; controls receipt-level charges and discounts. |
+| `provider`, `provider_request_id`                                           | `text`        | Nullable operational metadata; excludes raw credentials and image URLs.             |
+| `error_code`                                                                | `text`        | Nullable safe error category for retry and support.                                 |
+| `expires_at`, `confirmed_at`, `created_at`, `updated_at`                    | `timestamptz` | Draft lifecycle and audit timestamps.                                               |
 
 Only one expense may reference a confirmed scan, enforced by a unique constraint on `expenses.receipt_scan_id`. Confirmation accepts an idempotency key so browser or network retries return the existing expense instead of creating a duplicate. Unconfirmed scans and their images expire automatically after 24 hours. The product should define a separate, visible retention setting for images attached to confirmed expenses.
 
 ### `receipt_items`
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | `uuid` PK | |
-| `receipt_scan_id` | `uuid` FK | References `receipt_scans.id`. |
-| `position` | `integer` | Preserves printed and user-edited order. |
-| `description` | `text` | Required before confirmation. |
-| `quantity` | `numeric` | Defaults to 1 and supports fractional quantities. |
-| `unit_price_minor`, `total_minor` | `bigint` | The confirmed line total is authoritative for splitting. |
-| `confidence_basis_points` | `integer` | Nullable extraction confidence from 0 to 10,000. |
-| `needs_review` | `boolean` | True when extraction is uncertain or internally inconsistent. |
-| `created_at`, `updated_at` | `timestamptz` | Audit timestamps. |
+| Column                            | Type          | Notes                                                         |
+| --------------------------------- | ------------- | ------------------------------------------------------------- |
+| `id`                              | `uuid` PK     |                                                               |
+| `receipt_scan_id`                 | `uuid` FK     | References `receipt_scans.id`.                                |
+| `position`                        | `integer`     | Preserves printed and user-edited order.                      |
+| `description`                     | `text`        | Required before confirmation.                                 |
+| `quantity`                        | `numeric`     | Defaults to 1 and supports fractional quantities.             |
+| `unit_price_minor`, `total_minor` | `bigint`      | The confirmed line total is authoritative for splitting.      |
+| `confidence_basis_points`         | `integer`     | Nullable extraction confidence from 0 to 10,000.              |
+| `needs_review`                    | `boolean`     | True when extraction is uncertain or internally inconsistent. |
+| `created_at`, `updated_at`        | `timestamptz` | Audit timestamps.                                             |
 
 ### `receipt_item_assignments`
 
 Assignments say who consumed each item; they are inputs to the final expense shares, not a second financial ledger.
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | `uuid` PK | |
-| `receipt_item_id` | `uuid` FK | References `receipt_items.id`. |
-| `participant_id` | `uuid` FK | Participant in the same bill. |
-| `weight` | `integer` | Positive relative share; defaults to 1 for equal sharing. |
-| `amount_minor` | `bigint` | Final allocated line-item amount after deterministic rounding. |
-| `created_at`, `updated_at` | `timestamptz` | Audit timestamps. |
+| Column                     | Type          | Notes                                                          |
+| -------------------------- | ------------- | -------------------------------------------------------------- |
+| `id`                       | `uuid` PK     |                                                                |
+| `receipt_item_id`          | `uuid` FK     | References `receipt_items.id`.                                 |
+| `participant_id`           | `uuid` FK     | Participant in the same bill.                                  |
+| `weight`                   | `integer`     | Positive relative share; defaults to 1 for equal sharing.      |
+| `amount_minor`             | `bigint`      | Final allocated line-item amount after deterministic rounding. |
+| `created_at`, `updated_at` | `timestamptz` | Audit timestamps.                                              |
 
 Constraints: unique `(receipt_item_id, participant_id)`, at least one assignment per confirmed item, and assignment amounts for each item must sum exactly to that item's `total_minor`.
 
@@ -327,14 +360,14 @@ Constraints: unique `(receipt_item_id, participant_id)`, at least one assignment
 
 The final amount owed by each included participant is stored regardless of split method, keeping balance queries consistent.
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | `uuid` PK | |
-| `expense_id` | `uuid` FK | References `expenses.id`. |
-| `participant_id` | `uuid` FK | References `bill_participants.id`. |
-| `amount_minor` | `bigint` | Non-negative integer. |
-| `percentage_basis_points` | `integer` | Nullable; 10,000 means 100%. |
-| `created_at`, `updated_at` | `timestamptz` | Audit timestamps. |
+| Column                     | Type          | Notes                              |
+| -------------------------- | ------------- | ---------------------------------- |
+| `id`                       | `uuid` PK     |                                    |
+| `expense_id`               | `uuid` FK     | References `expenses.id`.          |
+| `participant_id`           | `uuid` FK     | References `bill_participants.id`. |
+| `amount_minor`             | `bigint`      | Non-negative integer.              |
+| `percentage_basis_points`  | `integer`     | Nullable; 10,000 means 100%.       |
+| `created_at`, `updated_at` | `timestamptz` | Audit timestamps.                  |
 
 Constraints:
 
@@ -345,30 +378,30 @@ Constraints:
 
 ### `settlements`
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | `uuid` PK | |
-| `bill_id` | `uuid` FK | References `bills.id`. |
-| `from_participant_id`, `to_participant_id` | `uuid` FK | Sender and receiver in the same bill. |
-| `amount_minor` | `bigint` | Positive integer. |
-| `settled_at` | `timestamptz` | Effective payment time. |
-| `notes` | `text` | Nullable. |
-| `created_by_participant_id` | `uuid` FK | Participant attribution. |
-| `deleted_at`, `created_at`, `updated_at` | `timestamptz` | Soft deletion and audit timestamps. |
+| Column                                     | Type          | Notes                                 |
+| ------------------------------------------ | ------------- | ------------------------------------- |
+| `id`                                       | `uuid` PK     |                                       |
+| `bill_id`                                  | `uuid` FK     | References `bills.id`.                |
+| `from_participant_id`, `to_participant_id` | `uuid` FK     | Sender and receiver in the same bill. |
+| `amount_minor`                             | `bigint`      | Positive integer.                     |
+| `settled_at`                               | `timestamptz` | Effective payment time.               |
+| `notes`                                    | `text`        | Nullable.                             |
+| `created_by_participant_id`                | `uuid` FK     | Participant attribution.              |
+| `deleted_at`, `created_at`, `updated_at`   | `timestamptz` | Soft deletion and audit timestamps.   |
 
 The sender and receiver must differ. Index `(bill_id, settled_at DESC)`.
 
 ### `activity_log`
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | `uuid` PK | |
-| `bill_id` | `uuid` FK | References `bills.id`. |
-| `actor_participant_id` | `uuid` FK | Nullable for system events. |
-| `entity_type`, `entity_id` | `text`, `uuid` | Identifies the affected record. |
-| `action` | `text` | For example `expense.created`. |
-| `metadata` | `jsonb` | Small display snapshot, not a balance source. |
-| `created_at` | `timestamptz` | Immutable event time. |
+| Column                     | Type           | Notes                                         |
+| -------------------------- | -------------- | --------------------------------------------- |
+| `id`                       | `uuid` PK      |                                               |
+| `bill_id`                  | `uuid` FK      | References `bills.id`.                        |
+| `actor_participant_id`     | `uuid` FK      | Nullable for system events.                   |
+| `entity_type`, `entity_id` | `text`, `uuid` | Identifies the affected record.               |
+| `action`                   | `text`         | For example `expense.created`.                |
+| `metadata`                 | `jsonb`        | Small display snapshot, not a balance source. |
+| `created_at`               | `timestamptz`  | Immutable event time.                         |
 
 Index `(bill_id, created_at DESC)`.
 
