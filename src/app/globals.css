@@ -26,7 +26,8 @@ body {
   color: var(--foreground);
 }
 button,
-input {
+input,
+select {
   font: inherit;
 }
 ::selection {

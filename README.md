@@ -2,8 +2,6 @@
 
 Bill Splitter is a planned responsive web app for creating a shared bill, adding people and expenses, calculating fair shares, and settling up—without requiring anyone to create an account.
 
-> **Project status:** Phase 0 foundation is in progress. The application shell, design tokens, quality tooling, environment validation, local Supabase configuration, and CI workflow are ready for feature development.
-
 ## Local development
 
 ### Prerequisites
@@ -21,7 +19,13 @@ npx supabase start
 npm run dev
 ```
 
-Copy the local API URL and anonymous key printed by `supabase start` into `.env.local`. Replace `PARTICIPANT_SESSION_SECRET` with a random value containing at least 32 characters; for example, generate one with `openssl rand -base64 32`. The development server is available at [http://localhost:3000](http://localhost:3000), and Supabase Studio is available at [http://localhost:54323](http://localhost:54323).
+Copy the local API URL, anonymous key, and service-role key printed by
+`supabase start` into `.env.local`. The service-role key is server-only and must
+never use a `NEXT_PUBLIC_` prefix. Replace `PARTICIPANT_SESSION_SECRET` with a
+random value containing at least 32 characters; for example, generate one with
+`openssl rand -base64 32`. The development server is available at
+[http://localhost:3000](http://localhost:3000), and Supabase Studio is available
+at [http://localhost:54323](http://localhost:54323).
 
 Environment variables are validated at startup. Keep server secrets out of variables prefixed with `NEXT_PUBLIC_`; those variables are included in browser bundles.
 
@@ -35,7 +39,21 @@ npm run build
 npm run test:e2e
 ```
 
-GitHub Actions runs formatting, linting, unit tests, and a production build for pull requests. Vercel should be connected to the repository for deployment previews and configured with the three variables used by `src/env.js`. Preview and production Supabase projects must remain separate, with their matching public project values configured per Vercel environment.
+After connecting Supabase and applying the migrations, run the complete Phase 1
+two-browser flow explicitly:
+
+```bash
+npm run test:e2e:supabase
+```
+
+The Supabase-backed tests are skipped during the normal browser suite so they
+cannot accidentally write test bills to an unconfigured or shared project.
+
+GitHub Actions runs formatting, linting, unit tests, and a production build for
+pull requests. Vercel should be connected to the repository for deployment
+previews and configured with the four required variables in `.env.example`.
+Preview and production Supabase projects must remain separate, with matching
+project keys configured per Vercel environment.
 
 ## Product direction
 
@@ -493,6 +511,21 @@ tests/
 - Add integration tests for valid, invalid, expired, rotated, and cross-bill credentials.
 
 **Exit criteria:** a new visitor can create and share a bill in under a minute, and another device can join without an account.
+
+#### Current Phase 1 progress
+
+- The landing form creates a bill and its creator atomically, stores the creator
+  recovery capability on that device, and opens the private bill URL.
+- Private bill links resolve server-side, show current participants, and can be
+  copied for sharing. New devices can join without an account.
+- Signed, path-scoped, HTTP-only participant cookies remember each bill on a
+  device and are checked against hashed server-side session capabilities.
+- Share, recovery, and session capabilities contain 256 bits of randomness;
+  only SHA-256 digests cross the database boundary.
+- The migration creates bills, participants, activity entries, atomic create and
+  join functions, constraints, indexes, RLS, and restricted browser roles.
+- Unit tests cover capabilities, cookie tampering, expiry, signing-key rotation,
+  cross-bill rejection, input validation, and UI foundations.
 
 ### Phase 2 — Expense ledger
 

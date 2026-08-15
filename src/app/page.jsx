@@ -1,5 +1,4 @@
-import { Button } from "@/components/ui/button";
-import { Field } from "@/components/ui/field";
+import { CreateBillForm } from "@/components/create-bill-form";
 
 const benefits = [
   ["Start instantly", "Create a shared bill without sign-up or passwords."],
@@ -49,23 +48,7 @@ export default function Home() {
         <p className="mt-2 text-sm leading-6 text-slate-600">
           You can invite everyone else after you start.
         </p>
-        <form className="mt-7 grid gap-5">
-          <Field
-            id="bill-name"
-            label="Bill name"
-            placeholder="Beach weekend"
-            autoComplete="off"
-          />
-          <Field
-            id="your-name"
-            label="Your name"
-            placeholder="Sokha"
-            autoComplete="name"
-          />
-          <Button className="mt-2 w-full" type="button">
-            Create bill
-          </Button>
-        </form>
+        <CreateBillForm />
         <p className="mt-5 text-center text-xs leading-5 text-slate-500">
           Anyone with your private bill link can view it. Joining is required to
           make changes.
