@@ -32,6 +32,13 @@ test.describe("Phase 1 bill access", () => {
       creatorPage.locator("aside").getByText(creatorName, { exact: true }),
     ).toBeVisible();
 
+    await creatorPage.getByLabel("Add someone").fill(participantName);
+    await creatorPage.getByRole("button", { name: "Add person" }).click();
+    await expect(
+      creatorPage.getByText(participantName, { exact: true }),
+    ).toBeVisible();
+    await expect(creatorPage.getByText("Waiting to join")).toBeVisible();
+
     const privateBillUrl = creatorPage.url();
     const guestContext = await browser.newContext();
     const guestPage = await guestContext.newPage();
@@ -40,8 +47,12 @@ test.describe("Phase 1 bill access", () => {
     await expect(
       guestPage.getByRole("heading", { name: "Join this bill" }),
     ).toBeVisible();
-    await guestPage.getByLabel("Your name").fill(participantName);
-    await guestPage.getByRole("button", { name: "Join bill" }).click();
+    await guestPage.getByLabel("Choose your name").selectOption({
+      label: participantName,
+    });
+    await guestPage
+      .getByRole("button", { name: "Continue as this person" })
+      .click();
 
     await expect(guestPage.getByText("You’re joining as")).toBeVisible();
     await expect(

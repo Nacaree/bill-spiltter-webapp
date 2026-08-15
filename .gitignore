@@ -4,6 +4,7 @@
 /coverage
 /playwright-report
 /test-results
+/supabase/.temp/
 .env*
 !.env.example
 .DS_Store

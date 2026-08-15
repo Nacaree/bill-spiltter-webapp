@@ -17,7 +17,7 @@ export default function Home() {
           Split the bill, not the friendship.
         </h1>
         <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
-          Add people, scan receipts, and understand every balance—all from one
+          Add people, upload receipts, and understand every balance—all from one
           private link.
         </p>
         <ul className="mt-10 grid gap-5 sm:grid-cols-3 lg:grid-cols-1">

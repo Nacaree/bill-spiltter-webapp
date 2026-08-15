@@ -66,7 +66,7 @@ Accounts, sign-in screens, email verification, and invitations are intentionally
 - Let a first-time visitor create a bill in under a minute.
 - Require only a bill name and the creator's display name to begin.
 - Let other people join from a link by entering their name—no registration.
-- Turn a receipt photo into editable bill items without manual re-entry.
+- Turn an uploaded receipt image into editable bill items without manual re-entry.
 - Keep every expense, balance, and settlement easy to understand.
 - Support common split methods without complicating the default equal split.
 - Minimize the number of payments needed to settle a bill.
@@ -100,7 +100,7 @@ The bill page shows:
 - Suggested transfers and recorded settlements.
 - Recent activity so changes can be understood.
 
-The first empty state should offer **Scan receipt** and **Add manually** rather than leading through configuration.
+The first empty state should offer **Upload receipt** and **Add manually** rather than leading through configuration.
 
 ### 3. Share and join
 
@@ -112,9 +112,9 @@ The creator copies a private bill link and sends it through any messaging app. A
 
 A signed, HTTP-only participant session cookie remembers the selected participant on that device. Display names are labels, not passwords or secure identities, so sensitive information should not be placed in a bill.
 
-### 4. Scan a receipt
+### 4. Upload a receipt
 
-From the bill page, **Scan receipt** opens the device camera on supported phones and also allows an existing image to be uploaded. The server extracts the merchant, date, currency, line items, subtotal, tax, tip, discounts, and total.
+From the bill page, **Upload receipt** opens the normal file picker for a JPEG, PNG, or HEIC image. The app does not request device hardware permissions. The server extracts the merchant, date, currency, line items, subtotal, tax, tip, discounts, and total.
 
 OCR is only a draft. Before anything affects balances, the user reviews the result and can:
 
@@ -125,11 +125,11 @@ OCR is only a draft. Before anything affects balances, the user reviews the resu
 5. Choose how receipt-level tax, tip, discounts, and rounding differences are distributed.
 6. Confirm the import and add it to the bill.
 
-The review screen clearly highlights low-confidence fields and any mismatch between the itemized calculation and the receipt total. A failed scan falls back to the normal manual expense form with any successfully extracted values preserved.
+The review screen clearly highlights low-confidence fields and any mismatch between the itemized calculation and the receipt total. A failed extraction falls back to the normal manual expense form with any successfully extracted values preserved.
 
 ### 5. Add and split an expense manually
 
-From the bill page, a participant enters a description, amount, payer, and included people. Equal split is the default; exact amount and percentage splits are also available. The user reviews the calculated shares before saving.
+From the bill page, a participant enters a description, amount, payer, and included people. Equal split is the default, and exact amounts are available when people owe different shares. The user reviews the calculated shares before saving.
 
 ### 6. Settle up
 
@@ -190,14 +190,14 @@ The MVP should be one modern JavaScript application backed by managed PostgreSQL
 #### Expenses
 
 - Add an expense with description, date, category, payer, amount, and participants.
-- Take a receipt photo or upload a JPEG, PNG, or HEIC image from the bill page.
+- Upload a JPEG, PNG, or HEIC receipt image from the bill page using the normal file picker.
 - Extract merchant, date, line items, quantities, prices, subtotal, tax, tip, discounts, and total into a reviewable draft.
 - Highlight uncertain values and total mismatches; require review before importing.
 - Edit extracted items and assign each item to one or more participants.
 - Split shared items equally and distribute tax, tip, discounts, and rounding adjustments using an explicit method.
 - Save a confirmed receipt as one expense whose participant shares are derived from its item assignments.
-- Retry or fall back to manual entry without losing extracted values when scanning is incomplete.
-- Split equally, by exact amount, or by percentage.
+- Retry or fall back to manual entry without losing extracted values when extraction is incomplete.
+- Split equally or by exact amount.
 - Validate that shares add up exactly to the expense total.
 - Edit or remove an expense with a visible activity entry.
 - Filter expenses by participant or category.
@@ -313,7 +313,7 @@ Adding, replacing, or removing this method requires the creator recovery key. Th
 | `description`                                            | `text`        | Required.                                                          |
 | `amount_minor`                                           | `bigint`      | Positive integer.                                                  |
 | `paid_by_participant_id`                                 | `uuid` FK     | References a participant in the same bill.                         |
-| `split_method`                                           | enum          | `equal`, `exact`, or `percentage`.                                 |
+| `split_method`                                           | enum          | `equal` or `exact`.                                                |
 | `category`                                               | `text`        | Controlled application category.                                   |
 | `expense_date`                                           | `date`        | User-selected date.                                                |
 | `notes`                                                  | `text`        | Nullable.                                                          |
@@ -384,14 +384,12 @@ The final amount owed by each included participant is stored regardless of split
 | `expense_id`               | `uuid` FK     | References `expenses.id`.          |
 | `participant_id`           | `uuid` FK     | References `bill_participants.id`. |
 | `amount_minor`             | `bigint`      | Non-negative integer.              |
-| `percentage_basis_points`  | `integer`     | Nullable; 10,000 means 100%.       |
 | `created_at`, `updated_at` | `timestamptz` | Audit timestamps.                  |
 
 Constraints:
 
 - Unique `(expense_id, participant_id)`.
 - Shares must sum to the expense amount, enforced by the transactional write operation.
-- Percentage inputs must total 10,000 basis points.
 - Rounding remainders are assigned deterministically so totals always match.
 
 ### `settlements`
@@ -518,27 +516,49 @@ tests/
   recovery capability on that device, and opens the private bill URL.
 - Private bill links resolve server-side, show current participants, and can be
   copied for sharing. New devices can join without an account.
+- Joined participants can add another person without claiming that identity.
+  A new device can claim an available listed person or add a distinct name.
 - Signed, path-scoped, HTTP-only participant cookies remember each bill on a
   device and are checked against hashed server-side session capabilities.
 - Share, recovery, and session capabilities contain 256 bits of randomness;
   only SHA-256 digests cross the database boundary.
 - The migration creates bills, participants, activity entries, atomic create and
   join functions, constraints, indexes, RLS, and restricted browser roles.
-- Unit tests cover capabilities, cookie tampering, expiry, signing-key rotation,
-  cross-bill rejection, input validation, and UI foundations.
+- Unit and live-database tests cover capabilities, cookie tampering, expiry,
+  signing-key rotation, cross-bill rejection, atomic participant claiming,
+  input validation, and UI foundations. Browser tests cover the complete
+  create, add, share, claim, return, and join journey.
 
 ### Phase 2 — Expense ledger
 
 - Build expense create, edit, and remove flows directly from the bill page.
-- Implement equal, exact, and percentage splits with integer arithmetic.
+- Implement equal and exact splits with integer arithmetic.
 - Add transactional expense/share writes and audit events.
 - Build expense history, filters, and clear empty/error states.
-- Build the receipt camera/upload flow, private image storage, and asynchronous extraction adapter.
+- Build the receipt upload flow, private image storage, and asynchronous extraction adapter.
 - Build the receipt review screen with low-confidence and total-mismatch states.
 - Implement editable receipt items, item-to-participant assignment, adjustment allocation, and atomic confirmation.
 - Add fixture-based extraction tests and browser tests for successful, partial, failed, and retried scans.
 
-**Exit criteria:** manual and scanned expenses preserve totals under rounding, no OCR draft affects balances before confirmation, and every change is attributable and auditable.
+**Exit criteria:** manual and uploaded-receipt expenses preserve totals under rounding, no OCR draft affects balances before confirmation, and every change is attributable and auditable.
+
+#### Current Phase 2 progress
+
+- The bill page supports manual expense creation, editing, removal, equal/exact
+  integer splits, history filters, and attributable activity entries.
+- Receipt images use an upload-only JPEG/PNG/HEIC picker and a private Supabase
+  Storage bucket. Extraction runs after the upload response and supports retry.
+- Receipt review supports editable totals and items, low-confidence and mismatch
+  warnings, item assignments, proportional/equal/custom adjustments, and atomic,
+  idempotent confirmation. Unconfirmed drafts never create expense shares.
+- The production adapter sends a compressed, metadata-free copy to OCR.Space
+  using the server-only `OCR_SPACE_API_KEY`. Table mode, auto-rotation, scaling,
+  and Engine 2 are enabled; returned text is parsed into reviewable receipt
+  fields and never enters the ledger without confirmation.
+- If no OCR.Space key is configured, uploads enter a clear failed state and can
+  be retried or entered manually without affecting the ledger.
+- Local manual testing can set `RECEIPT_EXTRACTION_DEV_FIXTURE` to `success`,
+  `partial`, or `failed`; this fixture adapter is disabled in production.
 
 ### Phase 3 — Balances and settle-up
 
@@ -578,7 +598,7 @@ npm run build
 npm run test:e2e # for affected critical journeys
 ```
 
-Money utilities need table-driven tests for indivisible equal splits, exact totals, percentage rounding, receipt item weights, proportional tax/tip, discounts, large values, edits, removals, and settlements. Receipt tests must cover rotated images, duplicate line descriptions, quantities, negative discounts, low-confidence fields, total mismatches, unsupported/corrupt files, timeouts, retries, duplicate confirmation, and draft/image expiry. Payment QR tests must cover unreadable and duplicate QRs, fixed amounts, KHR/USD currency handling, non-owner changes, image replacement/removal, signed URL expiry, recipient display, and the rule that QR viewing never creates a settlement. Access tests must cover guessed/invalid links, expired bills, session tampering, cross-bill references, creator-only actions, and rate limits.
+Money utilities need table-driven tests for indivisible equal splits, exact totals, receipt item weights, proportional tax/tip, discounts, large values, edits, removals, and settlements. Receipt tests must cover rotated images, duplicate line descriptions, quantities, negative discounts, low-confidence fields, total mismatches, unsupported/corrupt files, timeouts, retries, duplicate confirmation, and draft/image expiry. Payment QR tests must cover unreadable and duplicate QRs, fixed amounts, KHR/USD currency handling, non-owner changes, image replacement/removal, signed URL expiry, recipient display, and the rule that QR viewing never creates a settlement. Access tests must cover guessed/invalid links, expired bills, session tampering, cross-bill references, creator-only actions, and rate limits.
 
 ## Decisions to confirm before implementation
 

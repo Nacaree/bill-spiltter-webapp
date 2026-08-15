@@ -11,6 +11,8 @@ import { getServerSupabase } from "@/lib/supabase-server";
 
 export class BillNotFoundError extends Error {}
 export class ParticipantNameTakenError extends Error {}
+export class ParticipantSessionRequiredError extends Error {}
+export class ParticipantUnavailableError extends Error {}
 
 function resultRow(data) {
   return Array.isArray(data) ? data[0] : data;
@@ -27,7 +29,18 @@ function sessionSecrets() {
 function throwDatabaseError(error) {
   if (error.code === "23505") throw new ParticipantNameTakenError();
   if (error.code === "P0002") throw new BillNotFoundError();
+  if (error.code === "P0001") throw new ParticipantSessionRequiredError();
+  if (error.code === "P0003") throw new ParticipantUnavailableError();
   throw new Error(`Database operation failed (${error.code ?? "unknown"}).`);
+}
+
+function sessionFromCookie(cookieValue, expectedBillId) {
+  const session = verifyParticipantSession(cookieValue, {
+    expectedBillId,
+    secrets: sessionSecrets(),
+  });
+  if (!session) throw new ParticipantSessionRequiredError();
+  return session;
 }
 
 export async function createBillWithCreator({
@@ -95,21 +108,31 @@ export async function getBillByShareToken(shareToken) {
 
   const { data: participants, error: participantError } = await supabase
     .from("bill_participants")
-    .select("id, display_name, is_creator, created_at")
+    .select("id, display_name, is_creator, session_token_hash, created_at")
     .eq("bill_id", bill.id)
     .is("deactivated_at", null)
     .order("created_at", { ascending: true });
   if (participantError) throwDatabaseError(participantError);
 
-  return { ...bill, participants };
+  return {
+    ...bill,
+    participants: participants.map(
+      ({ session_token_hash: sessionTokenHash, ...participant }) => ({
+        ...participant,
+        canClaim: !sessionTokenHash,
+      }),
+    ),
+  };
 }
 
 export async function getSessionParticipant(billId, cookieValue) {
-  const session = verifyParticipantSession(cookieValue, {
-    expectedBillId: billId,
-    secrets: sessionSecrets(),
-  });
-  if (!session) return null;
+  let session;
+  try {
+    session = sessionFromCookie(cookieValue, billId);
+  } catch (error) {
+    if (error instanceof ParticipantSessionRequiredError) return null;
+    throw error;
+  }
 
   const { data, error } = await getServerSupabase()
     .from("bill_participants")
@@ -151,4 +174,70 @@ export async function joinBill({ participantName, shareToken }) {
     sessionToken: participantAccess.token,
   });
   return { billId: joined.bill_id, sessionValue: session.value };
+}
+
+export async function claimParticipant({ participantId, shareToken }) {
+  const participantAccess = createAccessToken();
+  let shareHash;
+  try {
+    shareHash = hashAccessToken(shareToken);
+  } catch {
+    throw new BillNotFoundError();
+  }
+
+  const { data, error } = await getServerSupabase().rpc(
+    "claim_bill_participant",
+    {
+      participant_session_hash: participantAccess.tokenHash,
+      share_hash: shareHash,
+      target_participant_id: participantId,
+    },
+  );
+  if (error) throwDatabaseError(error);
+
+  const claimed = resultRow(data);
+  if (!claimed?.bill_id || !claimed?.participant_id) {
+    throw new Error(
+      "Database did not return the claimed participant identity.",
+    );
+  }
+
+  const session = createParticipantSession({
+    billId: claimed.bill_id,
+    participantId: claimed.participant_id,
+    secret: process.env.PARTICIPANT_SESSION_SECRET,
+    sessionToken: participantAccess.token,
+  });
+  return { billId: claimed.bill_id, sessionValue: session.value };
+}
+
+export async function addParticipant({
+  cookieValue,
+  participantName,
+  shareToken,
+}) {
+  let shareHash;
+  try {
+    shareHash = hashAccessToken(shareToken);
+  } catch {
+    throw new BillNotFoundError();
+  }
+
+  const session = sessionFromCookie(cookieValue);
+  const { data, error } = await getServerSupabase().rpc(
+    "add_bill_participant",
+    {
+      actor_participant_id: session.participantId,
+      actor_session_hash: hashAccessToken(session.sessionToken),
+      participant_name: participantName,
+      share_hash: shareHash,
+    },
+  );
+  if (error) throwDatabaseError(error);
+
+  const added = resultRow(data);
+  if (!added?.participant_id) {
+    throw new Error("Database did not return the added participant identity.");
+  }
+  return { participantId: added.participant_id };
 }

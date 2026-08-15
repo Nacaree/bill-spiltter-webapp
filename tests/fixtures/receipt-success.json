@@ -1,0 +1,27 @@
+{
+  "merchantName": "Night Market",
+  "receiptDate": "2026-08-16",
+  "currency": "USD",
+  "subtotalMinor": 1001,
+  "taxMinor": 80,
+  "tipMinor": 119,
+  "discountMinor": 0,
+  "totalMinor": 1200,
+  "providerRequestId": "fixture-success",
+  "items": [
+    {
+      "description": "Noodles",
+      "quantity": 1,
+      "unitPriceMinor": 501,
+      "totalMinor": 501,
+      "confidenceBasisPoints": 9700
+    },
+    {
+      "description": "Drinks",
+      "quantity": 2,
+      "unitPriceMinor": 250,
+      "totalMinor": 500,
+      "confidenceBasisPoints": 9300
+    }
+  ]
+}

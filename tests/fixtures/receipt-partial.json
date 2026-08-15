@@ -1,0 +1,20 @@
+{
+  "merchantName": null,
+  "receiptDate": null,
+  "currency": "USD",
+  "subtotalMinor": null,
+  "taxMinor": 0,
+  "tipMinor": 0,
+  "discountMinor": 0,
+  "totalMinor": null,
+  "providerRequestId": "fixture-partial",
+  "items": [
+    {
+      "description": null,
+      "quantity": 1,
+      "unitPriceMinor": null,
+      "totalMinor": 725,
+      "confidenceBasisPoints": 4200
+    }
+  ]
+}

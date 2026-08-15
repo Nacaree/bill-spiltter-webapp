@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { hashAccessToken } from "@/lib/access-tokens";
-import { verifyParticipantSession } from "@/lib/participant-session";
+import {
+  createParticipantSession,
+  verifyParticipantSession,
+} from "@/lib/participant-session";
 
 const mocks = vi.hoisted(() => ({
   rpc: vi.fn(),
@@ -11,9 +14,13 @@ vi.mock("@/lib/supabase-server", () => ({
 }));
 
 import {
+  addParticipant,
+  claimParticipant,
   createBillWithCreator,
   joinBill,
   ParticipantNameTakenError,
+  ParticipantSessionRequiredError,
+  ParticipantUnavailableError,
 } from "@/server/bills";
 
 const billId = "018f0f67-2a03-7e9d-8e1c-75dcfcb18be7";
@@ -92,5 +99,78 @@ describe("bill repository capability boundary", () => {
     await expect(
       joinBill({ participantName: "Dara", shareToken: "b".repeat(43) }),
     ).rejects.toBeInstanceOf(ParticipantNameTakenError);
+  });
+
+  it("claims an unclaimed participant with a new server-side capability", async () => {
+    mocks.rpc.mockResolvedValue({
+      data: [{ bill_id: billId, participant_id: participantId }],
+      error: null,
+    });
+
+    const claimed = await claimParticipant({
+      participantId,
+      shareToken: "c".repeat(43),
+    });
+    const [, parameters] = mocks.rpc.mock.calls[0];
+
+    expect(mocks.rpc).toHaveBeenCalledWith(
+      "claim_bill_participant",
+      expect.objectContaining({
+        share_hash: hashAccessToken("c".repeat(43)),
+        target_participant_id: participantId,
+      }),
+    );
+    expect(parameters.participant_session_hash).toMatch(/^[a-f0-9]{64}$/);
+    expect(
+      verifyParticipantSession(claimed.sessionValue, {
+        expectedBillId: billId,
+        secrets: [secret],
+      }),
+    ).toMatchObject({ participantId });
+
+    mocks.rpc.mockResolvedValueOnce({
+      data: null,
+      error: { code: "P0003" },
+    });
+    await expect(
+      claimParticipant({ participantId, shareToken: "d".repeat(43) }),
+    ).rejects.toBeInstanceOf(ParticipantUnavailableError);
+  });
+
+  it("adds an unclaimed participant only with a valid signed session", async () => {
+    const sessionToken = "s".repeat(43);
+    const session = createParticipantSession({
+      billId,
+      participantId,
+      secret,
+      sessionToken,
+    });
+    mocks.rpc.mockResolvedValue({
+      data: [{ participant_id: participantId }],
+      error: null,
+    });
+
+    await addParticipant({
+      cookieValue: session.value,
+      participantName: "Dara",
+      shareToken: "e".repeat(43),
+    });
+
+    expect(mocks.rpc).toHaveBeenCalledWith("add_bill_participant", {
+      actor_participant_id: participantId,
+      actor_session_hash: hashAccessToken(sessionToken),
+      participant_name: "Dara",
+      share_hash: hashAccessToken("e".repeat(43)),
+    });
+
+    mocks.rpc.mockClear();
+    await expect(
+      addParticipant({
+        cookieValue: `${session.value}tampered`,
+        participantName: "Malis",
+        shareToken: "e".repeat(43),
+      }),
+    ).rejects.toBeInstanceOf(ParticipantSessionRequiredError);
+    expect(mocks.rpc).not.toHaveBeenCalled();
   });
 });

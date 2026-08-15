@@ -11,8 +11,14 @@ const billName = z
 const participantName = z
   .string()
   .trim()
-  .min(1, "Enter your name.")
+  .min(1, "Enter a name.")
   .max(60, "Use 60 characters or fewer.");
+
+const shareToken = z
+  .string()
+  .regex(/^[A-Za-z0-9_-]{43}$/, "This bill link is invalid.");
+
+const participantId = z.uuid("Choose an available person.");
 
 const createBillSchema = z.object({
   billName,
@@ -22,10 +28,11 @@ const createBillSchema = z.object({
 
 const joinBillSchema = z.object({
   participantName,
-  shareToken: z
-    .string()
-    .regex(/^[A-Za-z0-9_-]{43}$/, "This bill link is invalid."),
+  shareToken,
 });
+
+const claimParticipantSchema = z.object({ participantId, shareToken });
+const addParticipantSchema = z.object({ participantName, shareToken });
 
 function firstErrors(error) {
   const fields = z.flattenError(error).fieldErrors;
@@ -47,6 +54,26 @@ export function parseCreateBill(formData) {
 
 export function parseJoinBill(formData) {
   const result = joinBillSchema.safeParse({
+    participantName: formData.get("participantName"),
+    shareToken: formData.get("shareToken"),
+  });
+  return result.success
+    ? { data: result.data, errors: null }
+    : { data: null, errors: firstErrors(result.error) };
+}
+
+export function parseClaimParticipant(formData) {
+  const result = claimParticipantSchema.safeParse({
+    participantId: formData.get("participantId"),
+    shareToken: formData.get("shareToken"),
+  });
+  return result.success
+    ? { data: result.data, errors: null }
+    : { data: null, errors: firstErrors(result.error) };
+}
+
+export function parseAddParticipant(formData) {
+  const result = addParticipantSchema.safeParse({
     participantName: formData.get("participantName"),
     shareToken: formData.get("shareToken"),
   });

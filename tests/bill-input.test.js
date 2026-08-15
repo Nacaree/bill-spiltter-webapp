@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { parseCreateBill, parseJoinBill } from "@/lib/bill-input";
+import {
+  parseAddParticipant,
+  parseClaimParticipant,
+  parseCreateBill,
+  parseJoinBill,
+} from "@/lib/bill-input";
 
 function form(values) {
   const data = new FormData();
@@ -48,5 +53,35 @@ describe("bill input validation", () => {
       form({ participantName: "Dara", shareToken: "guessable" }),
     );
     expect(invalid.errors?.shareToken).toBeTruthy();
+  });
+
+  it("validates claiming an existing participant", () => {
+    const valid = parseClaimParticipant(
+      form({ participantId: crypto.randomUUID(), shareToken: "a".repeat(43) }),
+    );
+    expect(valid.errors).toBeNull();
+
+    const invalid = parseClaimParticipant(
+      form({ participantId: "not-a-participant", shareToken: "short" }),
+    );
+    expect(invalid.errors).toMatchObject({
+      participantId: expect.any(String),
+      shareToken: expect.any(String),
+    });
+  });
+
+  it("validates adding an unclaimed participant", () => {
+    const valid = parseAddParticipant(
+      form({ participantName: " Dara ", shareToken: "b".repeat(43) }),
+    );
+    expect(valid.data).toEqual({
+      participantName: "Dara",
+      shareToken: "b".repeat(43),
+    });
+
+    const invalid = parseAddParticipant(
+      form({ participantName: " ", shareToken: "b".repeat(43) }),
+    );
+    expect(invalid.errors?.participantName).toBeTruthy();
   });
 });

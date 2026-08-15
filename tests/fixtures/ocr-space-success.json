@@ -1,0 +1,11 @@
+{
+  "ParsedResults": [
+    {
+      "ParsedText": "NIGHT MARKET\nDate: 16/08/2026\nNoodles 5.01\n2 x Drinks 5.00\nSubtotal 10.01\nVAT 0.80\nService Charge 1.19\nDiscount -0.50\nTOTAL USD 11.50\nCash 20.00\nChange 8.50",
+      "ErrorMessage": null
+    }
+  ],
+  "OCRExitCode": 1,
+  "IsErroredOnProcessing": false,
+  "ErrorMessage": null
+}
