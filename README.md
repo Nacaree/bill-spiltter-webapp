@@ -2,7 +2,8 @@
 
 Bill Splitter is a planned responsive web app for creating a shared bill, adding people and expenses, calculating fair shares, and settling up—without requiring anyone to create an account.
 
-> **Project status:** product and architecture planning. No application code has been started yet.
+> **Project status:** Phase 1 is in progress. The initial database migration and
+> access/session security primitives are implemented; application routes and UI are next.
 
 ## Product direction
 
@@ -460,6 +461,19 @@ tests/
 - Add integration tests for valid, invalid, expired, rotated, and cross-bill credentials.
 
 **Exit criteria:** a new visitor can create and share a bill in under a minute, and another device can join without an account.
+
+#### Current Phase 1 progress
+
+- Added the first Supabase migration for bills, participants, activity, and the
+  atomic bill-plus-creator database operation.
+- Added 256-bit share and creator recovery capability generation. Only SHA-256
+  digests are designed to cross the database boundary.
+- Added signed, bill-scoped participant sessions with expiry, tamper detection,
+  secure cookie attributes, and signing-key rotation support.
+- Added dependency-free automated tests for access capabilities and sessions.
+
+The next slice is the server-side bill repository and landing/create route, followed
+by bill resolution, join/return behavior, sharing, and browser integration tests.
 
 ### Phase 2 — Expense ledger
 
