@@ -7,5 +7,6 @@
 /supabase/.temp/
 .env*
 !.env.example
+/local-data/receipt-samples/
 .DS_Store
 npm-debug.log*

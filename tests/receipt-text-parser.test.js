@@ -1,8 +1,120 @@
 import { describe, expect, it } from "vitest";
 import ocrSpaceFixture from "./fixtures/ocr-space-success.json";
+import layouts from "./fixtures/receipt-text-layouts.json";
 import { parseOcrAmount, parseReceiptText } from "@/lib/receipt-text-parser";
 
 describe("OCR receipt text parsing", () => {
+  it.each(layouts)(
+    "parses $name",
+    ({ billCurrency, text, expected, items }) => {
+      const parsed = parseReceiptText(text, billCurrency);
+      expect(parsed).toMatchObject(expected);
+      expect(parsed.items).toEqual(
+        items.map((item) => expect.objectContaining(item)),
+      );
+    },
+  );
+
+  it.each([
+    "1.2345",
+    "12,34,567",
+    "1.234.56",
+    "1..00",
+    "12-34",
+    "(12.00",
+    "9007199254740992",
+  ])("rejects malformed or unsafe USD amount %s", (amount) =>
+    expect(parseOcrAmount(amount, "USD")).toBeNull(),
+  );
+
+  it.each([
+    ["1,234,567.89", "USD", 123456789],
+    ["1.234.567,89", "EUR", 123456789],
+    ["(0.50) USD", "USD", -50],
+    ["41,000.00 KHR", "KHR", 41000],
+    ["៛ 41.000", "KHR", 41000],
+  ])("reads %s as minor units", (amount, currency, expected) => {
+    expect(parseOcrAmount(amount, currency)).toBe(expected);
+  });
+
+  it("uses the bill currency for dual-currency receipts", () => {
+    const text = "SHOP\nRice 10,000 KHR\nTOTAL USD 2.50\nTOTAL KHR 10,000";
+    expect(parseReceiptText(text, "KHR")).toMatchObject({
+      currency: "KHR",
+      totalMinor: 10000,
+    });
+    expect(parseReceiptText(text, "USD")).toMatchObject({
+      currency: "USD",
+      totalMinor: 250,
+      items: [],
+    });
+  });
+
+  it("still detects a receipt currency different from the bill", () => {
+    expect(
+      parseReceiptText("SHOP\nRice 10,000 KHR\nTOTAL KHR 10,000", "USD"),
+    ).toMatchObject({ currency: "KHR", totalMinor: 10000 });
+  });
+
+  it("flags inconsistent quantity and unit prices without changing the printed total", () => {
+    const parsed = parseReceiptText(
+      "CAFE\n2 x Coffee 2.00 5.00\nTOTAL 5.00",
+      "USD",
+    );
+    expect(parsed.items[0]).toMatchObject({
+      description: "Coffee",
+      quantity: 2,
+      totalMinor: 500,
+      unitPriceMinor: null,
+      confidenceBasisPoints: 4000,
+    });
+  });
+
+  it("reads quantities printed after an item name", () => {
+    const parsed = parseReceiptText(
+      "CAFE\nCoffee 2 @ 2.50 5.00\nTOTAL 5.00",
+      "USD",
+    );
+    expect(parsed.items).toEqual([
+      expect.objectContaining({
+        description: "Coffee",
+        quantity: 2,
+        unitPriceMinor: 250,
+        totalMinor: 500,
+      }),
+    ]);
+  });
+
+  it("uses the last valid total when repeated labels have equal priority", () => {
+    expect(
+      parseReceiptText(
+        "CAFE\nTea 2.00\nTotal 1.00\nTotal 2.00\nTotal unreadable",
+        "USD",
+      ).totalMinor,
+    ).toBe(200);
+  });
+
+  it("combines tax components but does not double-count a total-tax row", () => {
+    const text = "CAFE\nMeal 10.00\nVAT 0.50\nTax 0.25";
+    expect(parseReceiptText(text, "USD").taxMinor).toBe(75);
+    expect(
+      parseReceiptText(`${text}\nTotal tax 0.75\nTOTAL 10.75`, "USD"),
+    ).toMatchObject({ taxMinor: 75, totalMinor: 1075 });
+  });
+
+  it("does not turn included tax, rates, IDs, or phone numbers into extra charges", () => {
+    const parsed = parseReceiptText(
+      "CAFE\nPhone 012345678\nOrder # 345\nTable 12\nTea 2.00\nVAT included 0.20\nTax 10%\nTOTAL 2.00",
+      "USD",
+    );
+    expect(parsed.items).toHaveLength(1);
+    expect(parsed).toMatchObject({
+      merchantName: "CAFE",
+      taxMinor: 0,
+      totalMinor: 200,
+    });
+  });
+
   it("extracts receipt fields and excludes payment lines", () => {
     const parsed = parseReceiptText(
       ocrSpaceFixture.ParsedResults[0].ParsedText,

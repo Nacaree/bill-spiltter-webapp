@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import partialFixture from "./fixtures/receipt-partial.json";
 import ocrSpaceFixture from "./fixtures/ocr-space-success.json";
 import successFixture from "./fixtures/receipt-success.json";
+import layouts from "./fixtures/receipt-text-layouts.json";
 import {
   extractReceiptImage,
   normalizeReceiptExtraction,
@@ -84,6 +85,34 @@ describe("receipt extraction fixtures", () => {
         scanId: "scan-2",
       }),
     ).rejects.toBeInstanceOf(ReceiptExtractionError);
+  });
+
+  it("keeps a dual-currency OCR response reviewable in the bill currency", async () => {
+    process.env.OCR_SPACE_API_KEY = "test-key";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          OCRExitCode: 1,
+          IsErroredOnProcessing: false,
+          ParsedResults: [{ ParsedText: layouts[0].text }],
+        }),
+      }),
+    );
+    const raw = await extractReceiptImage({
+      billCurrency: "USD",
+      bytes: new Uint8Array([1, 2, 3]),
+      mimeType: "image/png",
+    });
+    const draft = normalizeReceiptExtraction(raw, "USD");
+    expect(draft).toMatchObject({
+      currency: "USD",
+      totalMinor: 1215,
+      taxMinor: 110,
+    });
+    expect(draft.items).toHaveLength(3);
+    expect(draft.items.every((item) => item.needsReview)).toBe(true);
   });
 
   it("provides development-only success and partial fixtures", async () => {

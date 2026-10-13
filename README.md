@@ -555,6 +555,11 @@ tests/
   using the server-only `OCR_SPACE_API_KEY`. Table mode, auto-rotation, scaling,
   and Engine 2 are enabled; returned text is parsed into reviewable receipt
   fields and never enters the ledger without confirmation.
+- USD/KHR parsing handles quantity/price columns, currency suffixes, split
+  summary labels, and dual-currency totals. It excludes common receipt metadata
+  and payment lines, rejects malformed money values, and keeps inferred items
+  flagged for review. Synthetic layout fixtures cover these cases; extraction
+  quality still needs validation against representative receipt images.
 - If no OCR.Space key is configured, uploads enter a clear failed state and can
   be retried or entered manually without affecting the ledger.
 - Local manual testing can set `RECEIPT_EXTRACTION_DEV_FIXTURE` to `success`,

@@ -1,0 +1,83 @@
+[
+  {
+    "name": "restaurant table with USD and converted KHR totals",
+    "billCurrency": "USD",
+    "text": "RECEIPT\nRIVERSIDE KITCHEN\nTel: 012 345678\nTable 12\nOrder # 1042\nDate: 16/08/2026\nItem Qty Price Amount\nNoodles 2 3.50 7.00\nIced coffee 1 2.00 2.00\nIced coffee 1 2.00 2.00\nSubtotal 11.00\nVAT 10% 1.10\nService charge 0.55\nDiscount -0.50\nGRAND TOTAL USD 12.15\nTOTAL KHR 49,815\nAmount paid USD 20.00\nChange USD 7.85\nTotal items 4\nThank you",
+    "expected": {
+      "currency": "USD",
+      "merchantName": "RIVERSIDE KITCHEN",
+      "receiptDate": "2026-08-16",
+      "subtotalMinor": 1100,
+      "taxMinor": 110,
+      "tipMinor": 55,
+      "discountMinor": 50,
+      "totalMinor": 1215
+    },
+    "items": [
+      {
+        "description": "Noodles",
+        "quantity": 2,
+        "totalMinor": 700,
+        "unitPriceMinor": 350
+      },
+      {
+        "description": "Iced coffee",
+        "quantity": 1,
+        "totalMinor": 200,
+        "unitPriceMinor": 200
+      },
+      {
+        "description": "Iced coffee",
+        "quantity": 1,
+        "totalMinor": 200,
+        "unitPriceMinor": 200
+      }
+    ]
+  },
+  {
+    "name": "KHR shop with split summary labels and currency suffixes",
+    "billCurrency": "KHR",
+    "text": "CORNER SHOP\nReceipt # 203\n2026-08-16\nRice 12,000 KHR\n2 x Water 1,500 3,000 KHR\nSUBTOTAL\n15,000 KHR\nDiscount (1,000) KHR\nTOTAL\n14,000.00 KHR\nCash 20,000 KHR\nChange 6,000 KHR",
+    "expected": {
+      "currency": "KHR",
+      "merchantName": "CORNER SHOP",
+      "subtotalMinor": 15000,
+      "discountMinor": 1000,
+      "totalMinor": 14000
+    },
+    "items": [
+      {
+        "description": "Rice",
+        "quantity": 1,
+        "totalMinor": 12000,
+        "unitPriceMinor": 12000
+      },
+      {
+        "description": "Water",
+        "quantity": 2,
+        "totalMinor": 3000,
+        "unitPriceMinor": 1500
+      }
+    ]
+  },
+  {
+    "name": "quantity prefixes and item names containing payment words",
+    "billCurrency": "USD",
+    "text": "MARKET CAFE\n2 x Cash Card Cookies 2.50 5.00\nTotal burger 6.00\nSubtotal 11.00\nTOTAL $11.00\nCard VISA 11.00",
+    "expected": { "subtotalMinor": 1100, "totalMinor": 1100 },
+    "items": [
+      {
+        "description": "Cash Card Cookies",
+        "quantity": 2,
+        "totalMinor": 500,
+        "unitPriceMinor": 250
+      },
+      {
+        "description": "Total burger",
+        "quantity": 1,
+        "totalMinor": 600,
+        "unitPriceMinor": 600
+      }
+    ]
+  }
+]
