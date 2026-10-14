@@ -1,5 +1,4 @@
 const CURRENCY_FRACTION_DIGITS = {
-  EUR: 2,
   KHR: 0,
   USD: 2,
 };

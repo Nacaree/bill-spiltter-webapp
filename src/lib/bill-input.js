@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const BILL_CURRENCIES = ["KHR", "USD", "EUR"];
+export const BILL_CURRENCIES = ["KHR", "USD"];
 
 const billName = z
   .string()

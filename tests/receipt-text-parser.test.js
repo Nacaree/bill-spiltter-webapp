@@ -54,7 +54,7 @@ describe("OCR receipt text parsing", () => {
 
   it.each([
     ["1,234,567.89", "USD", 123456789],
-    ["1.234.567,89", "EUR", 123456789],
+    ["1.234.567,89", "USD", 123456789],
     ["(0.50) USD", "USD", -50],
     ["41,000.00 KHR", "KHR", 41000],
     ["៛ 41.000", "KHR", 41000],
@@ -168,9 +168,9 @@ describe("OCR receipt text parsing", () => {
     ]);
   });
 
-  it("handles KHR grouping and European decimal commas", () => {
+  it("handles KHR grouping and decimal commas", () => {
     expect(parseOcrAmount("៛ 12,000", "KHR")).toBe(12_000);
-    expect(parseOcrAmount("EUR 1.234,56", "EUR")).toBe(123_456);
+    expect(parseOcrAmount("USD 1.234,56", "USD")).toBe(123_456);
     expect(parseOcrAmount("$1,234.56", "USD")).toBe(123_456);
   });
 

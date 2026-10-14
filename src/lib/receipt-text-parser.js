@@ -13,7 +13,7 @@ const PAYMENT_PATTERN =
 const METADATA_PATTERN =
   /^(?:tel(?:ephone)?|phone|mobile|fax|address|table|order|invoice|receipt|bill\s*(?:no|number|#)|cashier|server|staff|guest|pax|date|time|thank\s+you|qty|quantity|item\s+qty|total\s+(?:items|qty|quantity))\b|^(?:www\.|https?:)/i;
 const TRAILING_AMOUNT =
-  /([(-]?\s*(?:USD|EUR|KHR|[$€៛])?\s*\d[\d.,]*\s*\)?(?:\s*(?:USD|EUR|KHR|[$€៛]|R))?)\s*$/i;
+  /([(-]?\s*(?:USD|KHR|[$៛])?\s*\d[\d.,]*\s*\)?(?:\s*(?:USD|KHR|[$៛]|R))?)\s*$/i;
 
 function validIsoDate(year, month, day) {
   const value = `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -46,7 +46,7 @@ export function parseOcrAmount(value, currency) {
   const digits = currencyFractionDigits(currency);
   let input = String(value)
     .trim()
-    .replace(/USD|EUR|KHR|[$€៛]|\bR\b|\s/gi, "");
+    .replace(/USD|KHR|[$៛]|\bR\b|\s/gi, "");
   const negative =
     input.startsWith("-") || (input.startsWith("(") && input.endsWith(")"));
   if (input.startsWith("-")) input = input.slice(1);
@@ -88,7 +88,7 @@ function lineAmount(line, currency) {
   if (
     match.index > 0 &&
     !/^\s/.test(match[1]) &&
-    !/[\s:$€៛]/.test(line[match.index - 1])
+    !/[\s:$៛]/.test(line[match.index - 1])
   )
     return null;
   const amountMinor = parseOcrAmount(match[1], currency);
@@ -108,7 +108,7 @@ function summaryKind(line) {
     ([, pattern]) =>
       pattern.test(line) &&
       (pattern !== SUMMARY_PATTERNS.total ||
-        /^(?:\s*[:.-]?\s*)(?:$|[\d($€៛-]|(?:USD|EUR|KHR)\b|\(\s*R\s*\)\s*\d)/i.test(
+        /^(?:\s*[:.-]?\s*)(?:$|[\d($៛-]|(?:USD|KHR)\b|\(\s*R\s*\)\s*\d)/i.test(
           line.replace(pattern, ""),
         )),
   )?.[0];
@@ -118,7 +118,6 @@ function explicitCurrencies(text) {
   return [
     [/\bUSD\b|\$/i, "USD"],
     [/\bKHR\b|៛|\(\s*R\s*\)/i, "KHR"],
-    [/\bEUR\b|€/i, "EUR"],
   ]
     .filter(([pattern]) => pattern.test(text))
     .map(([, currency]) => currency);
@@ -215,7 +214,7 @@ export function parseReceiptText(text, billCurrency) {
     if (
       summaryKind(lines[index]) &&
       lineAmount(lines[index], currency) === null &&
-      /^[(\-\d$€៛]|^(?:USD|EUR|KHR)\b/i.test(lines[index + 1]) &&
+      /^[(\-\d$៛]|^(?:USD|KHR)\b/i.test(lines[index + 1]) &&
       !lineAmount(lines[index + 1], currency)?.description
     ) {
       lines[index] = `${lines[index]} ${lines[index + 1]}`;

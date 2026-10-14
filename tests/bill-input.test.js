@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  BILL_CURRENCIES,
   parseAddParticipant,
   parseClaimParticipant,
   parseCreateBill,
@@ -13,6 +14,26 @@ function form(values) {
 }
 
 describe("bill input validation", () => {
+  it("offers only the two supported Cambodian currencies", () => {
+    expect(BILL_CURRENCIES).toEqual(["KHR", "USD"]);
+  });
+
+  it.each(["KHR", "USD"])("accepts a %s bill", (currency) => {
+    expect(
+      parseCreateBill(
+        form({ billName: "Dinner", currency, participantName: "Sokha" }),
+      ).errors,
+    ).toBeNull();
+  });
+
+  it.each(["EUR", "GBP"])("rejects a %s bill", (currency) => {
+    expect(
+      parseCreateBill(
+        form({ billName: "Dinner", currency, participantName: "Sokha" }),
+      ).errors?.currency,
+    ).toBeTruthy();
+  });
+
   it("trims and accepts a valid create request", () => {
     const result = parseCreateBill(
       form({

@@ -11,7 +11,7 @@ describe("money parsing and formatting", () => {
   it.each([
     ["12", "USD", 1200],
     ["12.3", "USD", 1230],
-    ["12.34", "EUR", 1234],
+    ["12.34", "USD", 1234],
     ["4000", "KHR", 4000],
   ])("parses %s %s into integer minor units", (input, currency, expected) => {
     expect(parseMoneyToMinor(input, currency)).toBe(expected);
@@ -31,6 +31,11 @@ describe("money parsing and formatting", () => {
     expect(currencyFractionDigits("KHR")).toBe(0);
     expect(formatMoney(1234, "USD")).toBe("$12.34");
     expect(formatMoney(4000, "KHR")).toContain("4,000");
+  });
+
+  it.each(["EUR", "GBP"])("rejects unsupported currency %s", (currency) => {
+    expect(() => parseMoneyToMinor("12.34", currency)).toThrow(/Unsupported/);
+    expect(() => formatMoney(1234, currency)).toThrow(/Unsupported/);
   });
 });
 

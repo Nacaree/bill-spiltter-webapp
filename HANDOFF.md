@@ -1,13 +1,13 @@
 # Bill Splitter — Computer Handoff
 
 Read this file and `CURRENT_WORK.md` when resuming on another computer. Current
-branch: `main`; baseline commit: `e18e83a`. There is uncommitted Gemini integration
-work, the Cambodian receipt-parser changes, and a receipt review UI fix. Commit and push them
-before expecting those changes on another computer.
+branch: `main`; baseline commit: `ea3d1f2`. Currency restrictions are uncommitted.
+Commit and push them before expecting those changes on another computer.
 
 ## Current state
 
 Phase 1 and the Phase 2 manual expense ledger and receipt review flow are built.
+Bill creation, money handling, receipt parsing, and Gemini accept only USD/KHR.
 Production receipt extraction now calls Gemini directly with the image and a
 JSON schema. Zod validates the output; every AI item remains flagged for review.
 The private upload, retry, review, and atomic confirmation flow is retained.
@@ -25,7 +25,7 @@ Visible amounts: USD subtotal 149.75, discount 24.00, total 125.75; equivalent
 riel total 521,900. The fixture is a manual transcription, not model output.
 Real-photo Gemini accuracy has not yet been verified. Phase 3 is not started.
 
-Validation passed: formatting, lint, 110 unit tests, webpack production build,
+Validation passed: formatting, lint, 119 unit tests, webpack production build,
 and a live Gemini request with the configured key. The live generated receipt
 returned correct quantities, item prices, subtotal, discount, and USD total.
 Google briefly reported high demand; a later retry succeeded. Normal tests
@@ -64,6 +64,7 @@ Before switching computers, inspect and commit the current work:
 ```bash
 git status --short
 git add HANDOFF.md CURRENT_WORK.md README.md .env.example package.json \
+  src/lib/bill-input.js src/lib/money.js tests/bill-input.test.js tests/money.test.js \
   src/env.js src/lib/receipt-extraction.js src/lib/receipt-text-parser.js \
   src/components/receipt-review-form.jsx \
   src/lib/receipt-item-price.js src/lib/receipt-input.js src/server/receipts.js \
@@ -76,7 +77,7 @@ git add HANDOFF.md CURRENT_WORK.md README.md .env.example package.json \
   tests/integration/gemini-receipt.integration.test.js \
   tests/fixtures/cambodia-receipt-visual-transcription.json
 git diff --cached --check
-git commit -m "Use Gemini for receipt image extraction"
+git commit -m "Restrict bill and receipt currencies to USD and KHR"
 git push
 ```
 

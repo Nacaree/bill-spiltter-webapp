@@ -5,7 +5,7 @@
 
 ## Task
 
-Add editable receipt unit prices between description and line total.
+Restrict the app to USD and KHR.
 
 ## Completed
 
@@ -18,7 +18,7 @@ Add editable receipt unit prices between description and line total.
 - Every Gemini item remains flagged for review; drafts never affect the ledger.
 - Missing, malformed, blocked, truncated, and failed responses fail safely.
 - GEMINI_API_KEY and optional GEMINI_RECEIPT_MODEL replace OCR.Space configuration.
-- Added an opt-in live Gemini check that sends only a generated test receipt.
+- Bill creation, money handling, receipt parsing, and Gemini support USD/KHR only.
 - Gemini key verified: live generated receipt returned correct item quantities,
   prices, subtotal, discount, and USD total; all items remain reviewable drafts.
 - Receipt fields wrap to fit panel width. Editable totals reconcile items plus
@@ -28,7 +28,7 @@ Add editable receipt unit prices between description and line total.
   integer rounding for fractional quantities. Unknown prices remain blank.
 - Confirmation preserves quantity and unit price atomically; migration
   20261013000000 was applied on hosted Supabase and verified with a test receipt.
-- Formatting, lint, 110 unit tests, and webpack build pass. Normal tests skip
+- Formatting, lint, 119 unit tests, and webpack build pass. Normal tests skip
   5 live-database tests and the opt-in Gemini test; Gemini passed separately.
 - Uses hosted Supabase; Docker is not required.
 

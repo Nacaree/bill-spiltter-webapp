@@ -83,6 +83,14 @@ describe("Gemini receipt extraction", () => {
       totalMinor: 725,
     });
   });
+  it.each(["EUR", "GBP"])(
+    "rejects unsupported extracted currency %s",
+    (currency) => {
+      expect(() =>
+        normalizeReceiptExtraction({ ...successFixture, currency }, "USD"),
+      ).toThrow("invalid_provider_response");
+    },
+  );
   it("sends a metadata-free image and JSON schema and keeps AI items flagged for review", async () => {
     const fetchMock = vi.fn().mockResolvedValue(mockResponse());
     vi.stubGlobal("fetch", fetchMock);

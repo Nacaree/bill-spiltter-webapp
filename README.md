@@ -109,7 +109,7 @@ Required fields:
 
 Optional fields:
 
-- Currency, defaulted from the browser locale.
+- Currency: USD or KHR, defaulting to USD.
 
 On submission, the server creates the bill and its first participant in one transaction, stores a participant session on the device, and redirects directly to the bill page.
 
@@ -290,7 +290,7 @@ bills ──< bill_participants
 | `public_id_hash`            | `text` unique | Hash of the high-entropy identifier contained in the private link. |
 | `creator_key_hash`          | `text`        | Hash of a separate recovery key used for destructive bill actions. |
 | `name`                      | `text`        | Required.                                                          |
-| `currency`                  | `char(3)`     | ISO 4217; immutable after the first expense in the MVP.            |
+| `currency`                  | `char(3)`     | USD or KHR; immutable after the first expense in the MVP.          |
 | `archived_at`, `expires_at` | `timestamptz` | Nullable lifecycle timestamps.                                     |
 | `created_at`, `updated_at`  | `timestamptz` | Audit timestamps.                                                  |
 
