@@ -7,25 +7,40 @@ Bill Splitter is a planned responsive web app for creating a shared bill, adding
 ### Prerequisites
 
 - Node.js 22 or newer and npm
-- Docker Desktop (for the local Supabase stack)
-- Supabase CLI, run through `npx supabase`
+- A hosted Supabase project (the backend runs on Supabase)
+- A Gemini API key for receipt scanning
+- Docker Desktop and the Supabase CLI only if you choose a local database
 
 ### Setup
 
 ```bash
-npm install
+npm ci
 cp .env.example .env.local
-npx supabase start
 npm run dev
 ```
 
-Copy the local API URL, anonymous key, and service-role key printed by
-`supabase start` into `.env.local`. The service-role key is server-only and must
-never use a `NEXT_PUBLIC_` prefix. Replace `PARTICIPANT_SESSION_SECRET` with a
+Copy your hosted Supabase project API URL, anonymous key, and service-role key
+into `.env.local`; all three must belong to the same project. Use the API URL,
+not the dashboard link. The hosted backend needs no local startup command.
+For a fresh project, apply the schema files in `supabase/migrations` first.
+The service-role key is server-only and must never use a `NEXT_PUBLIC_` prefix.
+Replace `PARTICIPANT_SESSION_SECRET` with a
 random value containing at least 32 characters; for example, generate one with
-`openssl rand -base64 32`. The development server is available at
-[http://localhost:3000](http://localhost:3000), and Supabase Studio is available
-at [http://localhost:54323](http://localhost:54323).
+`openssl rand -base64 32`. Set the server-only `GEMINI_API_KEY` using a key from
+[Google AI Studio](https://aistudio.google.com/apikey). Receipt extraction defaults
+to `gemini-3.1-flash-lite`; `GEMINI_RECEIPT_MODEL` can select another compatible
+image/structured-output model. Restart `npm run dev` after changing environment
+variables. Open the frontend at [http://localhost:3000](http://localhost:3000)
+and manage the backend in the [Supabase dashboard](https://supabase.com/dashboard).
+
+For an optional local backend, start Docker Desktop and run `npx supabase start`.
+Use the local URL and matching local keys in `.env.local`; local Studio is at
+[http://localhost:54323](http://localhost:54323).
+
+Gemini free-tier quotas depend on the model and project. Google’s
+[pricing and data-use terms](https://ai.google.dev/gemini-api/docs/pricing)
+state that free-tier content may be used to improve its products. Use redacted
+test receipts when evaluating that tier.
 
 Environment variables are validated at startup. Keep server secrets out of variables prefixed with `NEXT_PUBLIC_`; those variables are included in browser bundles.
 
@@ -48,6 +63,15 @@ npm run test:e2e:supabase
 
 The Supabase-backed tests are skipped during the normal browser suite so they
 cannot accidentally write test bills to an unconfigured or shared project.
+
+Run a live Gemini extraction check using a generated receipt (no customer data):
+
+```bash
+npm run test:integration:gemini
+```
+
+This check requires `GEMINI_API_KEY` in `.env.local` and consumes API quota. It is
+skipped in the normal test suite.
 
 GitHub Actions runs formatting, linting, unit tests, and a production build for
 pull requests. Vercel should be connected to the repository for deployment
@@ -551,16 +575,24 @@ tests/
 - Receipt review supports editable totals and items, low-confidence and mismatch
   warnings, item assignments, proportional/equal/custom adjustments, and atomic,
   idempotent confirmation. Unconfirmed drafts never create expense shares.
-- The production adapter sends a compressed, metadata-free copy to OCR.Space
-  using the server-only `OCR_SPACE_API_KEY`. Table mode, auto-rotation, scaling,
-  and Engine 2 are enabled; returned text is parsed into reviewable receipt
-  fields and never enters the ledger without confirmation.
-- USD/KHR parsing handles quantity/price columns, currency suffixes, split
-  summary labels, and dual-currency totals. It excludes common receipt metadata
-  and payment lines, rejects malformed money values, and keeps inferred items
-  flagged for review. Synthetic layout fixtures cover these cases; extraction
-  quality still needs validation against representative receipt images.
-- If no OCR.Space key is configured, uploads enter a clear failed state and can
+- Totals fields wrap to fit the review panel. Reconciliation includes tax, tip,
+  and discount, updates on edits, and distinguishes valid adjustments from
+  missing items, incorrect subtotals, and invalid amounts.
+- An editable unit-price field sits between description and line total. It
+  recalculates that line using the scanned quantity, shown below the price.
+  Confirmation preserves corrected quantities and prices atomically; apply
+  `20261013000000_preserve_receipt_unit_prices.sql` on other database projects.
+- The production adapter sends an oriented, resized, metadata-free image inline
+  to Gemini using server-only `GEMINI_API_KEY`. It requests structured JSON and
+  validates amounts, dates, field lengths, and item counts locally with Zod.
+- Extraction instructions cover quantities, duplicate items, readable Khmer
+  descriptions, USD/KHR totals, and discounts. Hidden descriptions stay unknown;
+  model confidence is not treated as a calibrated probability, so every Gemini
+  item is flagged for review. Only confirmation writes expense shares.
+- Previous OCR.Space text-parser fixtures, including a manually transcribed
+  Cambodian photo, remain as reference tests. Gemini does not use that parser.
+  Real receipt accuracy still needs evaluation through the live review flow.
+- If no Gemini key is configured, uploads enter a clear failed state and can
   be retried or entered manually without affecting the ledger.
 - Local manual testing can set `RECEIPT_EXTRACTION_DEV_FIXTURE` to `success`,
   `partial`, or `failed`; this fixture adapter is disabled in production.

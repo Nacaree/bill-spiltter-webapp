@@ -3,8 +3,11 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
-    OCR_SPACE_API_KEY: z.string().min(1).optional(),
-    OCR_SPACE_API_URL: z.string().url().optional(),
+    GEMINI_API_KEY: z.string().min(1).optional(),
+    GEMINI_RECEIPT_MODEL: z
+      .string()
+      .regex(/^[a-zA-Z0-9._-]+$/)
+      .optional(),
     PARTICIPANT_SESSION_SECRET: z.string().min(32),
     PARTICIPANT_SESSION_PREVIOUS_SECRET: z.string().min(32).optional(),
     SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
@@ -14,8 +17,8 @@ export const env = createEnv({
     NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
   },
   runtimeEnv: {
-    OCR_SPACE_API_KEY: process.env.OCR_SPACE_API_KEY,
-    OCR_SPACE_API_URL: process.env.OCR_SPACE_API_URL,
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+    GEMINI_RECEIPT_MODEL: process.env.GEMINI_RECEIPT_MODEL,
     PARTICIPANT_SESSION_SECRET: process.env.PARTICIPANT_SESSION_SECRET,
     PARTICIPANT_SESSION_PREVIOUS_SECRET:
       process.env.PARTICIPANT_SESSION_PREVIOUS_SECRET,

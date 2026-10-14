@@ -22,8 +22,12 @@ const errorMessages = {
   invalid_provider_response: "The extraction result was incomplete or invalid.",
   no_text_detected:
     "No readable text was found. Try a sharper, brighter receipt image.",
-  ocr_space_file_too_large:
-    "The image stayed too large for the free OCR service after compression.",
+  receipt_image_too_large:
+    "The image stayed too large for receipt scanning. Try a smaller image.",
+  provider_auth_failed:
+    "Receipt scanning credentials need attention. Enter it manually for now.",
+  provider_model_unavailable:
+    "The receipt scanning model is unavailable. Enter it manually for now.",
   provider_failed: "The extraction provider returned an error.",
   provider_not_configured:
     "Receipt extraction is not configured on this server yet.",
@@ -144,7 +148,7 @@ export default async function ReceiptPage({ params }) {
 
       {scan.status === "needs_review" && participant ? (
         <div className="mt-8 grid gap-6 lg:grid-cols-[0.75fr_1.25fr] lg:items-start">
-          <aside className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-6">
+          <aside className="min-w-0 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-6">
             {scan.imageUrl ? (
               <img
                 src={scan.imageUrl}
@@ -164,7 +168,7 @@ export default async function ReceiptPage({ params }) {
               </div>
             ) : null}
           </aside>
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <section className="min-w-0 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             {scan.items.some((item) => item.needs_review) ? (
               <div className="mb-6 rounded-xl bg-amber-50 p-4 text-sm text-amber-950">
                 Some extracted lines are low confidence. Check the highlighted

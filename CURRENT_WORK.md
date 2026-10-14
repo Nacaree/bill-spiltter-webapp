@@ -5,44 +5,45 @@
 
 ## Task
 
-Validate real USD/KHR restaurant and shop receipts after the parser improvements.
+Add editable receipt unit prices between description and line total.
 
 ## Completed
 
-- Phase 1 bill creation, access, sharing, joining, and participant claiming.
-- Manual expense create/edit/remove with equal and exact integer splits.
-- Atomic expense/share writes, soft removal, audit events, history, and filters.
-- Private receipt image upload with signature/dimension validation.
-- Asynchronous extraction adapter with processing, partial, failure, and retry
-  states; drafts never affect expense shares.
-- Receipt review with editable items/totals, confidence and mismatch warnings,
-  participant assignments, adjustment allocation, and atomic confirmation.
-- Connected OCR.Space with server-side image resizing, metadata removal, and
-  receipt-text parsing.
-- Improved quantity/price columns, currency suffixes, split summary labels,
-  and selection of totals matching the bill currency on dual-currency receipts.
-- Excluded common metadata/payment rows, validated money grouping, and lowered
-  confidence for inconsistent quantity/unit-price rows without changing totals.
-- Added synthetic USD/KHR layout regressions and adapter-to-review checks.
-- Applied all Phase 2 migrations to the hosted `bill-spilter` Supabase project.
-- Previously validated hosted manual-expense and receipt transactions.
-- Current parser changes pass formatting, lint, 70 tests, and the webpack build;
-  5 live-database tests are skipped.
+- Phase 1 bill creation, sharing, joining, sessions, and participant claiming.
+- Manual expense create/edit/remove with equal/exact integer splits and audit.
+- Private image upload, background extraction, retries, editable receipt review,
+  item assignments, adjustment allocation, and atomic confirmation.
+- Gemini adapter reads the receipt image directly, requests a JSON schema, and
+  validates fields with Zod. Images are resized, oriented, and stripped of metadata.
+- Every Gemini item remains flagged for review; drafts never affect the ledger.
+- Missing, malformed, blocked, truncated, and failed responses fail safely.
+- GEMINI_API_KEY and optional GEMINI_RECEIPT_MODEL replace OCR.Space configuration.
+- Added an opt-in live Gemini check that sends only a generated test receipt.
+- Gemini key verified: live generated receipt returned correct item quantities,
+  prices, subtotal, discount, and USD total; all items remain reviewable drafts.
+- Receipt fields wrap to fit panel width. Editable totals reconcile items plus
+  tax/tip minus discount and flag only genuine discrepancies or invalid values.
+- Verified totals and unit-price layouts at 320px, 560px, and 840px widths.
+- Editable unit prices update line totals using the scanned quantity, with
+  integer rounding for fractional quantities. Unknown prices remain blank.
+- Confirmation preserves quantity and unit price atomically; migration
+  20261013000000 was applied on hosted Supabase and verified with a test receipt.
+- Formatting, lint, 110 unit tests, and webpack build pass. Normal tests skip
+  5 live-database tests and the opt-in Gemini test; Gemini passed separately.
+- Uses hosted Supabase; Docker is not required.
 
 ## In Progress
 
-- Real-receipt validation awaits images and live OCR/database configuration.
+- Real-photo review through the hosted app remains.
 
 ## Known Problems
 
-- OCR.Space output still depends on heuristic parsing; the new synthetic layout
-  coverage does not establish accuracy on real receipt images.
-- Turbopack cannot bind its internal port in this environment; webpack passes.
-- Missing inputs: real images, OCR_SPACE_API_KEY, SUPABASE_SERVICE_ROLE_KEY.
-- OCR drafts remain isolated and do not affect balances unless confirmed.
+- The supplied photo has obscured item names. Live extraction accuracy on that
+  photo has not been measured; the retained fixture is a manual transcription.
+- Turbopack could not bind its internal port here; use the webpack build check.
 
 ## Next Step
 
-Obtain representative receipt images and configure the missing keys locally.
-Then validate upload, review, and confirmation to assess extraction quality.
-Phase 3 balances, transfers, settlements, and owner ABA QR remain unimplemented.
+Restart the frontend and upload the supplied receipt with Gemini enabled.
+Compare the draft against the printed receipt and correct unknown fields before
+confirming. Phase 3 balances, settlements, and owner ABA QR are still ahead.

@@ -255,6 +255,8 @@ export async function confirmReceiptExpense(input) {
         description: item.description,
         needs_review: false,
         position: item.position,
+        quantity: item.quantity ?? 1,
+        unit_price_minor: item.unitPriceMinor ?? null,
         total_minor: item.totalMinor,
       })),
       paid_by_participant_id: input.paidByParticipantId,

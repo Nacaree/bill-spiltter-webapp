@@ -9,6 +9,7 @@ import {
   EXPENSE_CATEGORY_LABELS,
 } from "@/lib/expense-input";
 import { formatMoney, moneyInputValue, parseMoneyToMinor } from "@/lib/money";
+import { receiptLineTotal } from "@/lib/receipt-item-price";
 
 const initialState = { errors: null };
 
@@ -16,6 +17,14 @@ function inputMoney(value, currency) {
   return value === null || value === undefined
     ? moneyInputValue(0, currency)
     : moneyInputValue(value, currency);
+}
+
+function readMoney(value, currency, allowZero = false) {
+  try {
+    return parseMoneyToMinor(value, currency, { allowZero });
+  } catch {
+    return null;
+  }
 }
 
 export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
@@ -29,6 +38,11 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
       ...item,
       assignments: allParticipantIds,
       clientKey: item.id,
+      quantity: item.quantity ?? 1,
+      unitPriceInput:
+        item.unit_price_minor === null || item.unit_price_minor === undefined
+          ? ""
+          : inputMoney(item.unit_price_minor, bill.currency),
       totalInput: inputMoney(item.total_minor, bill.currency),
     })),
   );
@@ -37,6 +51,16 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
       ? ""
       : inputMoney(scan.total_minor, bill.currency),
   );
+  const [summaryInputs, setSummaryInputs] = useState(() => ({
+    subtotal: inputMoney(
+      scan.subtotal_minor ??
+        scan.items.reduce((sum, item) => sum + item.total_minor, 0),
+      bill.currency,
+    ),
+    tax: inputMoney(scan.tax_minor, bill.currency),
+    tip: inputMoney(scan.tip_minor, bill.currency),
+    discount: inputMoney(scan.discount_minor, bill.currency),
+  }));
   const [adjustmentMethod, setAdjustmentMethod] = useState("proportional");
   const [state, action, pending] = useActionState(
     confirmReceiptAction,
@@ -47,20 +71,51 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
     if (state.success) router.push(`/b/${bill.shareToken}`);
   }, [bill.shareToken, router, state]);
 
-  let totalMinor = null;
-  try {
-    totalMinor = parseMoneyToMinor(totalInput, bill.currency);
-  } catch {
-    totalMinor = null;
-  }
-  const itemTotal = items.reduce((sum, item) => {
-    try {
-      return sum + parseMoneyToMinor(item.totalInput, bill.currency);
-    } catch {
-      return sum;
-    }
-  }, 0);
-  const difference = totalMinor === null ? null : totalMinor - itemTotal;
+  const totalMinor = readMoney(totalInput, bill.currency);
+  const itemAmounts = items.map((item) =>
+    readMoney(item.totalInput, bill.currency),
+  );
+  const sum = itemAmounts.reduce((total, amount) => total + (amount ?? 0), 0);
+  const itemTotal =
+    items.length && !itemAmounts.includes(null) && Number.isSafeInteger(sum)
+      ? sum
+      : null;
+  const summary = Object.fromEntries(
+    Object.entries(summaryInputs).map(([key, value]) => [
+      key,
+      readMoney(value, bill.currency, true),
+    ]),
+  );
+  const summariesValid = Object.values(summary).every(
+    (amount) => amount !== null,
+  );
+  const adjustment = summariesValid
+    ? summary.tax + summary.tip - summary.discount
+    : null;
+  const calculatedTotal =
+    adjustment === null ? null : summary.subtotal + adjustment;
+  const calculatedItemTotal =
+    adjustment === null || itemTotal === null ? null : itemTotal + adjustment;
+  const totalsValid =
+    totalMinor !== null &&
+    itemTotal !== null &&
+    summariesValid &&
+    items.every(
+      (item) =>
+        !item.unitPriceInput?.trim() ||
+        readMoney(item.unitPriceInput, bill.currency, true) !== null,
+    ) &&
+    Number.isSafeInteger(calculatedTotal) &&
+    calculatedTotal >= 0 &&
+    Number.isSafeInteger(calculatedItemTotal) &&
+    calculatedItemTotal >= 0;
+  const subtotalDifference = totalsValid ? summary.subtotal - itemTotal : null;
+  const summaryDifference = totalsValid ? totalMinor - calculatedTotal : null;
+  const unexplainedDifference = totalsValid
+    ? totalMinor - calculatedItemTotal
+    : null;
+  const totalsMatch =
+    totalsValid && subtotalDifference === 0 && summaryDifference === 0;
 
   function updateItem(clientKey, changes) {
     setItems((current) =>
@@ -68,6 +123,22 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
         item.clientKey === clientKey ? { ...item, ...changes } : item,
       ),
     );
+  }
+
+  function updateUnitPrice(item, value) {
+    const unitPriceMinor = readMoney(value, bill.currency, true);
+    const changes = { unitPriceInput: value };
+    if (unitPriceMinor !== null) {
+      try {
+        changes.totalInput = inputMoney(
+          receiptLineTotal(unitPriceMinor, item.quantity),
+          bill.currency,
+        );
+      } catch {
+        changes.totalInput = "";
+      }
+    }
+    updateItem(item.clientKey, changes);
   }
 
   function toggleAssignment(clientKey, participantId, checked) {
@@ -85,33 +156,33 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
   }
 
   return (
-    <form action={action} className="grid gap-7">
+    <form action={action} className="grid min-w-0 gap-7">
       <input type="hidden" name="shareToken" value={bill.shareToken} />
       <input type="hidden" name="receiptScanId" value={scan.id} />
       <input type="hidden" name="confirmationKey" value={confirmationKey} />
       <input type="hidden" name="itemCount" value={items.length} />
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+      <div className="grid min-w-0 gap-5 sm:grid-cols-2">
+        <label className="grid min-w-0 gap-2 text-sm font-semibold text-slate-800">
           Expense description
           <input
             name="description"
             defaultValue={scan.merchant_name || "Receipt"}
             maxLength={120}
             required
-            className="min-h-12 rounded-xl border border-slate-300 px-4 font-normal"
+            className="min-h-12 w-full min-w-0 rounded-xl border border-slate-300 px-4 font-normal"
           />
         </label>
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="grid min-w-0 gap-2 text-sm font-semibold text-slate-800">
           Merchant
           <input
             name="merchantName"
             defaultValue={scan.merchant_name ?? ""}
             maxLength={120}
-            className="min-h-12 rounded-xl border border-slate-300 px-4 font-normal"
+            className="min-h-12 w-full min-w-0 rounded-xl border border-slate-300 px-4 font-normal"
           />
         </label>
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="grid min-w-0 gap-2 text-sm font-semibold text-slate-800">
           Date
           <input
             type="date"
@@ -120,15 +191,15 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
               scan.receipt_date ?? new Date().toISOString().slice(0, 10)
             }
             required
-            className="min-h-12 rounded-xl border border-slate-300 px-4 font-normal"
+            className="min-h-12 w-full min-w-0 rounded-xl border border-slate-300 px-4 font-normal"
           />
         </label>
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="grid min-w-0 gap-2 text-sm font-semibold text-slate-800">
           Paid by
           <select
             name="paidByParticipantId"
             defaultValue={bill.currentParticipantId}
-            className="min-h-12 rounded-xl border border-slate-300 bg-white px-4 font-normal"
+            className="min-h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-4 font-normal"
           >
             {bill.participants.map((person) => (
               <option key={person.id} value={person.id}>
@@ -137,12 +208,12 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
             ))}
           </select>
         </label>
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="grid min-w-0 gap-2 text-sm font-semibold text-slate-800">
           Category
           <select
             name="category"
             defaultValue="general"
-            className="min-h-12 rounded-xl border border-slate-300 bg-white px-4 font-normal"
+            className="min-h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-4 font-normal"
           >
             {EXPENSE_CATEGORIES.map((category) => (
               <option key={category} value={category}>
@@ -153,7 +224,7 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
         </label>
       </div>
 
-      <fieldset className="grid gap-4">
+      <fieldset className="grid min-w-0 gap-4">
         <div className="flex items-end justify-between gap-4">
           <div>
             <legend className="text-lg font-bold text-slate-950">
@@ -174,6 +245,9 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
                   confidence_basis_points: null,
                   description: "",
                   needs_review: false,
+                  quantity: 1,
+                  unit_price_minor: null,
+                  unitPriceInput: "",
                   totalInput: "",
                 },
               ])
@@ -187,7 +261,7 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
         {items.map((item, index) => (
           <div
             key={item.clientKey}
-            className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+            className="@container min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4"
           >
             <div className="flex items-start justify-between gap-3">
               <p className="text-sm font-bold text-slate-800">
@@ -214,8 +288,13 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
                 </button>
               </div>
             </div>
-            <div className="mt-3 grid gap-4 sm:grid-cols-[1fr_10rem]">
-              <label className="grid gap-1 text-xs font-semibold text-slate-700">
+            <div className="mt-3 grid min-w-0 grid-cols-2 items-start gap-4 @md:grid-cols-[minmax(0,1fr)_8rem_8rem]">
+              <input
+                type="hidden"
+                name={`item-${index}-quantity`}
+                value={item.quantity ?? 1}
+              />
+              <label className="col-span-2 grid min-w-0 gap-1 text-xs font-semibold text-slate-700 @md:col-span-1">
                 Description
                 <input
                   name={`item-${index}-description`}
@@ -227,10 +306,34 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
                   }
                   maxLength={160}
                   required
-                  className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-normal"
+                  className="min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-sm font-normal"
                 />
               </label>
-              <label className="grid gap-1 text-xs font-semibold text-slate-700">
+              <label className="grid min-w-0 gap-1 text-xs font-semibold text-slate-700">
+                Unit price ({bill.currency})
+                <input
+                  name={`item-${index}-unit-price`}
+                  value={
+                    item.unitPriceInput ??
+                    (item.unit_price_minor === null ||
+                    item.unit_price_minor === undefined
+                      ? ""
+                      : inputMoney(item.unit_price_minor, bill.currency))
+                  }
+                  onChange={(event) =>
+                    updateUnitPrice(item, event.target.value)
+                  }
+                  inputMode="decimal"
+                  placeholder="Not read"
+                  className="min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-sm font-normal"
+                />
+                {item.quantity !== null && item.quantity !== undefined ? (
+                  <span className="font-normal text-slate-500">
+                    Quantity: {item.quantity}
+                  </span>
+                ) : null}
+              </label>
+              <label className="grid min-w-0 gap-1 text-xs font-semibold text-slate-700">
                 Line total ({bill.currency})
                 <input
                   name={`item-${index}-total`}
@@ -242,7 +345,7 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
                   }
                   inputMode="decimal"
                   required
-                  className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm font-normal"
+                  className="min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-sm font-normal"
                 />
               </label>
             </div>
@@ -284,32 +387,38 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
         ) : null}
       </fieldset>
 
-      <fieldset className="grid gap-4 rounded-2xl border border-slate-200 p-5">
+      <fieldset className="grid min-w-0 gap-4 rounded-2xl border border-slate-200 p-5">
         <legend className="px-1 text-lg font-bold text-slate-950">
           Receipt totals
         </legend>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,8rem),1fr))] gap-4">
           {[
-            ["subtotal", "Subtotal", scan.subtotal_minor ?? itemTotal],
-            ["tax", "Tax", scan.tax_minor ?? 0],
-            ["tip", "Tip", scan.tip_minor ?? 0],
-            ["discount", "Discount", scan.discount_minor ?? 0],
-          ].map(([name, label, value]) => (
+            ["subtotal", "Subtotal"],
+            ["tax", "Tax"],
+            ["tip", "Tip"],
+            ["discount", "Discount"],
+          ].map(([name, label]) => (
             <label
               key={name}
-              className="grid gap-1 text-xs font-semibold text-slate-700"
+              className="grid min-w-0 gap-1 text-xs font-semibold text-slate-700"
             >
               {label}
               <input
                 name={name}
-                defaultValue={inputMoney(value, bill.currency)}
+                value={summaryInputs[name]}
+                onChange={(event) =>
+                  setSummaryInputs((current) => ({
+                    ...current,
+                    [name]: event.target.value,
+                  }))
+                }
                 inputMode="decimal"
                 required
-                className="min-h-11 rounded-xl border border-slate-300 px-3 text-sm font-normal"
+                className="min-h-11 w-full min-w-0 rounded-xl border border-slate-300 px-3 text-sm font-normal"
               />
             </label>
           ))}
-          <label className="grid gap-1 text-xs font-semibold text-slate-700">
+          <label className="grid min-w-0 gap-1 text-xs font-semibold text-slate-700">
             Printed total
             <input
               name="total"
@@ -317,19 +426,68 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
               onChange={(event) => setTotalInput(event.target.value)}
               inputMode="decimal"
               required
-              className="min-h-11 rounded-xl border border-slate-300 px-3 text-sm font-normal"
+              className="min-h-11 w-full min-w-0 rounded-xl border border-slate-300 px-3 text-sm font-normal"
             />
           </label>
         </div>
-        {difference !== null && difference !== 0 ? (
-          <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-950">
-            Item totals differ from the printed total by{" "}
-            <strong>{formatMoney(Math.abs(difference), bill.currency)}</strong>.
-            Choose how to allocate that adjustment below.
+        {totalsValid ? (
+          <p className="text-sm text-slate-600">
+            {formatMoney(itemTotal, bill.currency)} items
+            {summary.tax > 0
+              ? ` + ${formatMoney(summary.tax, bill.currency)} tax`
+              : ""}
+            {summary.tip > 0
+              ? ` + ${formatMoney(summary.tip, bill.currency)} tip`
+              : ""}
+            {summary.discount > 0
+              ? ` − ${formatMoney(summary.discount, bill.currency)} discount`
+              : ""}
+            {` = ${formatMoney(calculatedItemTotal, bill.currency)}`}
+          </p>
+        ) : null}
+        {totalsMatch ? (
+          <p className="text-sm font-medium text-teal-700" role="status">
+            Items and adjustments match the printed total.
+          </p>
+        ) : totalsValid ? (
+          <div
+            className="grid min-w-0 gap-2 rounded-xl bg-amber-50 p-4 text-sm text-amber-950"
+            role="status"
+          >
+            {subtotalDifference !== 0 ? (
+              <p>
+                Item amounts differ from the subtotal by{" "}
+                <strong>
+                  {formatMoney(Math.abs(subtotalDifference), bill.currency)}
+                </strong>
+                . Check for missing or incorrect items.
+              </p>
+            ) : null}
+            {unexplainedDifference !== 0 ? (
+              <p>
+                After tax, tip, and discount, item amounts differ from the
+                printed total by{" "}
+                <strong>
+                  {formatMoney(Math.abs(unexplainedDifference), bill.currency)}
+                </strong>
+                . Review the amounts; any remaining difference will be allocated
+                below.
+              </p>
+            ) : summaryDifference !== 0 ? (
+              <p>
+                Subtotal, tax, tip, and discount differ from the printed total
+                by{" "}
+                <strong>
+                  {formatMoney(Math.abs(summaryDifference), bill.currency)}
+                </strong>
+                . Check the subtotal above.
+              </p>
+            ) : null}
           </div>
         ) : (
-          <p className="text-sm font-medium text-teal-700">
-            Item totals match the receipt total.
+          <p className="text-sm text-slate-600" role="status">
+            Enter valid item amounts and receipt totals to check the
+            calculation.
           </p>
         )}
         {state.errors?.totals ? (
@@ -339,13 +497,13 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
         ) : null}
       </fieldset>
 
-      <label className="grid gap-2 text-sm font-semibold text-slate-800">
+      <label className="grid min-w-0 gap-2 text-sm font-semibold text-slate-800">
         Allocate tax, tip, discount, and rounding difference
         <select
           name="adjustmentMethod"
           value={adjustmentMethod}
           onChange={(event) => setAdjustmentMethod(event.target.value)}
-          className="min-h-12 rounded-xl border border-slate-300 bg-white px-4 font-normal"
+          className="min-h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-4 font-normal"
         >
           <option value="proportional">Proportionally to assigned items</option>
           <option value="equal">Equally between included people</option>
@@ -353,11 +511,11 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
         </select>
       </label>
       {adjustmentMethod === "custom" ? (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid min-w-0 gap-3 sm:grid-cols-2">
           {bill.participants.map((person) => (
             <label
               key={person.id}
-              className="grid gap-1 text-xs font-semibold text-slate-700"
+              className="grid min-w-0 gap-1 text-xs font-semibold text-slate-700"
             >
               {person.display_name} adjustment ({bill.currency})
               <input
@@ -365,7 +523,7 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
                 defaultValue={inputMoney(0, bill.currency)}
                 placeholder="Use - for a discount"
                 required
-                className="min-h-11 rounded-xl border border-slate-300 px-3 text-sm font-normal"
+                className="min-h-11 w-full min-w-0 rounded-xl border border-slate-300 px-3 text-sm font-normal"
               />
             </label>
           ))}

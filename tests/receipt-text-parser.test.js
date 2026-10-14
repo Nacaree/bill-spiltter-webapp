@@ -1,9 +1,34 @@
 import { describe, expect, it } from "vitest";
 import ocrSpaceFixture from "./fixtures/ocr-space-success.json";
 import layouts from "./fixtures/receipt-text-layouts.json";
+import cambodiaReceipt from "./fixtures/cambodia-receipt-visual-transcription.json";
 import { parseOcrAmount, parseReceiptText } from "@/lib/receipt-text-parser";
 
 describe("OCR receipt text parsing", () => {
+  it("parses the visible Cambodian receipt amounts and excludes the riel total from USD", () => {
+    const parsed = parseReceiptText(
+      cambodiaReceipt.text,
+      cambodiaReceipt.billCurrency,
+    );
+    expect(parsed).toMatchObject(cambodiaReceipt.expected);
+    expect(parsed.items).toHaveLength(cambodiaReceipt.expectedItemCount);
+    expect(parsed.items.map((item) => item.totalMinor)).toEqual(
+      cambodiaReceipt.expectedItemTotalsMinor,
+    );
+    expect(parsed.items.reduce((sum, item) => sum + item.totalMinor, 0)).toBe(
+      parsed.subtotalMinor,
+    );
+  });
+
+  it("recognizes the Cambodian R marker as riel when the bill uses KHR", () => {
+    expect(
+      parseReceiptText(
+        "Restaurant\nGrand Total ($) 125.75\nGrand Total (R) 521,900",
+        "KHR",
+      ),
+    ).toMatchObject({ currency: "KHR", totalMinor: 521900 });
+  });
+
   it.each(layouts)(
     "parses $name",
     ({ billCurrency, text, expected, items }) => {

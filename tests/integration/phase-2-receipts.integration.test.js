@@ -40,20 +40,6 @@ liveDescribe("Phase 2 live receipt confirmation", () => {
       getReceiptScan,
     } = await import("@/server/receipts"));
     ({ getServerSupabase } = await import("@/lib/supabase-server"));
-    const { data: staleBills } = await getServerSupabase()
-      .from("bills")
-      .select("id")
-      .like("name", "Receipt transaction %");
-    if (staleBills?.length) {
-      const { error } = await getServerSupabase()
-        .from("bills")
-        .delete()
-        .in(
-          "id",
-          staleBills.map((bill) => bill.id),
-        );
-      if (error) throw error;
-    }
   });
 
   afterAll(async () => {
@@ -109,15 +95,15 @@ liveDescribe("Phase 2 live receipt confirmation", () => {
             needs_review: false,
             position: 0,
             quantity: 1,
-            total_minor: 1001,
-            unit_price_minor: 1001,
+            total_minor: 1050,
+            unit_price_minor: 1050,
           },
         ],
         extracted_merchant_name: "Live receipt",
         extracted_receipt_date: "2026-08-16",
-        extracted_subtotal_minor: 1001,
+        extracted_subtotal_minor: 1050,
         extracted_tax_minor: 80,
-        extracted_tip_minor: 119,
+        extracted_tip_minor: 70,
         extracted_total_minor: 1200,
         extraction_provider: "integration-fixture",
         extraction_provider_request_id: "fixture-1",
@@ -137,7 +123,9 @@ liveDescribe("Phase 2 live receipt confirmation", () => {
         needsReview: false,
         participantIds: [creator.id, second.participantId],
         position: 0,
-        totalMinor: 1001,
+        totalMinor: 1050,
+        quantity: 3,
+        unitPriceMinor: 350,
       },
     ];
     const allocated = allocateReceipt({
@@ -161,14 +149,21 @@ liveDescribe("Phase 2 live receipt confirmation", () => {
       paidByParticipantId: creator.id,
       receiptScanId: uploaded.scanId,
       shareToken: created.shareToken,
-      subtotalMinor: 1001,
+      subtotalMinor: 1050,
       taxMinor: 80,
-      tipMinor: 119,
+      tipMinor: 70,
       totalMinor: 1200,
     };
     const first = await confirmReceiptExpense(confirmation);
     const repeated = await confirmReceiptExpense(confirmation);
     expect(repeated.expenseId).toBe(first.expenseId);
+
+    const confirmedScan = await getReceiptScan(created.billId, uploaded.scanId);
+    expect(confirmedScan.items[0]).toMatchObject({
+      quantity: 3,
+      unit_price_minor: 350,
+      total_minor: 1050,
+    });
 
     const expenses = await getExpenses(created.billId);
     expect(expenses).toHaveLength(1);

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { EXPENSE_CATEGORIES } from "@/lib/expense-input";
 import { parseMoneyToMinor } from "@/lib/money";
 import { allocateReceipt } from "@/lib/receipt-allocation";
+import { parseReceiptQuantity } from "@/lib/receipt-item-price";
 
 const shareToken = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
 const uuid = z.uuid();
@@ -109,6 +110,18 @@ export function parseReceiptConfirmation(formData, currency) {
         needsReview: false,
         participantIds,
         position: index,
+        quantity: parseReceiptQuantity(
+          formData.get(`item-${index}-quantity`) ?? 1,
+        ),
+        unitPriceMinor: String(
+          formData.get(`item-${index}-unit-price`) ?? "",
+        ).trim()
+          ? parseMoneyToMinor(
+              formData.get(`item-${index}-unit-price`),
+              currency,
+              { allowZero: true },
+            )
+          : null,
         totalMinor: parseMoneyToMinor(
           formData.get(`item-${index}-total`),
           currency,

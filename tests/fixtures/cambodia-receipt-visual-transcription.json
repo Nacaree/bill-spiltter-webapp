@@ -1,0 +1,16 @@
+{
+  "name": "Cambodian restaurant receipt, partially obscured, visually transcribed",
+  "source": "User-provided receipt photo; visible text transcribed by hand, not OCR output",
+  "billCurrency": "USD",
+  "text": "Item Qty Price Amount\nPartially obscured item A 3 3.50 10.50\nPartially obscured item B 1 3.00 3.00\nPartially obscured item C 2 5.50 11.00\nPartially obscured item D 2 5.90 11.80\nCrystal Draught 5 16.00 80.00\nDiscount Item(30%) (24.00)\nWater 6 1.25 7.50\nSoda 1 1.25 1.25\nPartially obscured Khmer item A 1 4.90 4.90\nPartially obscured Khmer item B 2 4.90 9.80\nPartially obscured Khmer item C 1 5.50 5.50\nPartially obscured Khmer item D 1 4.50 4.50\nSub Total 149.75\nDiscount Item ($24.00)\nGrand Total ($) 125.75\nGrand Total (R) 521,900",
+  "expected": {
+    "currency": "USD",
+    "discountMinor": 2400,
+    "subtotalMinor": 14975,
+    "totalMinor": 12575
+  },
+  "expectedItemCount": 11,
+  "expectedItemTotalsMinor": [
+    1050, 300, 1100, 1180, 8000, 750, 125, 490, 980, 550, 450
+  ]
+}

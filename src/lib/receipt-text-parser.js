@@ -13,7 +13,7 @@ const PAYMENT_PATTERN =
 const METADATA_PATTERN =
   /^(?:tel(?:ephone)?|phone|mobile|fax|address|table|order|invoice|receipt|bill\s*(?:no|number|#)|cashier|server|staff|guest|pax|date|time|thank\s+you|qty|quantity|item\s+qty|total\s+(?:items|qty|quantity))\b|^(?:www\.|https?:)/i;
 const TRAILING_AMOUNT =
-  /([(-]?\s*(?:USD|EUR|KHR|[$€៛])?\s*\d[\d.,]*\s*\)?(?:\s*(?:USD|EUR|KHR|[$€៛]))?)\s*$/i;
+  /([(-]?\s*(?:USD|EUR|KHR|[$€៛])?\s*\d[\d.,]*\s*\)?(?:\s*(?:USD|EUR|KHR|[$€៛]|R))?)\s*$/i;
 
 function validIsoDate(year, month, day) {
   const value = `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -46,7 +46,7 @@ export function parseOcrAmount(value, currency) {
   const digits = currencyFractionDigits(currency);
   let input = String(value)
     .trim()
-    .replace(/USD|EUR|KHR|[$€៛]|\s/gi, "");
+    .replace(/USD|EUR|KHR|[$€៛]|\bR\b|\s/gi, "");
   const negative =
     input.startsWith("-") || (input.startsWith("(") && input.endsWith(")"));
   if (input.startsWith("-")) input = input.slice(1);
@@ -108,7 +108,7 @@ function summaryKind(line) {
     ([, pattern]) =>
       pattern.test(line) &&
       (pattern !== SUMMARY_PATTERNS.total ||
-        /^(?:\s*[:.-]?\s*)(?:$|[\d($€៛-]|(?:USD|EUR|KHR)\b)/i.test(
+        /^(?:\s*[:.-]?\s*)(?:$|[\d($€៛-]|(?:USD|EUR|KHR)\b|\(\s*R\s*\)\s*\d)/i.test(
           line.replace(pattern, ""),
         )),
   )?.[0];
@@ -117,7 +117,7 @@ function summaryKind(line) {
 function explicitCurrencies(text) {
   return [
     [/\bUSD\b|\$/i, "USD"],
-    [/\bKHR\b|៛/i, "KHR"],
+    [/\bKHR\b|៛|\(\s*R\s*\)/i, "KHR"],
     [/\bEUR\b|€/i, "EUR"],
   ]
     .filter(([pattern]) => pattern.test(text))
