@@ -2,6 +2,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { AddParticipantForm } from "@/components/add-participant-form";
+import { BalancesSection } from "@/components/balances-section";
 import { ClaimParticipantForm } from "@/components/claim-participant-form";
 import { ExpenseEditor } from "@/components/expense-editor";
 import { ExpenseForm } from "@/components/expense-form";
@@ -20,7 +21,7 @@ import {
   getBillByShareToken,
   getSessionParticipant,
 } from "@/server/bills";
-import { getExpenseActivity, getExpenses } from "@/server/expenses";
+import { getBillActivity, getExpenses } from "@/server/expenses";
 import { getRecentReceiptScans } from "@/server/receipts";
 
 export async function generateMetadata({ params }) {
@@ -43,6 +44,23 @@ function displayDate(value) {
 function activityDescription(activity, participantNames) {
   const actor =
     participantNames.get(activity.actor_participant_id) ?? "Someone";
+  if (activity.action.startsWith("settlement.")) {
+    const verbs = {
+      "settlement.created": "recorded",
+      "settlement.updated": "corrected",
+      "settlement.removed": "removed",
+    };
+    const from =
+      participantNames.get(activity.metadata?.from_participant_id) ??
+      "a participant";
+    const to =
+      participantNames.get(activity.metadata?.to_participant_id) ??
+      "a participant";
+    return `${actor} ${verbs[activity.action] ?? "changed"} a payment from ${from} to ${to}`;
+  }
+  if (activity.action.startsWith("payment_method.")) {
+    return `${actor} ${activity.action.endsWith("removed") ? "removed" : "updated"} the owner’s payment QR`;
+  }
   const description = activity.metadata?.description ?? "an expense";
   const verbs = {
     "expense.created": "added",
@@ -87,7 +105,7 @@ export default async function BillPage({ params, searchParams }) {
   try {
     [expenses, activity] = await Promise.all([
       getExpenses(bill.id, { category, participantId }),
-      getExpenseActivity(bill.id),
+      getBillActivity(bill.id),
     ]);
   } catch (error) {
     console.error("Unable to load expense ledger:", error.message);
@@ -196,6 +214,12 @@ export default async function BillPage({ params, searchParams }) {
           )}
         </aside>
       </div>
+
+      <BalancesSection
+        bill={bill}
+        participant={participant}
+        shareToken={shareToken}
+      />
 
       <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <div className="grid gap-8 md:grid-cols-2">

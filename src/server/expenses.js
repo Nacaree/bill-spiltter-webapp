@@ -187,3 +187,15 @@ export async function getExpenseActivity(billId, limit = 12) {
   if (error) throwDatabaseError(error);
   return data;
 }
+
+export async function getBillActivity(billId, limit = 12) {
+  const { data, error } = await getServerSupabase()
+    .from("activity_log")
+    .select("id, actor_participant_id, action, metadata, created_at")
+    .eq("bill_id", billId)
+    .in("entity_type", ["expense", "settlement", "payment_method"])
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throwDatabaseError(error);
+  return data;
+}

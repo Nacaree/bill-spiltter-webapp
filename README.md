@@ -608,6 +608,57 @@ tests/
 
 **Exit criteria:** users can understand and completely settle a bill without creating accounts.
 
+**Implementation status (2026-10-17):** Phase 3 code is implemented. Apply
+`supabase/migrations/20261017000000_phase_3_settlements.sql` to the hosted
+Supabase project before using it. Paste the complete file into the SQL editor
+and run it once; it includes a transaction. The app shows a setup message until
+the migration is applied. Existing expenses and receipt drafts are preserved.
+Hosted application has not been confirmed. The user manages hosted migrations;
+do not rerun this migration if it has already succeeded on that project.
+
+After migration, the bill page shows **Balances & payments** below **People**.
+Each person has an **Owes**, **Is owed**, or **Settled** status and an expandable
+explanation. Suggested transfers appear for nonzero balances. Joined members
+can record payments and use **Payment history** to correct or remove records.
+The creator sees **Owner ABA QR settings**; **Pay with ABA QR** appears only for
+an eligible owner-directed transfer after the owner saves a matching QR.
+
+- Balances come from a single database snapshot of confirmed expenses, their
+  shares, and active settlement records. Expense history filters never change
+  the balance. Inactive participants retain their historical balances.
+- Each participant can expand their balance to see paid amounts, assigned
+  shares, payments, and contributing expenses. Deterministic transfers settle
+  the net amounts; this greedy algorithm does not guarantee the global minimum
+  possible number of transfers.
+- Joined participants can record full or partial payments, correct records,
+  and remove mistaken records with confirmation. A payment must be explicitly
+  confirmed as already made outside the app. Creation is idempotent for the
+  same submission; corrections and removals reject stale versions. Changes and
+  previous payment details are recorded atomically in the activity log.
+- Owner QR settings require both the original creator participant session and
+  the creator recovery cookie on that device. Cross-device owner recovery is
+  not implemented yet. Other members can view eligible QR payments using the
+  private bill link, but cannot change the QR.
+- QR uploads accept a single JPEG/PNG image up to 10 MB. The server checks
+  KHQR field structure and CRC, requires USD/KHR matching the bill, rejects
+  unreadable/multiple symbols and automatic fee fields, and crops the image.
+  The owner confirms the decoded recipient/currency in a preview valid for ten
+  minutes. Validation follows the [NBC KHQR SDK documentation](https://bakong.nbc.gov.kh/download/KHQR/integration/KHQR%20SDK%20Document.pdf);
+  image decoding uses [jsQR](https://github.com/cozmo/jsQR). Legacy ABA URL QRs
+  are not supported. This does not verify bank account ownership.
+- Images live in the private `payment-qrs` bucket. Replacing/removing a QR
+  removes its old object after the database write succeeds. View/download URLs
+  expire within 60 seconds, or sooner if the QR expires. Fixed-amount QRs only
+  appear for matching owner-directed transfers; expired QRs are not offered.
+  QR viewing never writes a payment record.
+- `npm run test` includes offline PostgreSQL tests using PGlite, which apply
+  every migration and exercise transactions, permissions, and zero-sum
+  balances. They do not contact the hosted database or Gemini.
+- After applying the hosted migration, `npm run test:e2e:phase3` exercises
+  create → join → expense → synthetic owner QR → settle → correct → remove.
+  It uses synthetic data, never sends a bank payment, and cleans up its test
+  bill and QR image. The hosted browser flow remains to be run after migration.
+
 ### Phase 4 — Hardening and launch
 
 - Complete accessibility, responsive, and cross-browser reviews.

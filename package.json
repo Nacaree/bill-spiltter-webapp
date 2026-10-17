@@ -11,6 +11,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:e2e:phase3": "RUN_SUPABASE_E2E=1 node --env-file=.env.local ./node_modules/@playwright/test/cli.js test tests/e2e/phase-3.spec.js",
     "test:integration:supabase": "RUN_SUPABASE_INTEGRATION=1 node --env-file=.env.local ./node_modules/vitest/vitest.mjs run tests/integration",
     "test:integration:gemini": "RUN_GEMINI_INTEGRATION=1 node --env-file=.env.local ./node_modules/vitest/vitest.mjs run tests/integration/gemini-receipt.integration.test.js",
     "test:e2e:supabase": "npm run test:integration:supabase && RUN_SUPABASE_E2E=1 playwright test tests/e2e/phase-1.spec.js"
@@ -19,6 +20,7 @@
     "@supabase/supabase-js": "^2.57.0",
     "@t3-oss/env-nextjs": "^0.13.8",
     "clsx": "^2.1.1",
+    "jsqr": "^1.4.0",
     "next": "^16.3.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
@@ -27,6 +29,7 @@
     "zod": "^4.1.5"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.10",
     "@playwright/test": "^1.55.0",
     "@tailwindcss/postcss": "^4.1.13",
     "@testing-library/jest-dom": "^6.8.0",
@@ -38,6 +41,7 @@
     "postcss": "^8.5.6",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.6.14",
+    "qrcode": "^1.5.4",
     "tailwindcss": "^4.1.13",
     "vitest": "^3.2.4"
   },
