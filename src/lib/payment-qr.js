@@ -113,6 +113,19 @@ export function paymentQrEligible(
   );
 }
 
+// An amount-free KHQR can encode a default currency while the bank offers both.
+// That bank-side account setup cannot be established from tag 53 alone.
+export function confirmedQrCurrencies(details, currencyMode = "single") {
+  if (!["KHR", "USD"].includes(details.currency)) invalid();
+  if (currencyMode === "single") return [details.currency];
+  if (currencyMode !== "dual")
+    invalid("Choose the currencies this QR accepts.");
+  if (details.fixedAmountMinor !== null) {
+    invalid("A fixed-amount QR can only use its encoded currency.");
+  }
+  return ["KHR", "USD"];
+}
+
 export async function inspectPaymentQr(file) {
   if (!(file instanceof File) || !file.size || file.size > 10 * 1024 * 1024)
     invalid("Choose a JPEG or PNG QR image, up to 10 MB.");

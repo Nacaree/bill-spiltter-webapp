@@ -28,7 +28,7 @@ Phase 3 code is implemented:
 - Creator session plus creator recovery cookie controls owner QR settings.
   Inspect a JPEG/PNG, review decoded recipient/currency, then save or replace.
   Server validates KHQR CRC/fields, crops the image and detects multiple codes.
-  Only bill-currency USD/KHR KHQR is supported; legacy ABA URL QRs are rejected.
+  USD/KHR KHQR is supported; legacy ABA URL QRs are rejected.
   Owner preview tokens bind image/bill/owner and expire in ten minutes.
 - Payment images use private `payment-qrs` storage. View/download URLs last at
   most 60 seconds. Only current owner-directed suggested transfers with matching
@@ -48,6 +48,24 @@ Until applied, the app displays a balances/payments setup message.
 Do not apply hosted migrations for the user; they explicitly requested to do it.
 This updates the hosted project once, not once per computer.
 
+Also apply `supabase/migrations/20261019000000_dual_currency_payment_qrs.sql`
+after the original Phase 3 migration. This new migration is NOT applied by the
+agent. It preserves existing rows and adds a v2 save RPC plus constraints for
+one or two accepted currencies, with fixed amounts restricted to one currency.
+
+## Dual-currency QR correction
+
+The user reported that an ABA QR offering KHR/USD was rejected with "This QR
+uses KHR. Upload a USD QR for this bill." The parser could read the QR but the
+preview incorrectly required the encoded/default currency to equal the bill.
+Amount-free QRs now reach preview even if that default differs. The owner
+chooses encoded-currency only or confirms KHR + USD after checking their banking
+app. Never infer dual support just from tag 53. The signed image and decoded
+metadata are retained; accepted currencies must include the bill currency.
+Fixed-amount QRs cannot choose both currencies. Re-uploading the same QR can
+correct its selection. Payers are prompted to choose the bill's currency.
+No real bank QR or hosted browser flow has been validated for this change yet.
+
 ## Expected bill page
 
 After migration, a Balances & payments section appears below People, with each
@@ -60,7 +78,8 @@ is saved and an eligible transfer is owed to that owner.
 
 ## Validation
 
-- Formatting, lint, 140 tests and webpack production build passed.
+- Formatting, lint, 148 tests and webpack production build passed, including
+  dual-currency QR preview/save and all-migrations PostgreSQL checks.
 - Normal tests skip 6 live API/database checks and do not use Gemini quota.
 - Offline PGlite PostgreSQL tests apply every migration and cover settlement
   idempotence, corrections, deletion, zero-sum balances, cross-bill/session checks,
@@ -99,7 +118,7 @@ npm run build -- --webpack
 
 ## Resume
 
-1. Confirm the user applied the Phase 3 migration above, then refresh the bill.
+1. Confirm the user applied both required migrations above, then refresh the bill.
 2. Run `npm run test:e2e:phase3` and fix any browser/hosted issues it exposes.
 3. Have the owner upload their real amount-free ABA KHQR and confirm the decoded
    recipient/currency. Check it only appears for eligible owner transfers.

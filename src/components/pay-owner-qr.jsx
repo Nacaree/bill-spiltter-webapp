@@ -58,9 +58,10 @@ export function PayOwnerQr({ shareToken, transfer }) {
             Download QR image
           </a>
           <p className="mt-3 text-sm leading-6 text-amber-900">
-            Verify the recipient, currency and exact amount in your banking app
-            before sending. Opening this QR does not record a payment. After
-            transferring, use Record payment below.
+            If your banking app offers KHR and USD, choose {state.qr.currency}{" "}
+            for this bill. Verify the recipient, currency and exact amount in
+            your banking app before sending. Opening this QR does not record a
+            payment. After transferring, use Record payment below.
           </p>
         </div>
       ) : state.qr ? (

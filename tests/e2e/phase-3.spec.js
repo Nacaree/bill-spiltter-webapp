@@ -32,9 +32,9 @@ test("create bill → join → expense → owner QR → settle → correct → r
     await expect(guest.getByText("Owner ABA QR settings")).toHaveCount(0);
     await page.reload();
 
-    // Synthetic, non-payable KHQR with a valid CRC for upload validation.
+    // Synthetic KHR-default QR, confirmed as dual currency for a USD bill.
     const prefix =
-      "00020101021129200016phase3@testbankx5204599953038405802KH5910Test Owner6010Phnom Penh6304";
+      "00020101021129200016phase3@testbankx5204599953031165802KH5910Test Owner6010Phnom Penh6304";
     let crc = 0xffff;
     for (const byte of Buffer.from(prefix)) {
       crc ^= byte << 8;
@@ -53,6 +53,7 @@ test("create bill → join → expense → owner QR → settle → correct → r
     });
     await page.getByRole("button", { name: "Inspect QR image" }).click();
     await expect(page.getByText("Decoded recipient:")).toBeVisible();
+    await page.getByRole("radio", { name: /KHR \+ USD/ }).check();
     await page
       .getByLabel(
         "I confirm this is my recipient name and the correct currency.",

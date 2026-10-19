@@ -640,9 +640,9 @@ an eligible owner-directed transfer after the owner saves a matching QR.
   not implemented yet. Other members can view eligible QR payments using the
   private bill link, but cannot change the QR.
 - QR uploads accept a single JPEG/PNG image up to 10 MB. The server checks
-  KHQR field structure and CRC, requires USD/KHR matching the bill, rejects
+  KHQR field structure and CRC, recognizes USD/KHR encoded currency, rejects
   unreadable/multiple symbols and automatic fee fields, and crops the image.
-  The owner confirms the decoded recipient/currency in a preview valid for ten
+  The owner confirms the recipient and accepted currencies in a preview valid for ten
   minutes. Validation follows the [NBC KHQR SDK documentation](https://bakong.nbc.gov.kh/download/KHQR/integration/KHQR%20SDK%20Document.pdf);
   image decoding uses [jsQR](https://github.com/cozmo/jsQR). Legacy ABA URL QRs
   are not supported. This does not verify bank account ownership.
@@ -658,6 +658,28 @@ an eligible owner-directed transfer after the owner saves a matching QR.
   create → join → expense → synthetic owner QR → settle → correct → remove.
   It uses synthetic data, never sends a bank payment, and cleans up its test
   bill and QR image. The hosted browser flow remains to be run after migration.
+
+**Dual-currency owner QR update (2026-10-19):** Apply
+`supabase/migrations/20261019000000_dual_currency_payment_qrs.sql` after the
+original Phase 3 migration. This preserves existing QR records and allows an
+amount-free QR to store both KHR and USD as its accepted currencies. Hosted
+application of this migration is pending; the user applies migrations manually.
+
+An amount-free QR that encodes KHR can now be inspected on a USD bill (and vice
+versa). The preview displays **Encoded currency** and offers **Currencies this
+QR accepts**: keep the encoded currency only, or confirm **KHR + USD** after
+checking the choices in the banking app. The decoded default currency alone
+does not prove both currencies are enabled. This supports the receiving options
+described by [ABA's dual-currency QR guide](https://www.ababank.com/aba-mobile-app/aba-id/).
+The app does not query bank accounts or modify the uploaded QR payload.
+
+The confirmed options must include the bill currency. Fixed-amount QRs remain
+restricted to their encoded currency and exact amount; the client, server, and
+database reject a fixed amount combined with two currencies. Re-uploading the
+same QR can correct its accepted-currency selection. When paying, select the
+bill currency in the banking app, even if the QR defaults to the other currency.
+The new `save_bill_payment_method_v2` RPC stores the selection atomically; the
+original RPC remains available for existing clients and removal.
 
 ### Phase 4 — Hardening and launch
 

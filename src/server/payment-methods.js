@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { hashAccessToken } from "@/lib/access-tokens";
 import {
+  confirmedQrCurrencies,
   inspectPaymentQr,
   PaymentQrError,
   paymentQrEligible,
@@ -67,7 +68,7 @@ export async function requireCreator({
 export async function previewOwnerQr(input) {
   const { bill, actor } = await requireCreator(input);
   const details = await inspectPaymentQr(input.file);
-  if (details.currency !== bill.currency)
+  if (details.currency !== bill.currency && details.fixedAmountMinor !== null)
     throw new PaymentQrError(
       `This QR uses ${details.currency}. Upload a ${bill.currency} QR for this bill.`,
     );
@@ -90,6 +91,7 @@ export async function saveOwnerQr(input) {
   const removing = input.operation === "remove";
   let key = null;
   let details;
+  let supportedCurrencies;
   if (!removing) {
     if (
       typeof input.image !== "string" ||
@@ -107,6 +109,12 @@ export async function saveOwnerQr(input) {
       image: bytes,
       secret: process.env.PARTICIPANT_SESSION_SECRET,
     });
+    supportedCurrencies = confirmedQrCurrencies(details, input.currencyMode);
+    if (!supportedCurrencies.includes(bill.currency)) {
+      throw new PaymentQrError(
+        `This bill uses ${bill.currency}. Confirm KHR + USD only if your banking app offers both, or upload a ${bill.currency} QR.`,
+      );
+    }
     key = `${bill.id}/${randomUUID()}.png`;
     const { error } = await supabase.storage
       .from(BUCKET)
@@ -114,7 +122,7 @@ export async function saveOwnerQr(input) {
     if (error) throw new Error("Unable to store the QR image.");
   }
   const { data: oldKey, error } = await supabase.rpc(
-    "save_bill_payment_method",
+    removing ? "save_bill_payment_method" : "save_bill_payment_method_v2",
     {
       ...settlementAccess(input.shareToken, input.cookieValue),
       recovery_hash: recoveryHash,
@@ -127,6 +135,7 @@ export async function saveOwnerQr(input) {
       payload_hash: details?.payloadHash,
       fixed_amount: details?.fixedAmountMinor,
       qr_expires_at: details?.expiresAt,
+      ...(!removing ? { qr_currencies: supportedCurrencies } : {}),
     },
   );
   if (error) {

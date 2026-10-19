@@ -99,7 +99,9 @@ async function qr(f, changes = {}) {
     ...changes,
   };
   return db.query(
-    "select save_bill_payment_method($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,null)",
+    changes.v2
+      ? "select save_bill_payment_method_v2($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,null,$13)"
+      : "select save_bill_payment_method($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,null)",
     [
       f.share,
       p.recovery,
@@ -113,6 +115,7 @@ async function qr(f, changes = {}) {
       p.currency,
       p.payloadHash,
       p.fixed,
+      ...(changes.v2 ? [changes.currencies ?? null] : []),
     ],
   );
 }
@@ -253,6 +256,97 @@ describe("Phase 3 PostgreSQL transactions and permissions", () => {
     expect(events).toHaveLength(3);
     expect(events.every((e) => JSON.stringify(e.metadata) === "{}")).toBe(true);
   });
+  it("allows a confirmed dual-currency QR with KHR default on a USD bill and permits correcting a previously saved QR", async () => {
+    const f = await fixture();
+    await qr(f, { v2: true, currency: "KHR", currencies: ["USD", "KHR"] });
+    let {
+      rows: [method],
+    } = await db.query("select * from bill_payment_methods where bill_id=$1", [
+      f.billId,
+    ]);
+    expect(method.supported_currencies).toEqual(["KHR", "USD"]);
+    expect(method.fixed_amount_minor).toBe(null);
+    // Correct a dual-currency selection without changing the actual QR image.
+    const changes = {
+      v2: true,
+      currency: "USD",
+      currencies: ["USD"],
+      payloadHash: method.qr_payload_hash,
+      methodId: method.id,
+      version: method.updated_at.toISOString(),
+    };
+    await qr(f, changes);
+    ({
+      rows: [method],
+    } = await db.query("select * from bill_payment_methods where bill_id=$1", [
+      f.billId,
+    ]));
+    expect(method.supported_currencies).toEqual(["USD"]);
+    await qr(f, {
+      ...changes,
+      currencies: ["KHR", "USD"],
+      version: method.updated_at.toISOString(),
+    });
+    ({
+      rows: [method],
+    } = await db.query("select * from bill_payment_methods where bill_id=$1", [
+      f.billId,
+    ]));
+    await expect(
+      qr(f, {
+        ...changes,
+        currencies: ["KHR", "USD"],
+        version: method.updated_at.toISOString(),
+      }),
+    ).rejects.toThrow(/already/);
+    await expect(
+      qr(f, {
+        ...changes,
+        currencies: ["USD"],
+        recovery: hash(),
+        version: method.updated_at.toISOString(),
+      }),
+    ).rejects.toThrow(/Creator/);
+  });
+  it("rejects invalid currency selections and never applies a fixed amount to two currencies", async () => {
+    const f = await fixture();
+    for (const currencies of [
+      [],
+      ["KHR"],
+      ["EUR"],
+      ["USD", "USD"],
+      ["USD", null],
+    ]) {
+      await expect(qr(f, { v2: true, currencies })).rejects.toThrow(
+        /currencies/,
+      );
+    }
+    await expect(
+      qr(f, { v2: true, currency: "KHR", currencies: ["USD"] }),
+    ).rejects.toThrow(/currencies/);
+    await expect(
+      qr(f, { v2: true, currencies: ["KHR", "USD"], fixed: 500 }),
+    ).rejects.toThrow(/fixed/);
+    expect(
+      (
+        await db.query("select * from bill_payment_methods where bill_id=$1", [
+          f.billId,
+        ])
+      ).rows,
+    ).toHaveLength(0);
+    await qr(f, { v2: true, currencies: ["USD"], fixed: 500 });
+    const {
+      rows: [method],
+    } = await db.query("select * from bill_payment_methods where bill_id=$1", [
+      f.billId,
+    ]);
+    await expect(
+      db.query(
+        "update bill_payment_methods set supported_currencies=array['KHR','USD'] where id=$1",
+        [method.id],
+      ),
+    ).rejects.toThrow(/fixed_currency_check/);
+  });
   it("denies anon/authenticated direct reads and RPC execution and keeps storage private", async () => {
     for (const role of ["anon", "authenticated"]) {
       await db.exec(`set role ${role}`);
@@ -265,6 +359,14 @@ describe("Phase 3 PostgreSQL transactions and permissions", () => {
         ).rejects.toThrow(/permission/);
         await expect(
           db.query("select get_bill_ledger($1)", [hash()]),
+        ).rejects.toThrow(/permission/);
+        await expect(
+          db.query("select save_bill_payment_method_v2($1,$2,$3,$4,'save')", [
+            hash(),
+            hash(),
+            randomUUID(),
+            hash(),
+          ]),
         ).rejects.toThrow(/permission/);
         await expect(
           db.query("select save_bill_settlement($1,$2,$3,$4,'create')", [

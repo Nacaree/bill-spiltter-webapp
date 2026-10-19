@@ -116,6 +116,7 @@ export async function saveOwnerQrAction(_state, form) {
       operation: "save",
       image: form.get("previewImage"),
       token: form.get("previewToken"),
+      currencyMode: form.get("currencyMode") ?? "single",
       expectedMethodId: form.get("expectedMethodId"),
       expectedUpdatedAt: form.get("expectedUpdatedAt"),
     });

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import QRCode from "qrcode";
 import sharp from "sharp";
 import {
+  confirmedQrCurrencies,
   decodePaymentQr,
   inspectPaymentQr,
   khqrChecksum,
@@ -46,6 +47,30 @@ const method = {
 };
 
 describe("payment QR validation", () => {
+  it("supports owner-confirmed currency choices without treating a default currency as automatic dual support", () => {
+    const khr = decodePaymentQr(payload({ currency: "116" }));
+    expect(confirmedQrCurrencies(khr)).toEqual(["KHR"]);
+    expect(confirmedQrCurrencies(khr, "dual")).toEqual(["KHR", "USD"]);
+    expect(() => confirmedQrCurrencies(khr, "anything")).toThrow();
+    const fixed = decodePaymentQr(payload({ currency: "116", amount: "4500" }));
+    expect(() => confirmedQrCurrencies(fixed, "dual")).toThrow(/fixed-amount/);
+    expect(confirmedQrCurrencies(fixed, "single")).toEqual(["KHR"]);
+    const dualMethod = { ...method, supported_currencies: ["KHR", "USD"] };
+    expect(
+      paymentQrEligible(dualMethod, {
+        toParticipantId: "owner",
+        currency: "USD",
+        amountMinor: 100,
+      }),
+    ).toBe(true);
+    expect(
+      paymentQrEligible(dualMethod, {
+        toParticipantId: "owner",
+        currency: "KHR",
+        amountMinor: 4000,
+      }),
+    ).toBe(true);
+  });
   it("decodes USD and KHR and respects fixed amounts and expiry", () => {
     expect(decodePaymentQr(payload())).toMatchObject({
       currency: "USD",

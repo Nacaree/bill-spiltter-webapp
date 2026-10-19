@@ -43,8 +43,8 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
         Owner ABA QR settings
       </summary>
       <p className="mt-4 text-sm leading-6 text-slate-600">
-        Upload one ABA KHQR in {currency}. An amount-free QR can be reused.
-        Check the decoded recipient before saving.
+        Upload an ABA QR that accepts {currency}, including a QR offering both
+        KHR and USD. Check the recipient and currency options before saving.
       </p>
       {method ? (
         <p className="mt-3 text-sm text-slate-700">
@@ -85,6 +85,7 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
       </form>
       {draft ? (
         <form
+          key={draft.token}
           action={save}
           className="mt-5 grid gap-4 rounded-xl border border-teal-200 bg-white p-4"
         >
@@ -103,12 +104,47 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
           <p className="text-sm text-slate-700">
             Decoded recipient: <strong>{draft.recipientLabel}</strong>
             <br />
-            Currency: <strong>{draft.currency}</strong>
+            Encoded currency: <strong>{draft.currency}</strong>
             <br />
             {draft.fixedAmountMinor !== null
               ? `Fixed amount: ${formatMoney(draft.fixedAmountMinor, draft.currency)}. Only matching transfers can use this QR.`
               : "Amount-free QR: enter the settlement amount in your banking app."}
           </p>
+          {draft.fixedAmountMinor === null ? (
+            <fieldset className="grid gap-3 text-sm text-slate-700">
+              <legend className="mb-2 font-semibold text-slate-900">
+                Currencies this QR accepts
+              </legend>
+              <label className="flex items-start gap-3">
+                <input
+                  type="radio"
+                  name="currencyMode"
+                  value="single"
+                  defaultChecked
+                  required
+                  className="mt-1 size-4 accent-teal-700"
+                />
+                {draft.currency} only
+              </label>
+              <label className="flex items-start gap-3">
+                <input
+                  type="radio"
+                  name="currencyMode"
+                  value="dual"
+                  required
+                  className="mt-1 size-4 accent-teal-700"
+                />
+                KHR + USD — I checked that my banking app lets the payer choose
+                either currency for this QR.
+              </label>
+              <p className="text-xs leading-5 text-slate-600">
+                The encoded currency may be the default. Select both only after
+                checking the currency choices in your banking app.
+              </p>
+            </fieldset>
+          ) : (
+            <input type="hidden" name="currencyMode" value="single" />
+          )}
           {draft.expiresAt ? (
             <p className="text-sm text-amber-800">
               Expires: {new Date(draft.expiresAt).toLocaleString()}
