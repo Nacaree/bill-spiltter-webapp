@@ -228,7 +228,8 @@ Dates must be unambiguous YYYY-MM-DD; otherwise return null. For an absent tax, 
 Return only the JSON receipt matching the schema.`;
 }
 
-export async function extractReceiptImage({ billCurrency, bytes }) {
+export async function extractReceiptImage({ billCurrency, bytes, signal }) {
+  signal?.throwIfAborted();
   if (process.env.NODE_ENV !== "production") {
     const fixture = developmentFixture(
       process.env.RECEIPT_EXTRACTION_DEV_FIXTURE,
@@ -250,6 +251,7 @@ export async function extractReceiptImage({ billCurrency, bytes }) {
     });
   }
   const prepared = await prepareReceiptImage(bytes);
+  signal?.throwIfAborted();
   if (prepared.length > 10_000_000) {
     throw new ReceiptExtractionError("receipt_image_too_large", {
       retryable: false,
@@ -291,7 +293,9 @@ export async function extractReceiptImage({ billCurrency, bytes }) {
           "x-goog-api-key": apiKey,
         },
         method: "POST",
-        signal: AbortSignal.timeout(60_000),
+        signal: AbortSignal.any(
+          [AbortSignal.timeout(60_000), signal].filter(Boolean),
+        ),
       },
     );
   } catch {

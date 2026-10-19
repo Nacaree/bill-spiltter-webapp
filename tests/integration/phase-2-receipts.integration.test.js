@@ -78,14 +78,15 @@ liveDescribe("Phase 2 live receipt confirmation", () => {
     expect(await getExpenses(created.billId)).toHaveLength(0);
 
     const supabase = getServerSupabase();
-    const { error: claimError } = await supabase.rpc(
-      "claim_receipt_extraction",
+    const { data: attempts, error: claimError } = await supabase.rpc(
+      "claim_receipt_extraction_v2",
       { target_scan_id: uploaded.scanId },
     );
     expect(claimError).toBeNull();
     const { error: storeError } = await supabase.rpc(
-      "store_receipt_extraction",
+      "store_receipt_extraction_v2",
       {
+        expected_attempt_id: attempts[0].attempt_id,
         extracted_currency: "USD",
         extracted_discount_minor: 0,
         extracted_items: [

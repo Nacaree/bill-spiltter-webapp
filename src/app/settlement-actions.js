@@ -17,7 +17,6 @@ import {
 import {
   CreatorAccessRequiredError,
   openOwnerQr,
-  previewOwnerQr,
   saveOwnerQr,
 } from "@/server/payment-methods";
 import {
@@ -89,19 +88,6 @@ async function ownerInput(form) {
     recoveryToken: store.get(CREATOR_COOKIE_NAME)?.value,
     cookieValue: store.get(PARTICIPANT_COOKIE_NAME)?.value,
   };
-}
-
-export async function previewOwnerQrAction(_state, form) {
-  try {
-    return {
-      preview: await previewOwnerQr({
-        ...(await ownerInput(form)),
-        file: form.get("qrImage"),
-      }),
-    };
-  } catch (error) {
-    return failure(error);
-  }
 }
 
 export async function saveOwnerQrAction(_state, form) {

@@ -5,42 +5,44 @@
 
 ## Task
 
-Support ABA QRs that let payers choose KHR or USD during owner QR inspection.
+Prepare private image uploads and receipt processing for Vercel live testing.
 
 ## Completed
 
-- Phase 1 access and Phase 2 manual/receipt expenses; USD/KHR only.
-- Phase 3 balance explanations, transfers, audited/idempotent settlements,
-  private owner QR storage, signed URLs and creator-only settings.
-- Fixed the reported KHR-default QR rejection on a USD bill: amount-free QRs
-  now reach preview even when their encoded currency differs from the bill.
-- Preview shows encoded currency and lets the owner confirm KHR + USD based
-  on actual banking-app options. No automatic dual-support inference.
-- Accepted currencies must include the bill currency. Fixed-amount QRs remain
-  restricted to one encoded currency and exact amount, including DB checks.
-- New v2 save RPC stores accepted currencies; existing records/RPC preserved.
-- Re-uploading the same QR can correct its accepted-currency selection.
-- Payers are prompted to select the bill currency in their banking app.
-- Added regressions for preview/save, currency choices, tampering, persistence,
-  default currency mismatch, fixed amounts, access and existing RPC compatibility.
-- Updated the opt-in browser flow to use a KHR-default QR on a USD bill.
+- Existing bill, expense, settlement and dual-currency owner QR features retained.
+- Shared prepare/complete actions; original receipt/QR images upload directly
+  from the browser to private Supabase staging with the existing 10 MB cap.
+- Server-only reservations bind bill/participant/purpose; completion accepts
+  only the upload UUID, rechecks access, and validates actual image bytes.
+- Creator session/recovery key required for owner QR preparation and completion.
+- Stable receipt scan IDs, atomic completion, one extraction schedule per upload;
+  QR inspection still requires explicit recipient/currency confirmation to save.
+- Clear preparation/upload/processing states; failures retain selected files.
+- Application completion expires in 15 min; storage tokens in 2 hours, no overwrite.
+- Bounded cleanup of 20 reservations older than 24 hours plus private operator
+  command npm run uploads:cleanup. No scheduled cleanup worker yet.
+- Node.js/maxDuration 120 on bill/review pages. Gemini timeout 60 seconds;
+  overall extraction processing deadline 90 seconds plus bounded claim/failure.
+- Retry stale scans after 150 seconds; attempt IDs guard late success/failure.
+- New regressions cover large uploads, auth, expiration, duplicates, corruption,
+  interrupted requests, cleanup, timeouts, stale attempts and retained file input.
+- README includes migration, cleanup, Vercel configuration and smoke-test steps.
 
 ## Validation
 
-- Focused QR/server/PostgreSQL checks: 22 tests passed.
-- Formatting, lint, 148 tests and webpack production build passed.
-- Hosted browser and real dual-currency QR validation remain outstanding.
+- Formatting, lint, 176 unit/database tests and webpack production build pass.
+- Six live tests are skipped; build manifest confirms both 120-second limits.
+- Hosted upload/browser/real-QR tests and Vercel deployment remain outstanding.
 
 ## Required Migration
 
-Apply 20261019000000_dual_currency_payment_qrs.sql from supabase/migrations
-AFTER 20261017000000_phase_3_settlements.sql. Neither hosted application has
-been confirmed. The user applies hosted migrations themselves; provide files
-and instructions. Never rerun a migration already applied to that project.
+User applies missing migrations in order: 20261017000000 (Phase 3),
+20261019000000 (dual currency), then 20261020000000_direct_image_uploads.sql.
+User reports the new migration was applied. Hosted verification is pending.
+It retires unguarded worker RPCs; restart/deploy updated code before processing.
 
 ## Next Step
 
-Finish local checks, then have the user apply the new migration, refresh, and
-re-inspect their QR. Choose KHR + USD after checking the bank's currency options.
-Run npm run test:e2e:phase3 after both migrations are applied. Inspect the real
-QR result; saving/viewing a QR must never record a settlement automatically.
+Deploy a Vercel preview and run opt-in
+npm run test:e2e:uploads and npm run test:e2e:phase3. Use the EXISTING Supabase
+project and fresh bills on a stable Vercel preview hostname; enable Fluid compute.

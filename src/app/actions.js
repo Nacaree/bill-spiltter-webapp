@@ -39,7 +39,6 @@ import {
 } from "@/server/expenses";
 import {
   confirmReceiptExpense,
-  createReceiptScan,
   deleteReceiptImage,
   processReceiptScan,
   ReceiptNotFoundError,
@@ -260,23 +259,6 @@ function receiptErrorState(error) {
   }
   console.error("Unable to change receipt:", error.message);
   return { errors: { form: "We couldn’t process that receipt. Try again." } };
-}
-
-export async function uploadReceiptAction(_previousState, formData) {
-  const shareToken = String(formData.get("shareToken") ?? "");
-  try {
-    const cookieStore = await cookies();
-    const created = await createReceiptScan({
-      cookieValue: cookieStore.get(PARTICIPANT_COOKIE_NAME)?.value,
-      file: formData.get("receipt"),
-      shareToken,
-    });
-    after(() => processReceiptScan(created.scanId));
-    revalidatePath(`/b/${shareToken}`);
-    return { receiptScanId: created.scanId, shareToken, success: true };
-  } catch (error) {
-    return receiptErrorState(error);
-  }
 }
 
 export async function retryReceiptAction(_previousState, formData) {

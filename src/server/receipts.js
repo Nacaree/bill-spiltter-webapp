@@ -5,6 +5,10 @@ import {
   ReceiptExtractionError,
 } from "@/lib/receipt-extraction";
 import { validateReceiptFile } from "@/lib/receipt-file";
+import {
+  receiptCanRetry,
+  withExtractionDeadline,
+} from "@/lib/receipt-processing";
 import { verifyParticipantSession } from "@/lib/participant-session";
 import { getServerSupabase } from "@/lib/supabase-server";
 import {
@@ -93,8 +97,9 @@ export async function createReceiptScan({ cookieValue, file, shareToken }) {
 }
 
 export async function processReceiptScan(scanId) {
-  const supabase = getServerSupabase();
-  const { data, error } = await supabase.rpc("claim_receipt_extraction", {
+  const { data, error } = await getServerSupabase({
+    signal: AbortSignal.timeout(10_000),
+  }).rpc("claim_receipt_extraction_v2", {
     target_scan_id: scanId,
   });
   if (error) throw databaseError(error);
@@ -102,56 +107,70 @@ export async function processReceiptScan(scanId) {
   if (!claimed) return { claimed: false };
 
   try {
-    const { data: storedImage, error: downloadError } = await supabase.storage
-      .from(RECEIPT_BUCKET)
-      .download(claimed.storage_key);
-    if (downloadError) throw new ReceiptExtractionError("image_unavailable");
-    const bytes = new Uint8Array(await storedImage.arrayBuffer());
-    const raw = await extractReceiptImage({
-      billCurrency: claimed.bill_currency,
-      bytes,
-      mimeType: claimed.mime_type,
-      scanId,
+    return await withExtractionDeadline(async (signal) => {
+      const supabase = getServerSupabase({ signal });
+      const { data: storedImage, error: downloadError } = await supabase.storage
+        .from(RECEIPT_BUCKET)
+        .download(claimed.storage_key);
+      if (downloadError) throw new ReceiptExtractionError("image_unavailable");
+      const bytes = new Uint8Array(await storedImage.arrayBuffer());
+      const raw = await extractReceiptImage({
+        billCurrency: claimed.bill_currency,
+        bytes,
+        mimeType: claimed.mime_type,
+        scanId,
+        signal,
+      });
+      const draft = normalizeReceiptExtraction(raw, claimed.bill_currency);
+      signal.throwIfAborted();
+      const { data: stored, error: storeError } = await supabase.rpc(
+        "store_receipt_extraction_v2",
+        {
+          expected_attempt_id: claimed.attempt_id,
+          extracted_currency: draft.currency,
+          extracted_discount_minor: draft.discountMinor,
+          extracted_items: draft.items.map((item) => ({
+            confidence_basis_points: item.confidenceBasisPoints,
+            description: item.description,
+            needs_review: item.needsReview,
+            position: item.position,
+            quantity: item.quantity,
+            total_minor: item.totalMinor,
+            unit_price_minor: item.unitPriceMinor,
+          })),
+          extracted_merchant_name: draft.merchantName,
+          extracted_receipt_date: draft.receiptDate,
+          extracted_subtotal_minor: draft.subtotalMinor,
+          extracted_tax_minor: draft.taxMinor,
+          extracted_tip_minor: draft.tipMinor,
+          extracted_total_minor: draft.totalMinor,
+          extraction_provider: draft.provider,
+          extraction_provider_request_id: draft.providerRequestId,
+          target_scan_id: scanId,
+        },
+      );
+      if (storeError) throw databaseError(storeError);
+      return { claimed: true, status: stored ? "needs_review" : "superseded" };
     });
-    const draft = normalizeReceiptExtraction(raw, claimed.bill_currency);
-    const { error: storeError } = await supabase.rpc(
-      "store_receipt_extraction",
-      {
-        extracted_currency: draft.currency,
-        extracted_discount_minor: draft.discountMinor,
-        extracted_items: draft.items.map((item) => ({
-          confidence_basis_points: item.confidenceBasisPoints,
-          description: item.description,
-          needs_review: item.needsReview,
-          position: item.position,
-          quantity: item.quantity,
-          total_minor: item.totalMinor,
-          unit_price_minor: item.unitPriceMinor,
-        })),
-        extracted_merchant_name: draft.merchantName,
-        extracted_receipt_date: draft.receiptDate,
-        extracted_subtotal_minor: draft.subtotalMinor,
-        extracted_tax_minor: draft.taxMinor,
-        extracted_tip_minor: draft.tipMinor,
-        extracted_total_minor: draft.totalMinor,
-        extraction_provider: draft.provider,
-        extraction_provider_request_id: draft.providerRequestId,
-        target_scan_id: scanId,
-      },
-    );
-    if (storeError) throw databaseError(storeError);
-    return { claimed: true, status: "needs_review" };
   } catch (error) {
     const safeCode =
-      error instanceof ReceiptExtractionError
-        ? error.code
-        : "extraction_failed";
-    await supabase
-      .from("receipt_scans")
-      .update({ error_code: safeCode, status: "failed" })
-      .eq("id", scanId)
-      .eq("status", "processing");
-    return { claimed: true, status: "failed" };
+      error.name === "TimeoutError"
+        ? "extraction_timed_out"
+        : error instanceof ReceiptExtractionError
+          ? error.code
+          : "extraction_failed";
+    const { data: failed, error: failureError } = await getServerSupabase({
+      signal: AbortSignal.timeout(10_000),
+    }).rpc("fail_receipt_extraction_v2", {
+      target_scan_id: scanId,
+      expected_attempt_id: claimed.attempt_id,
+      failure_code: safeCode,
+    });
+    if (failureError)
+      console.error(
+        "Unable to mark failed receipt extraction; stale retry remains available.",
+      );
+    return { claimed: true, status: failed ? "failed" : "superseded" };
   }
 }
 
@@ -165,13 +184,15 @@ export async function retryReceiptScan({
   if (!participant) throw new ParticipantSessionRequiredError();
   const { data, error } = await getServerSupabase()
     .from("receipt_scans")
-    .select("id, status")
+    .select(
+      "id, status, created_at, updated_at, processing_started_at, expires_at",
+    )
     .eq("id", receiptScanId)
     .eq("bill_id", bill.id)
     .maybeSingle();
   if (error) throw databaseError(error);
   if (!data) throw new ReceiptNotFoundError();
-  if (data.status !== "failed") throw new ExpenseValidationError();
+  if (!receiptCanRetry(data)) throw new ExpenseValidationError();
   return { scanId: data.id };
 }
 
@@ -203,6 +224,7 @@ export async function getReceiptScan(billId, receiptScanId) {
   }
   return {
     ...scan,
+    canRetry: receiptCanRetry(scan),
     discount_minor:
       scan.discount_minor === null ? null : Number(scan.discount_minor),
     items: items.map((item) => ({

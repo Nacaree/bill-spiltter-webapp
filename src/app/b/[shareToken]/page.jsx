@@ -24,6 +24,9 @@ import {
 import { getBillActivity, getExpenses } from "@/server/expenses";
 import { getRecentReceiptScans } from "@/server/receipts";
 
+export const runtime = "nodejs";
+export const maxDuration = 120;
+
 export async function generateMetadata({ params }) {
   const { shareToken } = await params;
   try {

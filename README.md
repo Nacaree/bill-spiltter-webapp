@@ -1,6 +1,6 @@
 # Bill Splitter
 
-Bill Splitter is a planned responsive web app for creating a shared bill, adding people and expenses, calculating fair shares, and settling up—without requiring anyone to create an account.
+Bill Splitter is a responsive web app for creating a shared bill, adding people and expenses, calculating fair shares, and settling up—without requiring anyone to create an account.
 
 ## Local development
 
@@ -73,11 +73,129 @@ npm run test:integration:gemini
 This check requires `GEMINI_API_KEY` in `.env.local` and consumes API quota. It is
 skipped in the normal test suite.
 
-GitHub Actions runs formatting, linting, unit tests, and a production build for
-pull requests. Vercel should be connected to the repository for deployment
-previews and configured with the four required variables in `.env.example`.
-Preview and production Supabase projects must remain separate, with matching
-project keys configured per Vercel environment.
+The normal checks do not use hosted Supabase or Gemini. Opt-in browser and
+integration checks create synthetic test bills in the configured project.
+
+## Vercel live testing
+
+The first live test uses the existing hosted Supabase project. Vercel runs the
+Next.js frontend/server code; Supabase provides the database and private storage.
+No separate backend server or Docker is needed. Use fresh test bills.
+
+### Apply the migrations manually
+
+Apply any missing migrations in filename order through Supabase SQL Editor.
+Do not rerun migrations already applied to that hosted project. Recent required
+files are:
+
+1. `20261017000000_phase_3_settlements.sql`
+2. `20261019000000_dual_currency_payment_qrs.sql`
+3. `20261020000000_direct_image_uploads.sql`
+
+Run each complete file, including its transaction. The newest migration adds
+private upload reservations/staging storage and guarded extraction RPCs. It
+preserves existing expenses, receipt scans, and owner payment images. Apply it
+when no extraction is running, then restart/deploy the updated code: the old
+unguarded extraction RPCs are retired, so older receipt workers are incompatible.
+The user reports the newest migration was applied; hosted verification by the
+agent is still pending.
+
+### Upload and processing behavior
+
+- Receipt and original owner QR images upload from the browser directly to the
+  private `image-upload-staging` bucket. They retain their existing 10 MB limit.
+  Next.js actions receive metadata and an upload ID, not the original image.
+  This avoids Vercel's [4.5 MB function payload limit](https://vercel.com/docs/functions/limitations).
+- Preparation binds a generated path to the bill, participant, and purpose.
+  Owner QR preparation/completion both require the creator session and recovery
+  cookie. No public storage policies or browser service-role keys are added.
+- [Supabase upload tokens](https://supabase.com/docs/reference/javascript/file-buckets-createsigneduploadurl)
+  are valid for two hours, with overwrites disabled. Application completion
+  expires after 15 minutes. The server checks actual bytes, size, format and
+  dimensions before accepting an image. Client metadata is not trusted.
+- Receipt completion copies the validated image to private receipt storage and
+  atomically creates one scan. Repeated completion returns the same scan and
+  does not schedule extraction twice. Drafts remain outside the financial ledger.
+- QR completion returns the existing signed, cropped preview (at most 2 MB of
+  image bytes). Recipient/currency confirmation and saving remain separate.
+  The small cropped preview is allowed through Next.js; originals are not.
+  Existing single/dual-currency and fixed-amount checks remain enforced.
+- Forms show preparation/upload/processing states. Failed requests preserve the
+  selected file; retries reuse a valid upload reservation when possible.
+- The bill and receipt-review pages use Node.js with `maxDuration = 120`.
+  Extraction has a 90-second overall processing deadline; Gemini retains its
+  60-second request timeout. Claims and failure writes each have a 10-second
+  network deadline, leaving headroom within the function budget.
+- `after()` still runs extraction within the Vercel invocation; it is not a
+  durable job queue. Uploaded or processing scans older than 150 seconds offer
+  manual retry. Atomic claims and attempt IDs prevent late results/failures
+  from overwriting a newer attempt.
+
+### Cleanup
+
+Receipt staging images are removed after successful finalization; rejected
+images are removed when validation fails. QR originals are retained temporarily
+for inspection retries. Preparation/completion also cleans up to 20 reservations
+older than 24 hours, including their staging images and uncommitted receipt
+copies. Completed receipt images remain under the normal receipt lifecycle.
+Reservation records are retained long enough to clean files uploaded late using
+the two-hour storage token. Cleanup failures retain records for another attempt.
+
+There is no scheduled cleanup worker yet. For an idle project, run this private
+operator command with the project's `.env.local`; repeat until it reports zero:
+
+```bash
+npm run uploads:cleanup
+```
+
+### Configure and deploy a preview
+
+1. Commit/push the implementation to a testing branch such as `live-testing`.
+2. In Vercel, import the GitHub repository. Select Next.js, repository root `.`,
+   Node.js 22, install command `npm ci`, and build command
+   `npm run build -- --webpack` (the verified production build).
+3. Set these environment variables for Preview and Production from the matching
+   existing Supabase project: `NEXT_PUBLIC_SUPABASE_URL`,
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
+   `PARTICIPANT_SESSION_SECRET`, and `GEMINI_API_KEY`.
+   Optionally set `GEMINI_RECEIPT_MODEL`; leave
+   `RECEIPT_EXTRACTION_DEV_FIXTURE` blank. Never commit `.env.local`.
+4. Enable Fluid compute in Vercel. The page-level duration configuration covers
+   their server actions; see [Vercel's runtime configuration](https://vercel.com/docs/functions/configuring-functions/duration).
+5. Keep `main` as the production branch and create a preview deployment from
+   `live-testing`. Check preview access settings so invited testers can open it.
+   Changes to environment variables require a new deployment.
+6. Use the branch's stable preview URL throughout a test. Create a fresh bill
+   on that hostname; localhost/other-hostname participant and owner cookies do
+   not transfer. Keep the creator's browser for owner QR settings.
+
+### Validate before sharing
+
+Run the local checks, then the opt-in hosted tests after migrations are applied:
+
+```bash
+npm run format:check
+npm run lint
+npm run test
+npm run build -- --webpack
+npm run test:e2e:uploads
+npm run test:e2e:phase3
+```
+
+The upload browser test uses a generated valid PNG larger than 4.5 MB and checks
+that the original bytes go only to Supabase. Start it with no existing dev
+server on port 3100 so its development extraction fixture is enabled and no
+Gemini quota is used. Fixtures are ignored in deployed production builds.
+These browser tests create and clean synthetic bills/images in the configured
+project; they are opt-in and have not been run against hosted Supabase yet.
+
+On the deployed preview, manually test: create a bill; join from a second
+browser/device; upload a receipt larger than 4.5 MB; review and confirm it;
+inspect/save a real owner QR including KHR + USD; record a partial payment and
+then settle the remainder. Verify one confirmed expense, correct shares, and
+zero balances after settlement. A real Gemini request uses API quota; use a
+redacted test receipt. Inspect Vercel logs for processing errors without copying
+keys, upload tokens, bank payloads or receipt images into logs/chat.
 
 ## Product direction
 

@@ -142,13 +142,22 @@ test("create bill → join → expense → owner QR → settle → correct → r
         .eq("name", billName)
         .maybeSingle();
       if (bill) {
-        const { data: images } = await db.storage
-          .from("payment-qrs")
-          .list(bill.id);
-        if (images?.length)
-          await db.storage
-            .from("payment-qrs")
-            .remove(images.map((i) => `${bill.id}/${i.name}`));
+        for (const bucket of [
+          "payment-qrs",
+          "image-upload-staging",
+          "receipt-images",
+        ]) {
+          const { data: images, error: listError } = await db.storage
+            .from(bucket)
+            .list(bill.id);
+          if (listError) throw listError;
+          if (images?.length) {
+            const { error: removeError } = await db.storage
+              .from(bucket)
+              .remove(images.map((i) => `${bill.id}/${i.name}`));
+            if (removeError) throw removeError;
+          }
+        }
         const { error } = await db.from("bills").delete().eq("id", bill.id);
         if (error) throw error;
       }

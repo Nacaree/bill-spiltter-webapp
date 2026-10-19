@@ -6,6 +6,47 @@ latest commit. Pull `main` and run `npm ci` when moving to another computer.
 The user wants migration SQL saved in `supabase/migrations/` and will apply
 hosted migrations themselves. Tell them when a new migration is required.
 
+## Vercel preparation (2026-10-20)
+
+Direct browser uploads are implemented for receipts and owner QR originals.
+`prepareImageUploadAction` accepts metadata and issues a path-scoped token;
+`completeImageUploadAction` accepts only an upload UUID and rechecks access.
+Private reservations bind bill/participant/purpose and expire in 15 minutes.
+Supabase signed upload tokens last two hours, with overwrites disabled. Original
+images keep the 10 MB cap and are validated from stored bytes. Receipt completion
+creates one stable scan and schedules processing only for the winning write.
+QR inspection retains the existing signed cropped preview/confirmation flow.
+Failed uploads retain the selected file. Browser server-actions no longer accept
+original receipt/QR files; cropped QR confirmations remain below the 4 MB action
+body limit. Internal file helpers remain for server-side integration fixtures.
+
+The bill/review pages use Node.js and maxDuration 120. Extraction has a 90-second
+processing deadline; claim/failure requests are bounded separately to 10 seconds.
+Gemini retains its 60-second request timeout. Stale uploaded/processing scans
+can be retried after 150 seconds. New attempt IDs guard success and failure
+writes against stale workers. The old unguarded extraction RPCs are retired.
+`after()` remains best-effort invocation work, not a durable queue.
+
+Apply `supabase/migrations/20261020000000_direct_image_uploads.sql` AFTER the
+other migrations below, with no extraction in flight, then run updated code.
+The user reports this migration was applied; hosted verification is pending.
+Never apply migrations on the user's behalf.
+A code-only rollback to an older receipt worker is incompatible with this schema.
+
+Request-time cleanup handles up to 20 reservations older than 24 hours. Valid
+QR originals remain temporarily for retry; successful receipt staging and
+validation failures are removed promptly. Idle projects need the private
+`npm run uploads:cleanup` command; repeat until zero. No scheduled worker exists.
+
+The user chose the EXISTING Supabase project for initial Vercel tests, using
+fresh test bills. Follow README's Vercel live testing instructions: Node 22,
+webpack build, matching Preview environment variables, Fluid compute enabled,
+stable branch preview URL, and a new bill on that hostname. The agent has not
+configured/deployed Vercel or run hosted browser tests. Formatting, lint, 176
+unit/database tests and the webpack production build pass; six live tests are
+skipped. The build manifest confirms both 120-second route limits.
+New opt-in test: `npm run test:e2e:uploads`.
+
 ## Current state
 
 Phase 1 access and Phase 2 manual/receipt expenses are built. The user configured
@@ -78,8 +119,8 @@ is saved and an eligible transfer is owed to that owner.
 
 ## Validation
 
-- Formatting, lint, 148 tests and webpack production build passed, including
-  dual-currency QR preview/save and all-migrations PostgreSQL checks.
+- Before Vercel preparation, formatting, lint, 148 tests and webpack build
+  passed. Current results are recorded in CURRENT_WORK.md.
 - Normal tests skip 6 live API/database checks and do not use Gemini quota.
 - Offline PGlite PostgreSQL tests apply every migration and cover settlement
   idempotence, corrections, deletion, zero-sum balances, cross-bill/session checks,
@@ -118,8 +159,10 @@ npm run build -- --webpack
 
 ## Resume
 
-1. Confirm the user applied both required migrations above, then refresh the bill.
-2. Run `npm run test:e2e:phase3` and fix any browser/hosted issues it exposes.
+1. Confirm all three recent migrations are applied, including direct uploads.
+   Restart the updated app, then refresh the bill.
+2. Run `npm run test:e2e:uploads` and `npm run test:e2e:phase3` after migration,
+   using a dedicated local test server. Fix any browser/hosted issues.
 3. Have the owner upload their real amount-free ABA KHQR and confirm the decoded
    recipient/currency. Check it only appears for eligible owner transfers.
 4. Validate partial/full payments, corrections and removal; confirm all-settled

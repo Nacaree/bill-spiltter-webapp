@@ -67,7 +67,11 @@ export async function requireCreator({
 
 export async function previewOwnerQr(input) {
   const { bill, actor } = await requireCreator(input);
-  const details = await inspectPaymentQr(input.file);
+  return createOwnerQrPreview({ bill, actor, file: input.file });
+}
+
+export async function createOwnerQrPreview({ bill, actor, file }) {
+  const details = await inspectPaymentQr(file);
   if (details.currency !== bill.currency && details.fixedAmountMinor !== null)
     throw new PaymentQrError(
       `This QR uses ${details.currency}. Upload a ${bill.currency} QR for this bill.`,

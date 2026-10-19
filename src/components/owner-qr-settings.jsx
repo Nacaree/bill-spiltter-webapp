@@ -1,13 +1,13 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  previewOwnerQrAction,
   removeOwnerQrAction,
   saveOwnerQrAction,
 } from "@/app/settlement-actions";
 import { Button } from "@/components/ui/button";
+import { useDirectImageUpload } from "@/components/use-direct-image-upload";
 import { formatMoney } from "@/lib/money";
 
 function MethodIdentity({ method, shareToken }) {
@@ -26,17 +26,19 @@ function MethodIdentity({ method, shareToken }) {
 
 export function OwnerQrSettings({ method, shareToken, currency }) {
   const router = useRouter();
-  const [preview, inspect, inspecting] = useActionState(
-    previewOwnerQrAction,
-    {},
-  );
+  const upload = useDirectImageUpload({ shareToken, purpose: "owner_qr" });
+  const inspecting = upload.pending;
+  const labels = {
+    preparing: "Preparing upload…",
+    uploading: "Uploading…",
+    processing: "Reading QR…",
+  };
   const [saved, save, saving] = useActionState(saveOwnerQrAction, {});
   const [removed, remove, removing] = useActionState(removeOwnerQrAction, {});
-  const [showPreview, setShowPreview] = useState(true);
   useEffect(() => {
     if (saved.success || removed.success) router.refresh();
   }, [router, saved, removed]);
-  const draft = showPreview ? preview.preview : null;
+  const draft = upload.result?.preview;
   return (
     <details className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-5">
       <summary className="cursor-pointer font-semibold text-slate-900">
@@ -58,11 +60,7 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
             : ""}
         </p>
       ) : null}
-      <form
-        action={inspect}
-        className="mt-4 grid gap-4"
-        onSubmit={() => setShowPreview(true)}
-      >
+      <form className="mt-4 grid gap-4" onSubmit={upload.submit}>
         <input type="hidden" name="shareToken" value={shareToken} />
         <label className="grid gap-2 text-sm font-semibold text-slate-800">
           QR image
@@ -72,7 +70,8 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
             accept="image/jpeg,image/png"
             required
             className="min-w-0 rounded-xl border border-slate-300 bg-white p-3 font-normal"
-            onChange={() => setShowPreview(false)}
+            disabled={inspecting || saving}
+            onChange={upload.selectFile}
           />
         </label>
         <Button
@@ -80,9 +79,22 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
           variant="secondary"
           disabled={inspecting || saving}
         >
-          {inspecting ? "Reading QR…" : "Inspect QR image"}
+          {labels[upload.stage] ??
+            (upload.stage === "failed"
+              ? "Retry QR inspection"
+              : "Inspect QR image")}
         </Button>
       </form>
+      {upload.error ? (
+        <p role="alert" className="mt-3 text-sm text-red-700">
+          {upload.error}
+        </p>
+      ) : null}
+      {inspecting ? (
+        <p role="status" className="mt-3 text-sm text-slate-600">
+          {labels[upload.stage]}
+        </p>
+      ) : null}
       {draft ? (
         <form
           key={draft.token}
@@ -186,7 +198,7 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
           </Button>
         </form>
       ) : null}
-      {[preview, saved, removed].map((state, index) =>
+      {[saved, removed].map((state, index) =>
         state.errors?.form ? (
           <p key={index} role="alert" className="mt-3 text-sm text-red-700">
             {state.errors.form}

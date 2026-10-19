@@ -15,6 +15,8 @@ import {
 import { getReceiptScan, ReceiptNotFoundError } from "@/server/receipts";
 
 const errorMessages = {
+  extraction_timed_out:
+    "Receipt scanning took too long. You can retry safely or enter the expense manually.",
   extraction_failed: "The extraction service couldn’t read this receipt.",
   image_conversion_failed:
     "The receipt could not be converted for OCR. Try a JPEG or PNG image.",
@@ -35,6 +37,9 @@ const errorMessages = {
     "The extraction provider is busy. Wait a moment and retry.",
   provider_unavailable: "The extraction provider could not be reached.",
 };
+
+export const runtime = "nodejs";
+export const maxDuration = 120;
 
 export default async function ReceiptPage({ params }) {
   const { receiptScanId, shareToken } = await params;
@@ -92,7 +97,8 @@ export default async function ReceiptPage({ params }) {
         </div>
       ) : null}
 
-      {scan.status === "uploaded" || scan.status === "processing" ? (
+      {(scan.status === "uploaded" || scan.status === "processing") &&
+      !scan.canRetry ? (
         <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
           <ReceiptStatusRefresh />
           <div className="mx-auto size-8 animate-spin rounded-full border-4 border-teal-100 border-t-teal-700" />
@@ -106,15 +112,18 @@ export default async function ReceiptPage({ params }) {
         </div>
       ) : null}
 
-      {scan.status === "failed" ? (
+      {scan.status === "failed" || scan.canRetry ? (
         <div className="mt-8 grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
           <div className="rounded-3xl border border-red-200 bg-red-50 p-6">
             <h2 className="text-xl font-bold text-red-950">
               Extraction failed
             </h2>
             <p className="mt-2 text-sm leading-6 text-red-900">
-              {errorMessages[scan.error_code] ??
-                errorMessages.extraction_failed}
+              {errorMessages[
+                scan.canRetry && scan.status !== "failed"
+                  ? "extraction_timed_out"
+                  : scan.error_code
+              ] ?? errorMessages.extraction_failed}
             </p>
             {participant ? (
               <div className="mt-5">
