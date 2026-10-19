@@ -1,5 +1,7 @@
 "use server";
 
+import { monitorAction, reportAppError } from "@/server/monitoring";
+
 import { refresh } from "next/cache";
 import { cookies } from "next/headers";
 import { after } from "next/server";
@@ -43,32 +45,39 @@ function failure(error) {
     return {
       error: "Direct image uploads are not configured on this server yet.",
     };
-  console.error("Unable to complete image upload:", error.message);
+  reportAppError(error, "image_upload");
   return { error: "We couldn’t process this image. Try again." };
 }
 export async function prepareImageUploadAction(metadata) {
-  try {
-    return {
-      upload: await prepareImageUpload({ ...metadata, ...(await access()) }),
-    };
-  } catch (error) {
-    return failure(error);
-  }
+  return monitorAction("prepareImageUploadAction", async () => {
+    try {
+      return {
+        upload: await prepareImageUpload({ ...metadata, ...(await access()) }),
+      };
+    } catch (error) {
+      return failure(error);
+    }
+  });
 }
 export async function completeImageUploadAction(uploadId) {
-  try {
-    const result = await completeImageUpload({ uploadId, ...(await access()) });
-    if (result.purpose === "receipt" && result.shouldProcess)
-      after(() => processReceiptScan(result.receiptScanId));
-    refresh();
-    return {
-      result: {
-        purpose: result.purpose,
-        receiptScanId: result.receiptScanId,
-        preview: result.preview,
-      },
-    };
-  } catch (error) {
-    return failure(error);
-  }
+  return monitorAction("completeImageUploadAction", async () => {
+    try {
+      const result = await completeImageUpload({
+        uploadId,
+        ...(await access()),
+      });
+      if (result.purpose === "receipt" && result.shouldProcess)
+        after(() => processReceiptScan(result.receiptScanId));
+      refresh();
+      return {
+        result: {
+          purpose: result.purpose,
+          receiptScanId: result.receiptScanId,
+          preview: result.preview,
+        },
+      };
+    } catch (error) {
+      return failure(error);
+    }
+  });
 }

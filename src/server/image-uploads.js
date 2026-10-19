@@ -1,4 +1,5 @@
 import { cleanupImageUploadBatch } from "@/lib/cleanup-image-uploads.mjs";
+import { reportAppError } from "@/server/monitoring";
 import { randomUUID } from "node:crypto";
 import { hashAccessToken } from "@/lib/access-tokens";
 import {
@@ -58,9 +59,9 @@ export async function cleanupImageUploads() {
   const db = getServerSupabase({ signal: AbortSignal.timeout(5000) });
   try {
     return await cleanupImageUploadBatch(db, Date.now(), IMAGE_UPLOAD_BUCKET);
-  } catch {
+  } catch (error) {
     // Cleanup cannot make an otherwise valid upload fail; retain rows to retry.
-    console.error("Unable to clean expired image upload reservations.");
+    reportAppError(error, "upload_cleanup");
   }
 }
 

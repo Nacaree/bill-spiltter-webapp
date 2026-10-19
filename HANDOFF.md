@@ -6,6 +6,43 @@ latest commit. Pull `main` and run `npm ci` when moving to another computer.
 The user wants migration SQL saved in `supabase/migrations/` and will apply
 hosted migrations themselves. Tell them when a new migration is required.
 
+## Sentry setup (2026-10-20)
+
+The user reports all required migrations, Vercel deployment and live bill flows
+are working. Phase 4 has started with Sentry; SDK setup is documented below.
+Deployed Sentry reporting remains to be verified. No Sentry migration is required.
+
+The Codex plugin is connected, and the application now uses `@sentry/nextjs`
+11.8.0. Project: `nathan-d2 / bill-splitter-webapp`, team `nathan`, US region.
+Browser/Node/Edge initialization, Next request hooks, both error boundaries,
+manual server-action instrumentation and handled unexpected failures are wired.
+Action arguments/responses are excluded. Traces sample at 100% development and
+10% production builds. Shared links/private paths and payloads are filtered;
+unknown error messages become generic/static operation labels. Source frames
+remain available. Replay/profiling are not configured; breadcrumbs/logs/metrics
+are dropped. Platform logs have separate privacy/access considerations.
+
+Local development errors/traces and a compiled production error were verified
+through Sentry MCP. Production issue:
+https://nathan-d2.sentry.io/issues/BILL-SPLITTER-WEBAPP-3
+The stack maps back to original source with context. Synthetic email/receipt/tag
+canaries were absent. Public browser source maps were deleted after upload.
+Temporary verification routes were removed. Synthetic issues remain unresolved;
+offer cleanup before resolving them. Check CURRENT_WORK for final check results.
+
+The replacement organization auth token is saved in ignored root file
+`.env.sentry-build-plugin`, loaded by Next config for build uploads. Never read
+its value into chat/output. A prior token was accidentally put into a browser
+search during clipboard automation; the user was notified and a newer token is
+configured. Revocation of the exposed old token is not confirmed. Avoid clipboard
+browser navigation while secrets may be copied.
+
+Set `SENTRY_AUTH_TOKEN` in Vercel Preview and Production before deploying these
+changes; builds fail on Vercel if missing. Vercel environment/Git SHA identify
+events and releases. Local builds without a token skip source-map uploads.
+Commit/push/deploy only when requested, then verify a deployed error. Rate limits,
+alerts, mobile/accessibility review and privacy/support content remain future work.
+
 ## Vercel preparation (2026-10-20)
 
 Direct browser uploads are implemented for receipts and owner QR originals.
@@ -77,15 +114,14 @@ Phase 3 code is implemented:
   payment. Bank transfers and confirmation remain manual.
 - Activity includes settlement and QR changes without logging decoded payloads.
 
-## Required hosted migration — application unconfirmed
+## Required hosted migrations — user reports applied
 
 `supabase/migrations/20261017000000_phase_3_settlements.sql`
 
-The user has not confirmed applying this migration. If it is not applied yet,
-tell them to open their project's SQL Editor, paste the complete file, and
-run it once. The file includes BEGIN/COMMIT. It adds settlement/payment-method
-schema, RPCs, permissions and private storage, preserving existing expenses.
-Until applied, the app displays a balances/payments setup message.
+The user reports the migrations and live flow are complete. For a fresh project,
+apply this complete file once through SQL Editor; it includes BEGIN/COMMIT.
+It adds settlement/payment-method schema, RPCs, permissions and private storage,
+preserving existing expenses. Automated hosted verification was not run here.
 Do not apply hosted migrations for the user; they explicitly requested to do it.
 This updates the hosted project once, not once per computer.
 
@@ -159,12 +195,8 @@ npm run build -- --webpack
 
 ## Resume
 
-1. Confirm all three recent migrations are applied, including direct uploads.
-   Restart the updated app, then refresh the bill.
-2. Run `npm run test:e2e:uploads` and `npm run test:e2e:phase3` after migration,
-   using a dedicated local test server. Fix any browser/hosted issues.
-3. Have the owner upload their real amount-free ABA KHQR and confirm the decoded
-   recipient/currency. Check it only appears for eligible owner transfers.
-4. Validate partial/full payments, corrections and removal; confirm all-settled
-   appears only when every net is zero. These record payments already made.
-5. Continue with Phase 4 hardening after hosted and real-QR validation pass.
+1. Read CURRENT_WORK for Sentry's latest validation and remaining deployment steps.
+2. Set the replacement build token in Vercel Preview and Production.
+3. Commit/push/deploy Sentry only when requested, then verify deployed reporting.
+4. Continue Phase 4 hardening as directed by the user. Existing opt-in hosted
+   browser tests remain available if automated hosted verification is requested.

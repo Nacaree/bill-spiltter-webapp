@@ -1,4 +1,5 @@
 import { hashAccessToken } from "@/lib/access-tokens";
+import { reportAppError } from "@/server/monitoring";
 import {
   extractReceiptImage,
   normalizeReceiptExtraction,
@@ -102,7 +103,10 @@ export async function processReceiptScan(scanId) {
   }).rpc("claim_receipt_extraction_v2", {
     target_scan_id: scanId,
   });
-  if (error) throw databaseError(error);
+  if (error) {
+    reportAppError(error, "receipt_extract");
+    throw databaseError(error);
+  }
   const claimed = resultRow(data);
   if (!claimed) return { claimed: false };
 
@@ -159,6 +163,7 @@ export async function processReceiptScan(scanId) {
         : error instanceof ReceiptExtractionError
           ? error.code
           : "extraction_failed";
+    reportAppError(error, "receipt_extract");
     const { data: failed, error: failureError } = await getServerSupabase({
       signal: AbortSignal.timeout(10_000),
     }).rpc("fail_receipt_extraction_v2", {
@@ -166,10 +171,7 @@ export async function processReceiptScan(scanId) {
       expected_attempt_id: claimed.attempt_id,
       failure_code: safeCode,
     });
-    if (failureError)
-      console.error(
-        "Unable to mark failed receipt extraction; stale retry remains available.",
-      );
+    if (failureError) reportAppError(failureError, "receipt_failure_write");
     return { claimed: true, status: failed ? "failed" : "superseded" };
   }
 }

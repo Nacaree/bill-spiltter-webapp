@@ -19,6 +19,7 @@
     "test:e2e:supabase": "npm run test:integration:supabase && RUN_SUPABASE_E2E=1 playwright test tests/e2e/phase-1.spec.js"
   },
   "dependencies": {
+    "@sentry/nextjs": "^11.8.0",
     "@supabase/supabase-js": "^2.57.0",
     "@t3-oss/env-nextjs": "^0.13.8",
     "clsx": "^2.1.1",

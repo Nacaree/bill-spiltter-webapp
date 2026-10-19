@@ -5,44 +5,37 @@
 
 ## Task
 
-Prepare private image uploads and receipt processing for Vercel live testing.
+Phase 4: create the Sentry project and connect application monitoring.
 
 ## Completed
 
-- Existing bill, expense, settlement and dual-currency owner QR features retained.
-- Shared prepare/complete actions; original receipt/QR images upload directly
-  from the browser to private Supabase staging with the existing 10 MB cap.
-- Server-only reservations bind bill/participant/purpose; completion accepts
-  only the upload UUID, rechecks access, and validates actual image bytes.
-- Creator session/recovery key required for owner QR preparation and completion.
-- Stable receipt scan IDs, atomic completion, one extraction schedule per upload;
-  QR inspection still requires explicit recipient/currency confirmation to save.
-- Clear preparation/upload/processing states; failures retain selected files.
-- Application completion expires in 15 min; storage tokens in 2 hours, no overwrite.
-- Bounded cleanup of 20 reservations older than 24 hours plus private operator
-  command npm run uploads:cleanup. No scheduled cleanup worker yet.
-- Node.js/maxDuration 120 on bill/review pages. Gemini timeout 60 seconds;
-  overall extraction processing deadline 90 seconds plus bounded claim/failure.
-- Retry stale scans after 150 seconds; attempt IDs guard late success/failure.
-- New regressions cover large uploads, auth, expiration, duplicates, corruption,
-  interrupted requests, cleanup, timeouts, stale attempts and retained file input.
-- README includes migration, cleanup, Vercel configuration and smoke-test steps.
+- User reports migrations, Vercel deployment and live bill flows are working.
+- Existing private 10 MB uploads, extraction recovery and dual-currency QRs retained.
+- Sentry project nathan-d2/bill-splitter-webapp created (team nathan, US region).
+- SDK 11.8.0 initializes in browser, Node.js and Edge runtimes.
+- Request hooks, error boundaries, server actions and handled failures instrumented.
+- Action arguments/responses excluded; traces sample 100% dev, 10% production builds.
+- Capability paths/private payloads filtered; unknown error messages are generic.
+- Identity, headers, bodies, queries and provider/database payloads disabled.
+- Replay/profiling absent; breadcrumbs/logs/metrics dropped. Platform logs separate.
+- Public DSN configured; environment/release use Vercel environment/Git SHA.
+- Replacement build token saved in ignored .env.sentry-build-plugin, never logged.
+- Source-map uploads enabled; Vercel builds require SENTRY_AUTH_TOKEN.
+- README and HANDOFF document setup, privacy choices and deployment requirements.
 
 ## Validation
 
-- Formatting, lint, 176 unit/database tests and webpack production build pass.
-- Six live tests are skipped; build manifest confirms both 120-second limits.
-- Hosted upload/browser/real-QR tests and Vercel deployment remain outstanding.
-
-## Required Migration
-
-User applies missing migrations in order: 20261017000000 (Phase 3),
-20261019000000 (dual currency), then 20261020000000_direct_image_uploads.sql.
-User reports the new migration was applied. Hosted verification is pending.
-It retires unguarded worker RPCs; restart/deploy updated code before processing.
+- Real local errors and development traces confirmed in Sentry via MCP.
+- Compiled production error maps to source with context; private canaries absent.
+- Verification issue: https://nathan-d2.sentry.io/issues/BILL-SPLITTER-WEBAPP-3
+- Browser source maps absent after upload; temporary verification routes removed.
+- Final formatting, lint and webpack production build pass.
+- No unit/database suite run for Sentry setup; previous baseline was 176 passing.
 
 ## Next Step
 
-Deploy a Vercel preview and run opt-in
-npm run test:e2e:uploads and npm run test:e2e:phase3. Use the EXISTING Supabase
-project and fresh bills on a stable Vercel preview hostname; enable Fluid compute.
+- No SQL migration for Sentry; setup is ready for Vercel deployment.
+- Set SENTRY_AUTH_TOKEN in Vercel Preview and Production before deploying.
+- Ensure the previously exposed old token is revoked; replacement is configured.
+- Verify deployed Sentry reporting after Vercel builds the updated main branch.
+- Alerts, rate limits, mobile/accessibility and privacy/support work remain.

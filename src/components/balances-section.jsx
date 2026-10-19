@@ -20,7 +20,7 @@ export async function BalancesSection({ bill, participant, shareToken }) {
     ]);
   } catch (error) {
     const setup = error instanceof PhaseThreeSetupError;
-    if (!setup) console.error("Unable to load bill balances:", error.message);
+    if (!setup) reportAppError(error, "balances_load");
     return (
       <section
         id="balances"
@@ -253,3 +253,4 @@ export async function BalancesSection({ bill, participant, shareToken }) {
     </section>
   );
 }
+import { reportAppError } from "@/server/monitoring";

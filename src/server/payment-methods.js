@@ -151,8 +151,7 @@ export async function saveOwnerQr(input) {
     const { error: cleanupError } = await supabase.storage
       .from(BUCKET)
       .remove([oldKey]);
-    if (cleanupError)
-      console.error("Unable to remove replaced payment QR object.");
+    if (cleanupError) reportAppError(cleanupError, "qr_cleanup");
   }
 }
 
@@ -222,3 +221,4 @@ export async function openOwnerQr({
     currency: bill.currency,
   };
 }
+import { reportAppError } from "@/server/monitoring";

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { reportAppError } from "@/server/monitoring";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { AddParticipantForm } from "@/components/add-participant-form";
@@ -111,14 +112,14 @@ export default async function BillPage({ params, searchParams }) {
       getBillActivity(bill.id),
     ]);
   } catch (error) {
-    console.error("Unable to load expense ledger:", error.message);
+    reportAppError(error, "ledger_load");
     ledgerError = true;
   }
   let receiptError = false;
   try {
     receiptScans = await getRecentReceiptScans(bill.id);
   } catch (error) {
-    console.error("Unable to load receipt uploads:", error.message);
+    reportAppError(error, "receipts_load");
     receiptError = true;
   }
 

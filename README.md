@@ -97,8 +97,8 @@ private upload reservations/staging storage and guarded extraction RPCs. It
 preserves existing expenses, receipt scans, and owner payment images. Apply it
 when no extraction is running, then restart/deploy the updated code: the old
 unguarded extraction RPCs are retired, so older receipt workers are incompatible.
-The user reports the newest migration was applied; hosted verification by the
-agent is still pending.
+The user reports the required migrations were applied and the deployed live
+flow works. Automated hosted verification by the agent has not been run.
 
 ### Upload and processing behavior
 
@@ -196,6 +196,52 @@ then settle the remainder. Verify one confirmed expense, correct shares, and
 zero balances after settlement. A real Gemini request uses API quota; use a
 redacted test receipt. Inspect Vercel logs for processing errors without copying
 keys, upload tokens, bank payloads or receipt images into logs/chat.
+
+## Sentry monitoring
+
+Sentry is configured for **nathan-d2 / bill-splitter-webapp** using the official
+Next.js SDK. Browser, Node.js and Edge initialization live in `src/`, with shared
+configuration in `src/lib/sentry-config.js`. The checked-in DSN is a public
+ingestion address, not an auth token. `NEXT_PUBLIC_SENTRY_DSN` can override it.
+
+Errors are captured alongside sampled performance traces: 100% in development
+and 10% in production builds, including previews. Vercel's environment and Git
+commit SHA identify the environment/release; `NEXT_PUBLIC_SENTRY_ENVIRONMENT`
+and `SENTRY_RELEASE` can override these. Server actions exclude arguments and
+responses. Unexpected handled failures are also reported; normal validation and
+access errors retain their existing behavior.
+
+### Private-data filtering
+
+Identity, cookies, headers, request bodies, URL queries, database payloads, AI
+inputs/outputs, queue arguments and stack-frame variables are disabled. Shared
+bill links, receipt IDs and private storage paths are redacted. Arbitrary extras,
+tags, breadcrumbs, logs and metrics are dropped. Unknown error messages become
+generic messages or static operation labels; source-code stack frames remain
+available for debugging. Session Replay and profiling are not configured.
+Next.js/Vercel platform logs are separate and may contain request URLs; keep
+access to those logs private.
+
+### Source maps and deployment
+
+1. Create a Sentry organization auth token with source-map upload permissions.
+2. For local builds, save `SENTRY_AUTH_TOKEN=your-token` in the root file
+   `.env.sentry-build-plugin`, beside `.env.local`. Next.js config loads this
+   gitignored file. Never commit the token or paste it into chat.
+3. Add `SENTRY_AUTH_TOKEN` to Vercel's **Preview and Production** environment
+   variables before deploying. Vercel builds fail clearly if it is missing.
+4. Run `npm run build -- --webpack`. The build uploads private source maps and
+   deletes generated browser map files. Local/CI builds without a token still
+   work but skip map uploads. Runtime error capture does not need this token.
+5. When ready, deploy the changes and verify a fresh deployed error has a readable
+   source file/line. Environment changes require a new deployment. No SQL
+   migration is needed for Sentry.
+
+Local development error capture, tracing and production-build source maps were
+verified against Sentry. The synthetic production verification issue is
+[BILL-SPLITTER-WEBAPP-3](https://nathan-d2.sentry.io/issues/BILL-SPLITTER-WEBAPP-3).
+Temporary verification routes were removed. This SDK setup has not yet been
+deployed to Vercel; alerts and uptime monitoring remain separate follow-up work.
 
 ## Product direction
 

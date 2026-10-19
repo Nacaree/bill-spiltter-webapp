@@ -1,5 +1,7 @@
 "use server";
 
+import { monitorAction, reportAppError } from "@/server/monitoring";
+
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { z } from "zod";
@@ -45,7 +47,7 @@ function failure(error) {
     return {
       errors: { form: "Payments are not configured on this server yet." },
     };
-  console.error("Unable to change bill payments:", error.message);
+  reportAppError(error, "payment_change");
   return { errors: { form: "We couldn’t complete that request. Try again." } };
 }
 
@@ -72,13 +74,19 @@ async function changePayment(form, operation) {
 }
 
 export async function createSettlementAction(_state, form) {
-  return changePayment(form, "create");
+  return monitorAction("createSettlementAction", async () => {
+    return changePayment(form, "create");
+  });
 }
 export async function updateSettlementAction(_state, form) {
-  return changePayment(form, "update");
+  return monitorAction("updateSettlementAction", async () => {
+    return changePayment(form, "update");
+  });
 }
 export async function removeSettlementAction(_state, form) {
-  return changePayment(form, "remove");
+  return monitorAction("removeSettlementAction", async () => {
+    return changePayment(form, "remove");
+  });
 }
 
 async function ownerInput(form) {
@@ -91,60 +99,66 @@ async function ownerInput(form) {
 }
 
 export async function saveOwnerQrAction(_state, form) {
-  try {
-    if (form.get("confirmed") !== "yes")
-      throw new PaymentQrError(
-        "Confirm the decoded recipient and currency first.",
-      );
-    const input = await ownerInput(form);
-    await saveOwnerQr({
-      ...input,
-      operation: "save",
-      image: form.get("previewImage"),
-      token: form.get("previewToken"),
-      currencyMode: form.get("currencyMode") ?? "single",
-      expectedMethodId: form.get("expectedMethodId"),
-      expectedUpdatedAt: form.get("expectedUpdatedAt"),
-    });
-    revalidatePath(`/b/${input.shareToken}`);
-    return { success: true };
-  } catch (error) {
-    return failure(error);
-  }
+  return monitorAction("saveOwnerQrAction", async () => {
+    try {
+      if (form.get("confirmed") !== "yes")
+        throw new PaymentQrError(
+          "Confirm the decoded recipient and currency first.",
+        );
+      const input = await ownerInput(form);
+      await saveOwnerQr({
+        ...input,
+        operation: "save",
+        image: form.get("previewImage"),
+        token: form.get("previewToken"),
+        currencyMode: form.get("currencyMode") ?? "single",
+        expectedMethodId: form.get("expectedMethodId"),
+        expectedUpdatedAt: form.get("expectedUpdatedAt"),
+      });
+      revalidatePath(`/b/${input.shareToken}`);
+      return { success: true };
+    } catch (error) {
+      return failure(error);
+    }
+  });
 }
 
 export async function removeOwnerQrAction(_state, form) {
-  try {
-    const input = await ownerInput(form);
-    await saveOwnerQr({
-      ...input,
-      operation: "remove",
-      expectedMethodId: form.get("expectedMethodId"),
-      expectedUpdatedAt: form.get("expectedUpdatedAt"),
-    });
-    revalidatePath(`/b/${input.shareToken}`);
-    return { success: true };
-  } catch (error) {
-    return failure(error);
-  }
+  return monitorAction("removeOwnerQrAction", async () => {
+    try {
+      const input = await ownerInput(form);
+      await saveOwnerQr({
+        ...input,
+        operation: "remove",
+        expectedMethodId: form.get("expectedMethodId"),
+        expectedUpdatedAt: form.get("expectedUpdatedAt"),
+      });
+      revalidatePath(`/b/${input.shareToken}`);
+      return { success: true };
+    } catch (error) {
+      return failure(error);
+    }
+  });
 }
 
 export async function openOwnerQrAction(_state, form) {
-  try {
-    const input = z
-      .object({
-        shareToken: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
-        fromParticipantId: z.uuid(),
-        toParticipantId: z.uuid(),
-        amountMinor: z.coerce
-          .number()
-          .int()
-          .positive()
-          .max(Number.MAX_SAFE_INTEGER),
-      })
-      .parse(Object.fromEntries(form));
-    return { qr: await openOwnerQr(input) };
-  } catch (error) {
-    return failure(error);
-  }
+  return monitorAction("openOwnerQrAction", async () => {
+    try {
+      const input = z
+        .object({
+          shareToken: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
+          fromParticipantId: z.uuid(),
+          toParticipantId: z.uuid(),
+          amountMinor: z.coerce
+            .number()
+            .int()
+            .positive()
+            .max(Number.MAX_SAFE_INTEGER),
+        })
+        .parse(Object.fromEntries(form));
+      return { qr: await openOwnerQr(input) };
+    } catch (error) {
+      return failure(error);
+    }
+  });
 }
