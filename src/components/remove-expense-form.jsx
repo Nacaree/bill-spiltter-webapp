@@ -1,5 +1,7 @@
 "use client";
 
+import { RetainedForm } from "@/components/retained-form";
+
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { removeExpenseAction } from "@/app/actions";
@@ -19,7 +21,8 @@ export function RemoveExpenseForm({ expenseId, shareToken }) {
   }, [router, state]);
 
   return (
-    <form
+    <RetainedForm
+      state={state}
       action={action}
       onSubmit={(event) => {
         if (!window.confirm("Remove this expense from the bill?")) {
@@ -38,6 +41,6 @@ export function RemoveExpenseForm({ expenseId, shareToken }) {
           {state.errors.form}
         </p>
       ) : null}
-    </form>
+    </RetainedForm>
   );
 }

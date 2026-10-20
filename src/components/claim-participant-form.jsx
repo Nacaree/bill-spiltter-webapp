@@ -1,5 +1,7 @@
 "use client";
 
+import { RetainedForm } from "@/components/retained-form";
+
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { claimParticipantAction } from "@/app/actions";
@@ -19,7 +21,7 @@ export function ClaimParticipantForm({ participants, shareToken }) {
   }, [router, state.success]);
 
   return (
-    <form action={action} className="mt-4 grid gap-4">
+    <RetainedForm state={state} action={action} className="mt-4 grid gap-4">
       <input type="hidden" name="shareToken" value={shareToken} />
       <label
         className="grid gap-2 text-sm font-semibold text-slate-800"
@@ -63,6 +65,6 @@ export function ClaimParticipantForm({ participants, shareToken }) {
       <Button type="submit" disabled={pending}>
         {pending ? "Joining…" : "Continue as this person"}
       </Button>
-    </form>
+    </RetainedForm>
   );
 }

@@ -1,6 +1,9 @@
 "use server";
 
-import { monitorAction, reportAppError } from "@/server/monitoring";
+import { guardBillOperation } from "@/server/rate-limit-access";
+import { protectedAction } from "@/server/protected-action";
+import { rateLimitFailure } from "@/lib/rate-limit-error";
+import { reportAppError } from "@/server/monitoring";
 
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
@@ -28,6 +31,8 @@ import {
 } from "@/server/settlements";
 
 function failure(error) {
+  const limited = rateLimitFailure(error);
+  if (limited) return limited;
   if (
     error instanceof PaymentQrError ||
     error instanceof SettlementValidationError
@@ -61,6 +66,10 @@ async function changePayment(form, operation) {
     });
     if (!parsed.data) return { errors: parsed.errors };
     const store = await cookies();
+    await guardBillOperation("write", {
+      ...parsed.data,
+      cookieValue: store.get(PARTICIPANT_COOKIE_NAME)?.value,
+    });
     await saveSettlement({
       ...parsed.data,
       operation,
@@ -74,17 +83,17 @@ async function changePayment(form, operation) {
 }
 
 export async function createSettlementAction(_state, form) {
-  return monitorAction("createSettlementAction", async () => {
+  return protectedAction("createSettlementAction", async () => {
     return changePayment(form, "create");
   });
 }
 export async function updateSettlementAction(_state, form) {
-  return monitorAction("updateSettlementAction", async () => {
+  return protectedAction("updateSettlementAction", async () => {
     return changePayment(form, "update");
   });
 }
 export async function removeSettlementAction(_state, form) {
-  return monitorAction("removeSettlementAction", async () => {
+  return protectedAction("removeSettlementAction", async () => {
     return changePayment(form, "remove");
   });
 }
@@ -99,13 +108,14 @@ async function ownerInput(form) {
 }
 
 export async function saveOwnerQrAction(_state, form) {
-  return monitorAction("saveOwnerQrAction", async () => {
+  return protectedAction("saveOwnerQrAction", async () => {
     try {
       if (form.get("confirmed") !== "yes")
         throw new PaymentQrError(
           "Confirm the decoded recipient and currency first.",
         );
       const input = await ownerInput(form);
+      await guardBillOperation("write", input, { owner: true });
       await saveOwnerQr({
         ...input,
         operation: "save",
@@ -124,9 +134,10 @@ export async function saveOwnerQrAction(_state, form) {
 }
 
 export async function removeOwnerQrAction(_state, form) {
-  return monitorAction("removeOwnerQrAction", async () => {
+  return protectedAction("removeOwnerQrAction", async () => {
     try {
       const input = await ownerInput(form);
+      await guardBillOperation("write", input, { owner: true });
       await saveOwnerQr({
         ...input,
         operation: "remove",
@@ -142,7 +153,7 @@ export async function removeOwnerQrAction(_state, form) {
 }
 
 export async function openOwnerQrAction(_state, form) {
-  return monitorAction("openOwnerQrAction", async () => {
+  return protectedAction("openOwnerQrAction", async () => {
     try {
       const input = z
         .object({

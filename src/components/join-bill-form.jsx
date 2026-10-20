@@ -1,5 +1,7 @@
 "use client";
 
+import { RetainedForm } from "@/components/retained-form";
+
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { joinBillAction } from "@/app/actions";
@@ -17,7 +19,7 @@ export function JoinBillForm({ shareToken }) {
   }, [router, state.success]);
 
   return (
-    <form action={action} className="mt-5 grid gap-4">
+    <RetainedForm state={state} action={action} className="mt-5 grid gap-4">
       <input type="hidden" name="shareToken" value={shareToken} />
       <Field
         id="join-name"
@@ -37,6 +39,6 @@ export function JoinBillForm({ shareToken }) {
       <Button type="submit" disabled={pending}>
         {pending ? "Joining…" : "Join bill"}
       </Button>
-    </form>
+    </RetainedForm>
   );
 }

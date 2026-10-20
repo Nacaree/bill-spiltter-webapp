@@ -1,5 +1,7 @@
 "use client";
 
+import { RetainedForm } from "@/components/retained-form";
+
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { retryReceiptAction } from "@/app/actions";
@@ -19,7 +21,7 @@ export function RetryReceiptForm({ receiptScanId, shareToken }) {
   }, [router, state]);
 
   return (
-    <form action={action} className="grid gap-3">
+    <RetainedForm state={state} action={action} className="grid gap-3">
       <input type="hidden" name="shareToken" value={shareToken} />
       <input type="hidden" name="receiptScanId" value={receiptScanId} />
       <Button type="submit" disabled={pending}>
@@ -30,6 +32,6 @@ export function RetryReceiptForm({ receiptScanId, shareToken }) {
           {state.errors.form}
         </p>
       ) : null}
-    </form>
+    </RetainedForm>
   );
 }

@@ -3,6 +3,7 @@ export const SENTRY_DSN =
   "https://3a6c818f40bbc595dd8b4385b78a67e3@o4512284286124032.ingest.us.sentry.io/4512284373745664";
 
 const operations = new Set([
+  "rate_limit",
   "bill_create",
   "bill_join",
   "participant_claim",

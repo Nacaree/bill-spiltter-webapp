@@ -1,5 +1,7 @@
 "use client";
 
+import { RetainedForm } from "@/components/retained-form";
+
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { confirmReceiptAction } from "@/app/actions";
@@ -156,7 +158,7 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
   }
 
   return (
-    <form action={action} className="grid min-w-0 gap-7">
+    <RetainedForm state={state} action={action} className="grid min-w-0 gap-7">
       <input type="hidden" name="shareToken" value={bill.shareToken} />
       <input type="hidden" name="receiptScanId" value={scan.id} />
       <input type="hidden" name="confirmationKey" value={confirmationKey} />
@@ -546,6 +548,6 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
       <p className="text-xs leading-5 text-slate-500">
         Nothing affects balances until this confirmation succeeds.
       </p>
-    </form>
+    </RetainedForm>
   );
 }

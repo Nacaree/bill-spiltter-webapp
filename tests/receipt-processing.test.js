@@ -51,3 +51,18 @@ it("clears its timer after successful completion", async () => {
   expect(await withExtractionDeadline(async () => "done")).toBe("done");
   expect(vi.getTimerCount()).toBe(0);
 });
+it("waits for the persisted application quota delay before permitting receipt retries", () => {
+  const now = Date.now();
+  expect(
+    receiptCanRetry(
+      { status: "failed", next_retry_at: new Date(now + 60_000).toISOString() },
+      now,
+    ),
+  ).toBe(false);
+  expect(
+    receiptCanRetry(
+      { status: "failed", next_retry_at: new Date(now).toISOString() },
+      now,
+    ),
+  ).toBe(true);
+});

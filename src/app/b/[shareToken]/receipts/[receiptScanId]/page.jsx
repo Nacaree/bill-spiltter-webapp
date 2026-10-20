@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import { readableWait } from "@/lib/rate-limit-error";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
@@ -116,14 +117,18 @@ export default async function ReceiptPage({ params }) {
         <div className="mt-8 grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
           <div className="rounded-3xl border border-red-200 bg-red-50 p-6">
             <h2 className="text-xl font-bold text-red-950">
-              Extraction failed
+              {scan.error_code === "app_rate_limited"
+                ? "Scanning temporarily unavailable"
+                : "Extraction failed"}
             </h2>
             <p className="mt-2 text-sm leading-6 text-red-900">
-              {errorMessages[
-                scan.canRetry && scan.status !== "failed"
-                  ? "extraction_timed_out"
-                  : scan.error_code
-              ] ?? errorMessages.extraction_failed}
+              {scan.error_code === "app_rate_limited"
+                ? `Receipt scanning is temporarily unavailable.${scan.retryAfterSeconds > 0 ? ` Try again in ${readableWait(scan.retryAfterSeconds)}.` : " You can retry now."} You can enter the expense manually below.`
+                : (errorMessages[
+                    scan.canRetry && scan.status !== "failed"
+                      ? "extraction_timed_out"
+                      : scan.error_code
+                  ] ?? errorMessages.extraction_failed)}
             </p>
             {participant ? (
               <div className="mt-5">

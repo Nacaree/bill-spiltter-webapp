@@ -1,5 +1,7 @@
 "use client";
 
+import { RetainedForm } from "@/components/retained-form";
+
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -29,7 +31,7 @@ export function SettlementForm({ bill, settlementId, settlement, transfer }) {
   }, [router, state]);
   const prefix = settlement?.id ?? settlementId;
   return (
-    <form action={action} className="grid gap-4">
+    <RetainedForm state={state} action={action} className="grid gap-4">
       <input type="hidden" name="shareToken" value={bill.shareToken} />
       <input type="hidden" name="settlementId" value={prefix} />
       {settlement ? (
@@ -139,7 +141,7 @@ export function SettlementForm({ bill, settlementId, settlement, transfer }) {
             ? "Save payment changes"
             : "Record payment"}
       </Button>
-    </form>
+    </RetainedForm>
   );
 }
 
@@ -150,7 +152,8 @@ export function RemoveSettlementForm({ settlement, shareToken }) {
     if (state.success) router.refresh();
   }, [router, state]);
   return (
-    <form
+    <RetainedForm
+      state={state}
       action={action}
       onSubmit={(event) => {
         if (
@@ -177,6 +180,6 @@ export function RemoveSettlementForm({ settlement, shareToken }) {
           {state.errors.form}
         </p>
       ) : null}
-    </form>
+    </RetainedForm>
   );
 }

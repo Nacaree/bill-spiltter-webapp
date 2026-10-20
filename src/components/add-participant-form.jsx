@@ -1,5 +1,7 @@
 "use client";
 
+import { RetainedForm } from "@/components/retained-form";
+
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { addParticipantAction } from "@/app/actions";
@@ -20,7 +22,8 @@ export function AddParticipantForm({ shareToken }) {
   }, [router, state.success]);
 
   return (
-    <form
+    <RetainedForm
+      state={state}
       action={action}
       className="mt-5 grid gap-4 border-t border-slate-100 pt-5"
     >
@@ -49,6 +52,6 @@ export function AddParticipantForm({ shareToken }) {
       <Button type="submit" variant="secondary" disabled={pending}>
         {pending ? "Adding…" : "Add person"}
       </Button>
-    </form>
+    </RetainedForm>
   );
 }

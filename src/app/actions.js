@@ -1,6 +1,10 @@
 "use server";
 
-import { monitorAction, reportAppError } from "@/server/monitoring";
+import { guardOperation } from "@/server/rate-limits";
+import { guardBillOperation } from "@/server/rate-limit-access";
+import { protectedAction } from "@/server/protected-action";
+import { rateLimitFailure } from "@/lib/rate-limit-error";
+import { reportAppError } from "@/server/monitoring";
 
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
@@ -48,11 +52,12 @@ import {
 } from "@/server/receipts";
 
 export async function createBillAction(_previousState, formData) {
-  return monitorAction("createBillAction", async () => {
+  return protectedAction("createBillAction", async () => {
     const parsed = parseCreateBill(formData);
     if (!parsed.data) return { errors: parsed.errors };
 
     try {
+      await guardOperation("create");
       const created = await createBillWithCreator(parsed.data);
       const cookieStore = await cookies();
       cookieStore.set(
@@ -70,6 +75,8 @@ export async function createBillAction(_previousState, formData) {
         success: true,
       };
     } catch (error) {
+      const limited = rateLimitFailure(error);
+      if (limited) return limited;
       reportAppError(error, "bill_create");
       return {
         errors: {
@@ -81,11 +88,12 @@ export async function createBillAction(_previousState, formData) {
 }
 
 export async function joinBillAction(_previousState, formData) {
-  return monitorAction("joinBillAction", async () => {
+  return protectedAction("joinBillAction", async () => {
     const parsed = parseJoinBill(formData);
     if (!parsed.data) return { errors: parsed.errors };
 
     try {
+      await guardBillOperation("people", parsed.data, { joined: false });
       const joined = await joinBill(parsed.data);
       const cookieStore = await cookies();
       cookieStore.set(
@@ -95,6 +103,8 @@ export async function joinBillAction(_previousState, formData) {
       );
       return { success: true };
     } catch (error) {
+      const limited = rateLimitFailure(error);
+      if (limited) return limited;
       if (error instanceof ParticipantNameTakenError) {
         return {
           errors: {
@@ -112,11 +122,12 @@ export async function joinBillAction(_previousState, formData) {
 }
 
 export async function claimParticipantAction(_previousState, formData) {
-  return monitorAction("claimParticipantAction", async () => {
+  return protectedAction("claimParticipantAction", async () => {
     const parsed = parseClaimParticipant(formData);
     if (!parsed.data) return { errors: parsed.errors };
 
     try {
+      await guardBillOperation("people", parsed.data, { joined: false });
       const claimed = await claimParticipant(parsed.data);
       const cookieStore = await cookies();
       cookieStore.set(
@@ -126,6 +137,8 @@ export async function claimParticipantAction(_previousState, formData) {
       );
       return { success: true };
     } catch (error) {
+      const limited = rateLimitFailure(error);
+      if (limited) return limited;
       if (error instanceof ParticipantUnavailableError) {
         return {
           errors: {
@@ -144,18 +157,24 @@ export async function claimParticipantAction(_previousState, formData) {
 }
 
 export async function addParticipantAction(_previousState, formData) {
-  return monitorAction("addParticipantAction", async () => {
+  return protectedAction("addParticipantAction", async () => {
     const parsed = parseAddParticipant(formData);
     if (!parsed.data) return { errors: parsed.errors };
 
     try {
       const cookieStore = await cookies();
+      await guardBillOperation("people", {
+        ...parsed.data,
+        cookieValue: cookieStore.get(PARTICIPANT_COOKIE_NAME)?.value,
+      });
       await addParticipant({
         ...parsed.data,
         cookieValue: cookieStore.get(PARTICIPANT_COOKIE_NAME)?.value,
       });
       return { success: true };
     } catch (error) {
+      const limited = rateLimitFailure(error);
+      if (limited) return limited;
       if (error instanceof ParticipantNameTakenError) {
         return {
           errors: {
@@ -198,13 +217,17 @@ function expenseErrorState(error) {
 }
 
 export async function createExpenseAction(_previousState, formData) {
-  return monitorAction("createExpenseAction", async () => {
+  return protectedAction("createExpenseAction", async () => {
     const shareToken = String(formData.get("shareToken") ?? "");
     try {
       const bill = await getBillByShareToken(shareToken);
       const parsed = parseExpenseForm(formData, bill.currency);
       if (!parsed.data) return { errors: parsed.errors };
       const cookieStore = await cookies();
+      await guardBillOperation("write", {
+        ...parsed.data,
+        cookieValue: cookieStore.get(PARTICIPANT_COOKIE_NAME)?.value,
+      });
       await createExpense({
         ...parsed.data,
         cookieValue: cookieStore.get(PARTICIPANT_COOKIE_NAME)?.value,
@@ -212,13 +235,15 @@ export async function createExpenseAction(_previousState, formData) {
       revalidatePath(`/b/${shareToken}`);
       return { success: true };
     } catch (error) {
+      const limited = rateLimitFailure(error);
+      if (limited) return limited;
       return expenseErrorState(error);
     }
   });
 }
 
 export async function updateExpenseAction(_previousState, formData) {
-  return monitorAction("updateExpenseAction", async () => {
+  return protectedAction("updateExpenseAction", async () => {
     const shareToken = String(formData.get("shareToken") ?? "");
     try {
       const bill = await getBillByShareToken(shareToken);
@@ -227,6 +252,10 @@ export async function updateExpenseAction(_previousState, formData) {
       });
       if (!parsed.data) return { errors: parsed.errors };
       const cookieStore = await cookies();
+      await guardBillOperation("write", {
+        ...parsed.data,
+        cookieValue: cookieStore.get(PARTICIPANT_COOKIE_NAME)?.value,
+      });
       await updateExpense({
         ...parsed.data,
         cookieValue: cookieStore.get(PARTICIPANT_COOKIE_NAME)?.value,
@@ -234,17 +263,23 @@ export async function updateExpenseAction(_previousState, formData) {
       revalidatePath(`/b/${shareToken}`);
       return { success: true };
     } catch (error) {
+      const limited = rateLimitFailure(error);
+      if (limited) return limited;
       return expenseErrorState(error);
     }
   });
 }
 
 export async function removeExpenseAction(_previousState, formData) {
-  return monitorAction("removeExpenseAction", async () => {
+  return protectedAction("removeExpenseAction", async () => {
     const parsed = parseRemoveExpense(formData);
     if (!parsed.data) return { errors: parsed.errors };
     try {
       const cookieStore = await cookies();
+      await guardBillOperation("write", {
+        ...parsed.data,
+        cookieValue: cookieStore.get(PARTICIPANT_COOKIE_NAME)?.value,
+      });
       await removeExpense({
         ...parsed.data,
         cookieValue: cookieStore.get(PARTICIPANT_COOKIE_NAME)?.value,
@@ -252,6 +287,8 @@ export async function removeExpenseAction(_previousState, formData) {
       revalidatePath(`/b/${parsed.data.shareToken}`);
       return { success: true };
     } catch (error) {
+      const limited = rateLimitFailure(error);
+      if (limited) return limited;
       return expenseErrorState(error);
     }
   });
@@ -280,34 +317,42 @@ function receiptErrorState(error) {
 }
 
 export async function retryReceiptAction(_previousState, formData) {
-  return monitorAction("retryReceiptAction", async () => {
+  return protectedAction("retryReceiptAction", async () => {
     const parsed = parseReceiptIdentity(formData);
     if (!parsed.data) return { errors: parsed.errors };
     try {
       const cookieStore = await cookies();
-      await retryReceiptScan({
+      const retry = await retryReceiptScan({
         ...parsed.data,
         cookieValue: cookieStore.get(PARTICIPANT_COOKIE_NAME)?.value,
       });
-      after(() => processReceiptScan(parsed.data.receiptScanId));
+      after(() =>
+        processReceiptScan(parsed.data.receiptScanId, retry.actorParticipantId),
+      );
       revalidatePath(
         `/b/${parsed.data.shareToken}/receipts/${parsed.data.receiptScanId}`,
       );
       return { success: true };
     } catch (error) {
+      const limited = rateLimitFailure(error);
+      if (limited) return limited;
       return receiptErrorState(error);
     }
   });
 }
 
 export async function confirmReceiptAction(_previousState, formData) {
-  return monitorAction("confirmReceiptAction", async () => {
+  return protectedAction("confirmReceiptAction", async () => {
     const shareToken = String(formData.get("shareToken") ?? "");
     try {
       const bill = await getBillByShareToken(shareToken);
       const parsed = parseReceiptConfirmation(formData, bill.currency);
       if (!parsed.data) return { errors: parsed.errors };
       const cookieStore = await cookies();
+      await guardBillOperation("write", {
+        ...parsed.data,
+        cookieValue: cookieStore.get(PARTICIPANT_COOKIE_NAME)?.value,
+      });
       const confirmed = await confirmReceiptExpense({
         ...parsed.data,
         cookieValue: cookieStore.get(PARTICIPANT_COOKIE_NAME)?.value,
@@ -317,6 +362,8 @@ export async function confirmReceiptAction(_previousState, formData) {
       revalidatePath(`/b/${shareToken}/receipts/${parsed.data.receiptScanId}`);
       return { expenseId: confirmed.expenseId, success: true };
     } catch (error) {
+      const limited = rateLimitFailure(error);
+      if (limited) return limited;
       return receiptErrorState(error);
     }
   });

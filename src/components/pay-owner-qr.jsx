@@ -1,5 +1,7 @@
 "use client";
 
+import { RetainedForm } from "@/components/retained-form";
+
 import { useActionState, useEffect, useState } from "react";
 import { openOwnerQrAction } from "@/app/settlement-actions";
 import { Button } from "@/components/ui/button";
@@ -19,7 +21,7 @@ export function PayOwnerQr({ shareToken, transfer }) {
   const visible = state.qr && expired !== state.qr.expiresAt;
   return (
     <div className="mt-4">
-      <form action={action}>
+      <RetainedForm state={state} action={action}>
         <input type="hidden" name="shareToken" value={shareToken} />
         {Object.entries(transfer).map(([key, value]) => (
           <input key={key} type="hidden" name={key} value={value} />
@@ -27,7 +29,7 @@ export function PayOwnerQr({ shareToken, transfer }) {
         <Button type="submit" variant="secondary" disabled={pending}>
           {pending ? "Opening…" : "Pay with ABA QR"}
         </Button>
-      </form>
+      </RetainedForm>
       {state.errors?.form ? (
         <p role="alert" className="mt-2 text-sm text-red-700">
           {state.errors.form}

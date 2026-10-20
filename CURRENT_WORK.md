@@ -5,37 +5,38 @@
 
 ## Task
 
-Phase 4: create the Sentry project and connect application monitoring.
+Phase 4: Supabase-backed rate limiting for public live testing.
 
 ## Completed
 
-- User reports migrations, Vercel deployment and live bill flows are working.
-- Existing private 10 MB uploads, extraction recovery and dual-currency QRs retained.
-- Sentry project nathan-d2/bill-splitter-webapp created (team nathan, US region).
-- SDK 11.8.0 initializes in browser, Node.js and Edge runtimes.
-- Request hooks, error boundaries, server actions and handled failures instrumented.
-- Action arguments/responses excluded; traces sample 100% dev, 10% production builds.
-- Capability paths/private payloads filtered; unknown error messages are generic.
-- Identity, headers, bodies, queries and provider/database payloads disabled.
-- Replay/profiling absent; breadcrumbs/logs/metrics dropped. Platform logs separate.
-- Public DSN configured; environment/release use Vercel environment/Git SHA.
-- Replacement build token saved in ignored .env.sentry-build-plugin, never logged.
-- Source-map uploads enabled; Vercel builds require SENTRY_AUTH_TOKEN.
-- README and HANDOFF document setup, privacy choices and deployment requirements.
+- Private counter/policy migration and service-only atomic consume/cleanup RPCs.
+- All actions: 300/min/IP before business queries; authorized operation quotas
+  cover bills/people, uploads/completion, expenses/settlements and owner QR writes.
+- Extraction v3 claim atomically consumes quotas and assigns attempts; 100/day
+  across the app, 10/10min per acting participant and 30/hour per bill.
+- Fixed windows use database time; daily reset 00:00 UTC (07:00 Cambodia).
+- Duplicate claims do not spend scan quota; failed winning attempts still count.
+- App quota denial retains images, persists next_retry_at and offers manual entry.
+- Existing attempt guards, 90-second processing and stale retry remain intact.
+- Trusted Vercel IP header, normalized HMAC subjects; fixed local development IP.
+- Five-second limiter deadline; missing config/store fails closed, bill reads remain.
+- Expected denials preserve form values, selected files, reservations and response
+  shapes; no automatic retries. Static limiter failures report to Sentry.
+- Bounded expired-counter cleanup plus npm run rate-limits:cleanup for idle projects.
+- Added offline coverage and opt-in synthetic hosted concurrency checks.
+- README/HANDOFF include policies, secret, migration and rollout instructions.
 
 ## Validation
 
-- Real local errors and development traces confirmed in Sentry via MCP.
-- Compiled production error maps to source with context; private canaries absent.
-- Verification issue: https://nathan-d2.sentry.io/issues/BILL-SPLITTER-WEBAPP-3
-- Browser source maps absent after upload; temporary verification routes removed.
-- Final formatting, lint and webpack production build pass.
-- No unit/database suite run for Sentry setup; previous baseline was 176 passing.
+- Full suite: 206 offline tests pass; eight live tests skipped.
+- Formatting, lint and webpack production build pass.
+- User reports both hosted concurrency tests passed (2/2), without Gemini calls.
+- User reports migration and secret configuration complete; deployment pending.
 
-## Next Step
+## Remaining rollout
 
-- No SQL migration for Sentry; setup is ready for Vercel deployment.
-- Set SENTRY_AUTH_TOKEN in Vercel Preview and Production before deploying.
-- Ensure the previously exposed old token is revoked; replacement is configured.
-- Verify deployed Sentry reporting after Vercel builds the updated main branch.
-- Alerts, rate limits, mobile/accessibility and privacy/support work remain.
+- Push the updated main branch and wait for Vercel deployment to finish.
+- Keep scanning paused until deployment: migration retires the old v2 claim RPC.
+- Verify deployed normal and blocked flows using a fresh test bill.
+- Hosted test success verifies Supabase; it does not verify deployed app code.
+- Remaining Phase 4: mobile/accessibility, privacy/support, backup/deletion reviews.

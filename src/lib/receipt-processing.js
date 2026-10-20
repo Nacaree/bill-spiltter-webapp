@@ -30,6 +30,8 @@ export async function withExtractionDeadline(
 export function receiptCanRetry(scan, now = Date.now()) {
   if (scan.expires_at && new Date(scan.expires_at).getTime() <= now)
     return false;
+  if (scan.next_retry_at && new Date(scan.next_retry_at).getTime() > now)
+    return false;
   if (scan.status === "failed") return true;
   if (!["uploaded", "processing"].includes(scan.status)) return false;
   const started =

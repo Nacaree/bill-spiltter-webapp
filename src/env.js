@@ -3,6 +3,8 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
+    // Validate this only at the action boundary so a bad limiter key cannot block bill reads.
+    RATE_LIMIT_SECRET: z.string().optional(),
     GEMINI_API_KEY: z.string().min(1).optional(),
     GEMINI_RECEIPT_MODEL: z
       .string()
@@ -17,6 +19,7 @@ export const env = createEnv({
     NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
   },
   runtimeEnv: {
+    RATE_LIMIT_SECRET: process.env.RATE_LIMIT_SECRET,
     GEMINI_API_KEY: process.env.GEMINI_API_KEY,
     GEMINI_RECEIPT_MODEL: process.env.GEMINI_RECEIPT_MODEL,
     PARTICIPANT_SESSION_SECRET: process.env.PARTICIPANT_SESSION_SECRET,

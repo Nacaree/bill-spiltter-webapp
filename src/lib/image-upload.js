@@ -3,9 +3,11 @@ import { z } from "zod";
 export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 export const IMAGE_UPLOAD_BUCKET = "image-upload-staging";
 export class ImageUploadError extends Error {
-  constructor(message, { resetUpload = false } = {}) {
+  constructor(message, { resetUpload = false, code, retryAfterSeconds } = {}) {
     super(message);
     this.resetUpload = resetUpload;
+    this.code = code;
+    this.retryAfterSeconds = retryAfterSeconds;
   }
 }
 

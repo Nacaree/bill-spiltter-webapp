@@ -1,3 +1,4 @@
+import { RateLimitError } from "@/lib/rate-limit-error";
 import { hashAccessToken } from "@/lib/access-tokens";
 import { reportAppError } from "@/server/monitoring";
 import {
@@ -97,18 +98,29 @@ export async function createReceiptScan({ cookieValue, file, shareToken }) {
   return { scanId };
 }
 
-export async function processReceiptScan(scanId) {
-  const { data, error } = await getServerSupabase({
-    signal: AbortSignal.timeout(10_000),
-  }).rpc("claim_receipt_extraction_v2", {
-    target_scan_id: scanId,
-  });
-  if (error) {
-    reportAppError(error, "receipt_extract");
-    throw databaseError(error);
+export async function processReceiptScan(scanId, actorParticipantId) {
+  let data;
+  try {
+    const result = await getServerSupabase({
+      signal: AbortSignal.timeout(5000),
+    }).rpc("claim_receipt_extraction_v3", {
+      target_scan_id: scanId,
+      actor_participant_id: actorParticipantId ?? null,
+    });
+    if (result.error || !result.data) throw new Error("Claim unavailable");
+    data = result.data;
+  } catch {
+    reportAppError(new Error("Receipt claim unavailable"), "rate_limit");
+    return { claimed: false, unavailable: true };
   }
   const claimed = resultRow(data);
-  if (!claimed) return { claimed: false };
+  if (!claimed?.claimed)
+    return {
+      claimed: false,
+      ...(claimed?.rate_limited
+        ? { rateLimited: true, retryAfterSeconds: claimed.retry_after_seconds }
+        : {}),
+    };
 
   try {
     return await withExtractionDeadline(async (signal) => {
@@ -187,15 +199,19 @@ export async function retryReceiptScan({
   const { data, error } = await getServerSupabase()
     .from("receipt_scans")
     .select(
-      "id, status, created_at, updated_at, processing_started_at, expires_at",
+      "id, status, created_at, updated_at, processing_started_at, expires_at, next_retry_at",
     )
     .eq("id", receiptScanId)
     .eq("bill_id", bill.id)
     .maybeSingle();
   if (error) throw databaseError(error);
   if (!data) throw new ReceiptNotFoundError();
+  if (data.next_retry_at && new Date(data.next_retry_at).getTime() > Date.now())
+    throw new RateLimitError(
+      Math.ceil((new Date(data.next_retry_at).getTime() - Date.now()) / 1000),
+    );
   if (!receiptCanRetry(data)) throw new ExpenseValidationError();
-  return { scanId: data.id };
+  return { scanId: data.id, actorParticipantId: participant.id };
 }
 
 export async function getReceiptScan(billId, receiptScanId) {
@@ -227,6 +243,14 @@ export async function getReceiptScan(billId, receiptScanId) {
   return {
     ...scan,
     canRetry: receiptCanRetry(scan),
+    retryAfterSeconds: scan.next_retry_at
+      ? Math.max(
+          0,
+          Math.ceil(
+            (new Date(scan.next_retry_at).getTime() - Date.now()) / 1000,
+          ),
+        )
+      : 0,
     discount_minor:
       scan.discount_minor === null ? null : Number(scan.discount_minor),
     items: items.map((item) => ({

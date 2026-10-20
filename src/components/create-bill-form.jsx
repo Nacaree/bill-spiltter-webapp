@@ -1,5 +1,7 @@
 "use client";
 
+import { RetainedForm } from "@/components/retained-form";
+
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createBillAction } from "@/app/actions";
@@ -22,7 +24,7 @@ export function CreateBillForm() {
   }, [router, state]);
 
   return (
-    <form action={action} className="mt-7 grid gap-5">
+    <RetainedForm state={state} action={action} className="mt-7 grid gap-5">
       <Field
         id="bill-name"
         name="billName"
@@ -69,6 +71,6 @@ export function CreateBillForm() {
       <Button className="mt-2 w-full" type="submit" disabled={pending}>
         {pending ? "Creating…" : "Create bill"}
       </Button>
-    </form>
+    </RetainedForm>
   );
 }

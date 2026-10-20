@@ -1,5 +1,7 @@
 "use client";
 
+import { RetainedForm } from "@/components/retained-form";
+
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createExpenseAction, updateExpenseAction } from "@/app/actions";
@@ -58,7 +60,7 @@ export function ExpenseForm({
   }
 
   return (
-    <form action={action} className="grid gap-5">
+    <RetainedForm state={state} action={action} className="grid gap-5">
       <input type="hidden" name="shareToken" value={bill.shareToken} />
       {editing ? (
         <input type="hidden" name="expenseId" value={expense.id} />
@@ -253,6 +255,6 @@ export function ExpenseForm({
             ? "Save changes"
             : "Add expense"}
       </Button>
-    </form>
+    </RetainedForm>
   );
 }

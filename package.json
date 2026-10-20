@@ -16,7 +16,9 @@
     "test:e2e:phase3": "RUN_SUPABASE_E2E=1 node --env-file=.env.local ./node_modules/@playwright/test/cli.js test tests/e2e/phase-3.spec.js",
     "test:integration:supabase": "RUN_SUPABASE_INTEGRATION=1 node --env-file=.env.local ./node_modules/vitest/vitest.mjs run tests/integration",
     "test:integration:gemini": "RUN_GEMINI_INTEGRATION=1 node --env-file=.env.local ./node_modules/vitest/vitest.mjs run tests/integration/gemini-receipt.integration.test.js",
-    "test:e2e:supabase": "npm run test:integration:supabase && RUN_SUPABASE_E2E=1 playwright test tests/e2e/phase-1.spec.js"
+    "test:e2e:supabase": "npm run test:integration:supabase && RUN_SUPABASE_E2E=1 playwright test tests/e2e/phase-1.spec.js",
+    "rate-limits:cleanup": "node --env-file=.env.local scripts/cleanup-rate-limits.mjs",
+    "test:integration:rate-limits": "RUN_RATE_LIMIT_INTEGRATION=1 node --env-file=.env.local ./node_modules/vitest/vitest.mjs run tests/integration/rate-limits.integration.test.js"
   },
   "dependencies": {
     "@sentry/nextjs": "^11.8.0",

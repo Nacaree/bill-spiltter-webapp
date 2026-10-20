@@ -243,6 +243,94 @@ verified against Sentry. The synthetic production verification issue is
 Temporary verification routes were removed. This SDK setup has not yet been
 deployed to Vercel; alerts and uptime monitoring remain separate follow-up work.
 
+## Rate limiting
+
+Shared limits run in the existing Supabase project. All Server Actions check a
+300-request/minute IP guard before business queries. Authorized operations also
+consume their applicable counters atomically. Ordinary bill pages are not gated.
+These application limits do not replace network-level abuse protection.
+
+| Operation                                                     | Limits                                                                                   |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Create bills                                                  | 10/10 minutes and 50/day per IP                                                          |
+| Join, claim or add people                                     | 60/10 minutes per IP; 100/10 minutes per bill                                            |
+| New receipt/QR upload reservations, combined                  | 20/10 minutes per participant; 60/10 minutes and 100/day per bill; 120/10 minutes per IP |
+| Upload completion / repeat QR inspection                      | 60/10 minutes per participant; 180/10 minutes per bill                                   |
+| Expense, settlement, receipt-confirmation and owner QR writes | 60/minute per participant; 300/minute per bill                                           |
+| Receipt extraction, including retries                         | 10/10 minutes per acting participant; 30/hour per bill; **100/day across the app**       |
+
+Limits use database-time fixed windows; daily windows reset at **00:00 UTC**
+(07:00 Cambodia time). Fixed windows can allow bursts around their boundaries.
+The private `rate_limit_policies` table is the single configuration for quotas
+and window lengths. Preview, Production and local development using the same
+Supabase project share counters and the app-wide scan cap.
+
+### Migration and configuration
+
+1. Pause receipt extraction and wait for existing attempts to finish.
+2. Apply `supabase/migrations/20261021000000_rate_limiting.sql` once, after the
+   direct-upload migration. The user applies hosted SQL manually. This creates
+   private policies/counters, cleanup RPCs, `receipt_scans.next_retry_at`, and the
+   atomic v3 extraction claim. It revokes service-role access to the old v2 claim;
+   deploy the updated worker before resuming scans. A code-only rollback to the
+   old worker cannot process receipts with this permission change.
+3. Generate a server-only secret with `openssl rand -base64 32`. Save it as
+   `RATE_LIMIT_SECRET` in `.env.local` and Vercel **Preview and Production**.
+   Use the same value for deployments sharing this database. Never paste the
+   secret into chat or prefix it with `NEXT_PUBLIC_`. Restart/redeploy afterward.
+4. Deploy, create a fresh test bill, and verify normal actions and a controlled
+   limit denial. The user reports migration/configuration are complete and both
+   hosted concurrency tests passed. Deployment of this code remains pending.
+
+Vercel requests use only its validated `x-vercel-forwarded-for` header. IPs are
+normalized and HMAC-hashed before storage; raw IPs, capability links, cookies,
+images and upload tokens are excluded. Local requests use one fixed development
+identity and ignore supplied forwarding headers. Secret rotation changes IP
+counter identities, but does not reset participant, bill or global scan counters.
+
+### Denials, outages and extraction
+
+Blocked actions return an existing form/upload error plus `code: "rate_limited"`
+and `retryAfterSeconds`. Inputs and valid upload reservations are retained; no
+write or scan is automatically retried. Limiter requests have a five-second
+network timeout. Missing configuration/migrations or store failures return
+`rate_limit_unavailable` and stop protected actions, without a local fallback.
+Bill viewing remains available if its existing data queries work. Unexpected
+limiter failures go to Sentry under a static operation label; normal denials do
+not create error issues.
+
+Extraction quota and the attempt ID are claimed in one database transaction.
+Duplicate/busy claims do not consume scan quota; each winning attempt counts,
+even if image conversion, image download or Gemini later fails. The cap limits
+attempts, not dollars. Application quota denial retains the image and saves a
+retry time; the receipt page offers a wait message and manual expense entry.
+If the claim store itself is unavailable, Gemini is not called and the existing
+stale-scan retry remains available after 150 seconds. Repeated completion still
+returns the same receipt without another reservation or extraction attempt;
+request/completion limits continue to apply.
+
+### Cleanup and checks
+
+Each limiter call deletes up to 100 counter windows that expired over 24 hours
+ago. With no traffic, cleanup waits for an operator; run and repeat until zero:
+
+```bash
+npm run rate-limits:cleanup
+```
+
+Offline tests cover counters, permission boundaries, extraction quota behavior,
+retained form values and uploads. After applying the migration, explicitly run:
+
+```bash
+npm run test:integration:rate-limits
+```
+
+This opt-in hosted test uses synthetic counter subjects, a temporary bill and a
+synthetic scan. It checks concurrent admission and extraction claims without
+calling Gemini or uploading an image. It cleans its bill and private test
+subjects. Its single winning claim consumes one app-wide daily attempt; it never
+resets or decrements the shared global counter. Run it when scan quota remains.
+
 ## Product direction
 
 The product should be **bill-first, not account-first**. A visitor can start immediately by naming a bill and entering their own name. The resulting bill page is the center of the experience: it contains participants, expenses, balances, settlement suggestions, and a shareable link.

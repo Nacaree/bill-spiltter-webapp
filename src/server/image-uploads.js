@@ -1,3 +1,4 @@
+import { guardOperation } from "@/server/rate-limits";
 import { cleanupImageUploadBatch } from "@/lib/cleanup-image-uploads.mjs";
 import { reportAppError } from "@/server/monitoring";
 import { randomUUID } from "node:crypto";
@@ -78,6 +79,10 @@ export async function prepareImageUpload(input) {
     participant = await getSessionParticipant(bill.id, input.cookieValue);
     if (!participant) throw new ParticipantSessionRequiredError();
   }
+  await guardOperation("upload", {
+    billId: bill.id,
+    participantId: participant.id,
+  });
   await cleanupImageUploads();
   const db = getServerSupabase();
   const id = randomUUID();
@@ -124,6 +129,15 @@ export async function completeImageUpload({ uploadId, ...access }) {
   const capability = uploadCapability(access);
   const parameters = { ...capability, target_upload_id: uploadId };
   const db = getServerSupabase({ signal: AbortSignal.timeout(105_000) });
+  const { data: authorized, error: authError } = await db.rpc(
+    "get_image_upload",
+    parameters,
+  );
+  if (authError) throw databaseError(authError);
+  await guardOperation("complete", {
+    billId: authorized.bill_id,
+    participantId: authorized.participant_id,
+  });
   const { data: upload, error } = await db.rpc(
     "claim_image_upload",
     parameters,
@@ -204,6 +218,7 @@ export async function completeImageUpload({ uploadId, ...access }) {
       purpose: "receipt",
       receiptScanId: finished.scan_id,
       shouldProcess: finished.should_process,
+      actorParticipantId: upload.participant_id,
     };
   } catch (error) {
     if (upload.acquired) {

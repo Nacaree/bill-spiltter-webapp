@@ -4,6 +4,7 @@ import sharp from "sharp";
 import { afterEach, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { createParticipantSession } from "@/lib/participant-session";
 import { hashAccessToken } from "@/lib/access-tokens";
+vi.mock("@/server/rate-limits", () => ({ guardOperation: vi.fn() }));
 const mocks = vi.hoisted(() => ({
   rpc: vi.fn(),
   from: vi.fn(),
@@ -103,12 +104,11 @@ beforeEach(() => {
     actor: { id: actorId },
   });
   mocks.rpc.mockImplementation(async (name) => ({
-    data:
-      name === "claim_image_upload"
-        ? reservation
-        : name === "finish_receipt_upload"
-          ? { scan_id: id, should_process: true }
-          : null,
+    data: ["get_image_upload", "claim_image_upload"].includes(name)
+      ? reservation
+      : name === "finish_receipt_upload"
+        ? { scan_id: id, should_process: true }
+        : null,
     error: null,
   }));
   mocks.download.mockImplementation(async () => ({ data: new Blob([image]) }));
@@ -186,6 +186,7 @@ it("validates a >4.5 MB image from storage and commits its scan before deleting 
     purpose: "receipt",
     receiptScanId: id,
     shouldProcess: true,
+    actorParticipantId: actorId,
   });
   expect(mocks.rpc).toHaveBeenCalledWith(
     "claim_image_upload",
@@ -223,6 +224,7 @@ it("returns the completed scan without downloading or scheduling twice", async (
   });
   expect(mocks.download).not.toHaveBeenCalled();
   expect(mocks.rpc.mock.calls.map(([name]) => name)).toEqual([
+    "get_image_upload",
     "claim_image_upload",
   ]);
 });

@@ -1,6 +1,8 @@
 "use server";
 
-import { monitorAction, reportAppError } from "@/server/monitoring";
+import { protectedAction } from "@/server/protected-action";
+import { rateLimitFailure } from "@/lib/rate-limit-error";
+import { reportAppError } from "@/server/monitoring";
 
 import { refresh } from "next/cache";
 import { cookies } from "next/headers";
@@ -30,6 +32,8 @@ async function access() {
   };
 }
 function failure(error) {
+  const limited = rateLimitFailure(error, true);
+  if (limited) return limited;
   if (error instanceof ImageUploadError)
     return { error: error.message, resetUpload: error.resetUpload };
   if (error instanceof CreatorAccessRequiredError)
@@ -49,7 +53,7 @@ function failure(error) {
   return { error: "We couldn’t process this image. Try again." };
 }
 export async function prepareImageUploadAction(metadata) {
-  return monitorAction("prepareImageUploadAction", async () => {
+  return protectedAction("prepareImageUploadAction", async () => {
     try {
       return {
         upload: await prepareImageUpload({ ...metadata, ...(await access()) }),
@@ -60,14 +64,16 @@ export async function prepareImageUploadAction(metadata) {
   });
 }
 export async function completeImageUploadAction(uploadId) {
-  return monitorAction("completeImageUploadAction", async () => {
+  return protectedAction("completeImageUploadAction", async () => {
     try {
       const result = await completeImageUpload({
         uploadId,
         ...(await access()),
       });
       if (result.purpose === "receipt" && result.shouldProcess)
-        after(() => processReceiptScan(result.receiptScanId));
+        after(() =>
+          processReceiptScan(result.receiptScanId, result.actorParticipantId),
+        );
       refresh();
       return {
         result: {

@@ -1,5 +1,7 @@
 "use client";
 
+import { RetainedForm } from "@/components/retained-form";
+
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -96,7 +98,8 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
         </p>
       ) : null}
       {draft ? (
-        <form
+        <RetainedForm
+          state={saved}
           key={draft.token}
           action={save}
           className="mt-5 grid gap-4 rounded-xl border border-teal-200 bg-white p-4"
@@ -175,10 +178,11 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
           <Button type="submit" disabled={saving || inspecting}>
             {saving ? "Saving…" : method ? "Replace owner QR" : "Save owner QR"}
           </Button>
-        </form>
+        </RetainedForm>
       ) : null}
       {method ? (
-        <form
+        <RetainedForm
+          state={removed}
           action={remove}
           className="mt-4"
           onSubmit={(event) => {
@@ -196,7 +200,7 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
           >
             {removing ? "Removing…" : "Remove owner QR"}
           </Button>
-        </form>
+        </RetainedForm>
       ) : null}
       {[saved, removed].map((state, index) =>
         state.errors?.form ? (

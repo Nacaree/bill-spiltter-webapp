@@ -6,6 +6,39 @@ latest commit. Pull `main` and run `npm ci` when moving to another computer.
 The user wants migration SQL saved in `supabase/migrations/` and will apply
 hosted migrations themselves. Tell them when a new migration is required.
 
+## Rate limiting (2026-10-21)
+
+Implementation is ready for deployment. Do not apply hosted migrations for the
+user. SQL: `supabase/migrations/20261021000000_rate_limiting.sql`, after direct
+uploads. Pause extraction, wait for workers, apply SQL, deploy updated code, then
+resume: service-role access to claim_receipt_extraction_v2 is retired. The new v3
+claim atomically charges quota and assigns attempts; stale-worker guards remain.
+
+Private database policies/counters enforce the agreed generous limits; README
+lists them. All actions first enforce 300/minute/IP. Authorized operation limits
+precede mutation/token issuance/processing. Extraction is capped at 100/day across
+all deployments sharing this project, resetting 00:00 UTC, including failed
+attempts/retries. Duplicate claims do not spend extraction quota. Quota denial
+retains images, stores next_retry_at, and offers manual entry. Claims use the
+acting participant propagated from authorized completion/retry.
+
+Set RATE_LIMIT_SECRET (32+ characters) in local .env.local and both Vercel scopes;
+keep it identical across deployments using this database. No .env.local was edited.
+Vercel-only trusted IP header, normalized HMAC subjects; local fixed identity.
+Missing secret/migration/store errors fail closed; reads are not guarded.
+Five-second limiter network deadline. Expected denials preserve response shapes,
+inputs and upload reservations; no automatic mutation retries. Static limiter
+failure reporting goes to Sentry without identifiers.
+
+Cleanup deletes 100 windows older than expiration plus 24 hours per call. For idle
+projects: npm run rate-limits:cleanup until zero. No scheduler added.
+Opt-in hosted check: npm run test:integration:rate-limits AFTER migration; synthetic
+concurrency checks, no Gemini, consumes one global attempt and cleans test records.
+The user reports the migration/secret setup is complete and supplied passing
+output for both hosted concurrency tests (2/2). This verifies Supabase, not the
+deployed code. Push and wait for Vercel before resuming scans, then check app flows.
+See CURRENT_WORK for final validation.
+
 ## Sentry setup (2026-10-20)
 
 The user reports all required migrations, Vercel deployment and live bill flows

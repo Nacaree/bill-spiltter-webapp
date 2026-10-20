@@ -127,3 +127,23 @@ it("accepts the exact 10 MB boundary and preserves receipt versus QR format rest
     parseImageUploadMetadata({ ...metadata, size: metadata.size + 1 }),
   ).toThrow(/10 MB/);
 });
+
+it("preserves a valid uploaded reservation and rate-limit metadata for a manual retry", async () => {
+  const t = setup();
+  t.complete.mockResolvedValueOnce({
+    error: "Too many requests. Try again in 1 minute.",
+    code: "rate_limited",
+    retryAfterSeconds: 60,
+    resetUpload: false,
+  });
+  await expect(directImageUpload(t.input(), t)).rejects.toMatchObject({
+    code: "rate_limited",
+    retryAfterSeconds: 60,
+    resetUpload: false,
+  });
+  expect(t.input().file).toBe(file);
+  expect(t.input().reservation.uploaded).toBe(true);
+  await directImageUpload(t.input(), t);
+  expect(t.upload).toHaveBeenCalledOnce();
+  expect(t.prepare).toHaveBeenCalledOnce();
+});
