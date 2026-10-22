@@ -5,9 +5,9 @@
 
 ## Task
 
-Stage 4 daily cleanup automation implemented locally on `main`; activation pending.
-Stage 1 complete; Stage 2 skipped; Stage 3 migration/live smoke checks user-passed.
-No new migration. Existing work preserved; tested automation is ready to publish.
+Stage 4 daily cleanup is ENABLED in Production; worker revision `b0ba0ac` on main.
+No new migration; Stage 2 skipped. Existing work preserved, no new branch.
+Implementation committed/pushed; documentation follow-up records rollout results.
 
 ## Implementation and validation
 
@@ -15,34 +15,34 @@ No new migration. Existing work preserved; tested automation is ready to publish
 - Production-only bearer auth, enable flag, matching explicit project ref;
   gates precede client construction. HEAD/other methods reject; no-store responses.
 - Per run: up to 20 bills + 20 drafts, 20 old uploads, 100 old counter windows,
-  then 40 file batches of 3. Existing lifecycle deadlines/leases remain enforced.
+  then 40 file batches of 3. Database deadlines/leases remain enforced.
 - Limits: 300s function, 210s soft stop, 240s hard abort, 15s per request.
-- Stops on failures; safe aggregate results + existing Sentry lifecycle_cleanup.
-  No new email/missed-run alerts. Failed/unfinished work retries next daily run.
-- 280 offline tests pass; 8 hosted/provider tests skipped. Lint and webpack build
-  and full-repository formatting/diff checks pass; source-map uploads disabled.
-  Built-server local HTTP checks pass:
-  GET 401, authenticated disabled GET 503, HEAD/POST/OPTIONS 405; all no-store.
+- Safe aggregate reporting + existing Sentry lifecycle_cleanup; stops on failure.
+  No new email/missed-run alerts. Unfinished work retries on later daily runs.
+- 280 offline tests pass; 8 hosted/provider tests skipped. Lint, formatting/diff
+  and webpack build pass; source-map uploads disabled. Local HTTP checks passed.
 
-## Hosted preparation and next step
+## Hosted rollout evidence — 2026-10-23, GMT+7
 
-- Saved Vercel Production-only config: LIFECYCLE_CLEANUP_ENABLED=false and
-  LIFECYCLE_CLEANUP_PROJECT_REF=uvznqgkbodejvksmtafh. Verified list after reload.
-- User saved CRON_SECRET; its Secret type and Production-only scope were verified
-  in Chrome. Value was not revealed. User redeployment AS8JUv1uS used old f4f8b00.
-- Publish the worker to main, verify disabled deployment/access gates, enable and
-  redeploy, then verify cron
-  registration/first scheduled invocation. README contains rollout/stop runbook.
-- Automation is NOT active. Stage 4 remains open; no new Production cleanup ran.
+- CRON_SECRET saved by user, Secret type, Production only; value never revealed.
+- Worker b0ba0ac published; disabled deployment DjzWeacd8 passed public GET 401,
+  HEAD/POST 405, no-store, and authenticated dashboard Run 503.
+- User completed Vercel email verification; agent set enable flag true/redeployed.
+- H8jKFNYNJ / b0ba0ac Ready Production at 03:00:28. Cron registration verified.
+- Exactly one enabled dashboard probe approved: completed at 03:02:39, 571ms;
+  all removals=0, files failed=0, countsComplete=true; 13 future sweeps kept queued.
+- Read-only check at 03:02:55: active bills=19, confirmed receipts=8, expenses=10,
+  unchanged. All eligible backlog counts=0; pendingFileJobs=13.
+- README/HANDOFF record release links, schedule and emergency-stop instructions.
 
-## Existing cleanup evidence / remaining checks
+## Remaining
 
-- Oct 23: 5 expired drafts removed; 10 due file jobs processed across approved
-  batches without failure. Latest queue: 13 waiting, 0 due; no leases.
-- Deleted bill's 3 folders empty; 10 draft targets absent. Active bills=19,
-  confirmed receipts=8, expenses=10, unchanged. Last checked ~02:33 GMT+7.
-- Final sweeps after Oct 24 02:30 GMT+7; verify active confirmed receipt still opens.
+- Verify first time-triggered scheduled invocation (manual probe is distinct).
+- Existing 13 final deadlines pass Oct 24 02:30 GMT+7; daily worker should handle
+  them in a later 03–04 run. No manual return is needed to trigger cleanup.
+- Verify final queue/file absence and active bill's confirmed receipt UI access
+  before closing Stage 4. No artificial expiry or Production failure injection.
 - QR replacement failures lack live-bill orphan retries; documented limitation.
-- Credential rotation, broader deployed-flow tests, real devices/screen readers
-  and Firefox remain. Preview shares Production; prior missing RATE_LIMIT_SECRET.
+- Credential rotation, broader deployed flows, real devices/screen readers and
+  Firefox remain. Preview shares Production; prior missing RATE_LIMIT_SECRET.
 - Privacy/support content and Privacy & Help page remain off the to-do list.

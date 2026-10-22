@@ -9,7 +9,7 @@ computer.
 The user wants migration SQL saved in `supabase/migrations/` and will apply
 hosted migrations themselves. Tell them when a new migration is required.
 
-## Resume here — secret saved; publish worker and verify activation
+## Resume here — daily cleanup enabled; successful Production probe
 
 Status refreshed **2026-10-23 (Asia/Phnom_Penh)**. Current branch remains `main`;
 existing uncommitted documentation and mobile/accessibility work were preserved.
@@ -36,27 +36,59 @@ No new migration is required. Stage 2 remains skipped.
   lint and webpack production build passed with source-map uploads disabled.
   Local built-server HTTP checks passed: unauthenticated GET 401, authenticated
   disabled GET 503, HEAD/POST/OPTIONS 405, all no-store. They used a dummy secret,
-  disabled worker and placeholder service key. No Production cleanup ran while
-  implementing automation. Full-repository formatting and diff checks passed.
+  disabled worker and placeholder service key. Full-repository formatting and
+  diff checks passed. Subsequent hosted probe evidence is recorded below.
 - **Hosted preparation confirmed via Chrome:** saved config variables
   `LIFECYCLE_CLEANUP_ENABLED=false` and
   `LIFECYCLE_CLEANUP_PROJECT_REF=uvznqgkbodejvksmtafh`, both **Production only**,
   in Vercel project `nacarees-projects/bill-spiltter-webapp`. Reloaded the list and
-  verified both entries. Cleanup remains disabled pending worker publication.
+  verified both entries. The flag was later enabled after access checks passed.
 - **Secret entry complete:** user reported saving `CRON_SECRET` and manually
   redeploying. Chrome verified Secret type and Production-only scope; value was
   not revealed. The manual redeployment `AS8JUv1uSfJXwqzB5r5BvVzL66JZ` rebuilt
   **f4f8b00**, which predates the worker. Public GET/HEAD on the new route still
   returned 404; this does not verify the worker's access gates.
-- **Next:** commit/push the tested worker on the current `main` branch, deploy
-  while disabled, verify the new commit and 401/405/disabled-503 behavior; then
-  enable/redeploy and verify cron registration/first scheduled invocation. README
-  records activation and emergency-stop instructions. User requested the full
-  automation rollout; do not ask them to save the secret again or create a new
-  branch. Do not claim automation is running until verified.
-- Existing 13 file jobs still require final sweeps after Oct 24, 02:30 GMT+7 and
-  an active confirmed-receipt UI check. Last known queue/storage evidence below;
-  no new hosted mutation is inferred from the offline tests. Stage 4 stays open.
+- **Worker published:** committed/pushed on the existing `main` branch at
+  `b0ba0ac85209d190fcd65856ed074cbf7a27bfcd`, including prior uncommitted
+  inventory/manual-cleanup docs. Commit title: feat: schedule bounded daily
+  lifecycle cleanup.
+  Vercel deployment `DjzWeacd87N8rWhvWzohfkttTvDj` includes the worker.
+  Public Production GET returned **401**, HEAD/POST **405**, all no-store.
+  Cron registration was verified: `/api/cron/lifecycle-cleanup`, `0 20 * * *` UTC,
+  project Cron Jobs enabled. A dashboard Run while the application flag was false
+  returned **503** in Request Logs at `2026-10-22T19:55:31.308Z`, proving the
+  authenticated request reached the disabled worker without running cleanup.
+- **Activation completed:** user completed Vercel's email verification themselves.
+  Agent saved `LIFECYCLE_CLEANUP_ENABLED=true` (Production only) and redeployed the
+  verified worker source. Deployment **H8jKFNYNJDkrZnEZN4YWt1bqEnMN**, commit
+  **b0ba0ac**, was confirmed **Ready / Production** at **2026-10-23 03:00:28 GMT+7**.
+  Public alias: `https://bill-spiltter-webapp.vercel.app/`; immutable URL:
+  `https://bill-spiltter-webapp-451pc2qr1-nacarees-projects.vercel.app/`.
+  Cron Jobs enabled; exact daily route/schedule reverified after activation.
+  Secret values were never revealed, changed or copied by the agent.
+- **One enabled probe authorized and successful:** user confirmed “Run one probe
+  now” before the dashboard Run action. Runtime log at **2026-10-23 03:02:39 GMT+7**:
+  `status=completed`, `stoppedReason=idle`, all removal counts **0**,
+  `files={processed:0,failed:0,waiting:0}`, `countsComplete=true`, duration **571ms**.
+  One file-batch claim found no due work. Backlog: all eligible counts **0**,
+  `pendingFileJobs=13`. This was a manual dashboard probe, not evidence of the
+  first time-triggered scheduled invocation. No additional enabled probe ran.
+- **Read-only preservation check** at `2026-10-22T20:02:55.045Z`: active bills **19**,
+  confirmed receipts **8**, expenses **10**, unchanged; 0 expired bills/drafts,
+  stale uploads, old counter windows or due file jobs; 13 pending final sweeps.
+- **Next verification:** first time-triggered scheduled invocation remains to be
+  observed. The existing 13 final deadlines all pass after Oct 24, **02:30 GMT+7**;
+  the enabled daily worker should process them during a later **03:00–03:59** run,
+  subject to Vercel delivery, batch/time limits and failures. The user does not
+  need to return to trigger cleanup manually. Verify the resulting queue/file
+  absence and an active bill's confirmed receipt UI before closing all Stage 4
+  checks. Do not bypass deadlines, inject failures, or mark this evidence complete
+  merely because the schedule is enabled. Stage 2 remains skipped.
+- **Resume guidance:** worker implementation is committed/pushed on existing
+  `main`; no new branch or migration. The deployment above is the last directly
+  verified code release at its observation time. A documentation-only follow-up
+  may trigger another build from identical worker code; check Git/Vercel for the
+  latest release identity. README records activation and emergency-stop steps.
 
 ## Manual cleanup evidence before automation (2026-10-23)
 
@@ -135,7 +167,7 @@ Status refreshed **2026-10-23 (Asia/Phnom_Penh)**.
 - Stage 2 remains explicitly skipped. No isolated backend is available; broader
   failure/retry cases retain their offline evidence rather than being simulated
   against Production. Scheduling was initially deferred; daily automation is now
-  implemented locally as recorded above.
+  enabled in Production as recorded above.
 
 ## Remaining Phase 4 work
 
@@ -143,7 +175,7 @@ The user removed privacy/support content and the Privacy & Help page from the
 to-do list. Only mobile/accessibility reviews and operational checks remain.
 Stage 2 backup/restore was skipped at the user’s request. Stage 3 is implemented
 and committed on `main`; its migration and live smoke checks are user-reported
-complete. Stage 4 automation activation/final sweeps, credential rotation and the
+complete. Stage 4 scheduled/final-sweep verification, credential rotation and the
 broader deployed-flow verification remain pending; exact Production commit has not been independently captured.
 
 ## Stage 3 implementation (2026-10-22)
@@ -200,8 +232,8 @@ reference are in README's lifecycle section. No hosting settings were changed.
 
 Stage 3 migration and live smoke checks are user-reported complete. Stage 4 is
 active: the initial Production batch and seven remaining due file jobs completed,
-and daily automation is implemented locally. Activation, final sweeps and
-active/confirmed UI verification are pending.
+and daily automation is enabled with a successful manual Production probe.
+Time-triggered execution, final sweeps and active/confirmed UI verification remain.
 Exact deployment identity has not been independently captured.
 
 ## Stage 1 inventory (2026-10-22)
@@ -345,8 +377,8 @@ application tests were not rerun for these documentation-only edits.
 
 This is the execution order: Stage 1 complete, Stage 2 skipped by user,
 Stage 3 committed on `main` with migration and live smoke checks user-reported
-complete; Stage 4 daily automation is implemented locally with activation and
-final-sweep verification pending; Stages 5–7 remain pending. Work proceeds one stage at a time, with observed
+complete; Stage 4 daily automation is enabled with a successful manual probe and
+scheduled/final-sweep verification pending; Stages 5–7 remain pending. Work proceeds one stage at a time, with observed
 results and unresolved decisions recorded here
 and a concise status in CURRENT_WORK. Hosted migrations remain user-applied.
 
@@ -375,8 +407,8 @@ and a concise status in CURRENT_WORK. Hosted migrations remain user-applied.
    uploads, abandoned receipt drafts, replaced/removed QR files and old counters.
    Verify bounded batches, valid-data preservation, failure recovery and repeat
    runs. Test the operator commands on an isolated backend first. Decide/document
-   the idle-time routine. Daily Vercel scheduling is now implemented locally;
-   activation and first scheduled/final-sweep verification remain pending.
+   the idle-time routine. Daily Vercel scheduling is now enabled and manually probed;
+   first time-triggered invocation and final-sweep verification remain pending.
    Done: demonstrated cleanup and an explicit manual or scheduled operating plan.
 5. **Credential rotation rehearsal.** Inventory Supabase, Gemini, session-signing,
    rate-limit and Sentry credentials. Rehearse on isolated test credentials;

@@ -220,13 +220,14 @@ final sweeps remain, as recorded in HANDOFF. Expiry enforcement does not need th
 
 #### Stage 4 automated daily cleanup
 
-The daily worker is implemented and tested locally. **It is not deployed or
-active yet.** On 2026-10-23, the agent saved only these Vercel **Production**
-config variables: `LIFECYCLE_CLEANUP_ENABLED=false` and
-`LIFECYCLE_CLEANUP_PROJECT_REF=uvznqgkbodejvksmtafh`. The user subsequently saved
-`CRON_SECRET` as a Production-only Secret. Worker publication/activation remains
-pending; redeploying old commit `f4f8b00` does not include it. No additional SQL
-migration is needed.
+**Enabled in Production on 2026-10-23.** Worker revision `b0ba0ac` was deployed
+Ready with `LIFECYCLE_CLEANUP_ENABLED=true`, the matching project ref, and a
+Production-only `CRON_SECRET` entered by the user. Disabled-first 401/405/503 checks
+passed before activation. One approved enabled dashboard probe completed at
+03:02 GMT+7 with no failures or removals, leaving all 13 future final sweeps queued.
+First time-triggered execution and final-sweep/retained-receipt verification remain
+pending; HANDOFF records deployment IDs, times and aggregate evidence. No new SQL
+migration is needed. Documentation-only commits may deploy identical worker code.
 
 `vercel.json` schedules `GET /api/cron/lifecycle-cleanup` at `0 20 * * *` UTC:
 **3–4 a.m. Phnom Penh time daily**. Hobby execution can happen anywhere in the
@@ -373,8 +374,8 @@ Stage 4 completion requires recorded successful eligible cleanup, preservation
 of active/confirmed data, repeat-run results and final-sweep/file evidence.
 Offline tests cover controlled failures and late uploads. There is no isolated
 hosted backend, so do not inject outages or artificial expiry into Production.
-Stage 2 remains skipped. Daily automation is now implemented locally, with hosted
-activation and scheduled/final-sweep verification pending as described above.
+Stage 2 remains skipped. Daily automation is enabled and manually probed;
+time-triggered execution and final-sweep verification remain as described above.
 
 #### Coordinated lifecycle rollout — later explicit operator action
 
@@ -956,7 +957,7 @@ A scan is a temporary, editable draft until it is confirmed. OCR requests run as
 | `expires_at`, `confirmed_at`, `created_at`, `updated_at`                    | `timestamptz` | Draft lifecycle and audit timestamps.                                               |
 
 Only one expense may reference a confirmed scan, enforced by a unique constraint on `expenses.receipt_scan_id`. Confirmation accepts an idempotency key so browser or network retries return the existing expense instead of creating a duplicate. Unconfirmed scans become inaccessible after 24 hours and eligible for cleanup. Confirmed receipt images remain until bill deletion, with their structured items and financial records. Storage removal is performed by the retryable lifecycle
-cleanup; daily scheduling is implemented locally but awaits hosted activation.
+cleanup; daily scheduling is enabled in Production (Stage 4 details above).
 
 ### `receipt_items`
 
