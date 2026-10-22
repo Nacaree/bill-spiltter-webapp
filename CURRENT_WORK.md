@@ -5,45 +5,44 @@
 
 ## Task
 
-Phase 4: Stage 3 lifecycle/permanent deletion implemented locally and tested.
-Stage 1 complete; Stage 2 skipped by user. Hosted rollout pending.
-Working branch: `work/mobile-accessibility-lifecycle`; keep Production `main` unchanged.
+Stage 4 daily cleanup automation implemented locally on `main`; activation pending.
+Stage 1 complete; Stage 2 skipped; Stage 3 migration/live smoke checks user-passed.
+No new migration. Existing work preserved; tested automation is ready to publish.
 
-## Implemented locally
+## Implementation and validation
 
-- Bills expire after 12 UTC calendar months without a qualifying successful change.
-  Reads/failures/retries/background processing do not renew them; inline expiry
-  dates and a final-30-day warning are shown. No grace/undo at automatic expiry.
-- Draft receipts expire at 24 hours. Confirmed images remain until bill deletion;
-  expense cards link to receipts and old missing images have an accessible fallback.
-- Creator-device deletion requires session/recovery cookies and typing DELETE.
-  SQL atomically queues file cleanup and removes dependent app/scoped-quota rows;
-  other bills/global/IP quotas remain. Only this bill's cookies are cleared.
-- Private retry jobs sweep receipt/QR/staging folders, including orphan/nested files.
-  Five-minute leases/retries and a final 24-hour sweep handle failures/late uploads.
-- `npm run lifecycle:cleanup` defaults to count-only dry-run; apply requires
-  `-- --apply --project-ref <matching-project-ref>`. Bounded batches; no scheduler.
-- Migration `20261022000000_bill_lifecycle.sql`: **NOT APPLIED to hosted Supabase**,
-  explicitly confirmed by the user on 2026-10-22. User applies it after rate limiting.
-- Mobile/accessibility and lifecycle work saved together; not released to Production.
-  Automatic Preview builds do not apply SQL and are not ready for hosted validation.
+- GET `/api/cron/lifecycle-cleanup`, daily `0 20 * * *` UTC (03–04 Phnom Penh).
+- Production-only bearer auth, enable flag, matching explicit project ref;
+  gates precede client construction. HEAD/other methods reject; no-store responses.
+- Per run: up to 20 bills + 20 drafts, 20 old uploads, 100 old counter windows,
+  then 40 file batches of 3. Existing lifecycle deadlines/leases remain enforced.
+- Limits: 300s function, 210s soft stop, 240s hard abort, 15s per request.
+- Stops on failures; safe aggregate results + existing Sentry lifecycle_cleanup.
+  No new email/missed-run alerts. Failed/unfinished work retries next daily run.
+- 280 offline tests pass; 8 hosted/provider tests skipped. Lint and webpack build
+  and full-repository formatting/diff checks pass; source-map uploads disabled.
+  Built-server local HTTP checks pass:
+  GET 401, authenticated disabled GET 503, HEAD/POST/OPTIONS 405; all no-store.
 
-## Validation
+## Hosted preparation and next step
 
-- 243 offline tests pass; eight hosted/provider tests skipped. PGlite and mocked
-  Storage cover lifecycle, authorization, batches, failures and race interleavings.
-- 10 new offline lifecycle browser checks pass: Chromium/WebKit desktop, 320px
-  Chromium, Android/iPhone emulation; keyboard/error/pending/fallback/axe/reflow.
-- Formatting, lint and webpack production build pass; source-map uploads disabled.
-- No Production data tests, cleanup, migration, deployment or credential changes.
+- Saved Vercel Production-only config: LIFECYCLE_CLEANUP_ENABLED=false and
+  LIFECYCLE_CLEANUP_PROJECT_REF=uvznqgkbodejvksmtafh. Verified list after reload.
+- User saved CRON_SECRET; its Secret type and Production-only scope were verified
+  in Chrome. Value was not revealed. User redeployment AS8JUv1uS used old f4f8b00.
+- Publish the worker to main, verify disabled deployment/access gates, enable and
+  redeploy, then verify cron
+  registration/first scheduled invocation. README contains rollout/stop runbook.
+- Automation is NOT active. Stage 4 remains open; no new Production cleanup ran.
 
-## Remaining
+## Existing cleanup evidence / remaining checks
 
-- Do not merge/promote this branch yet. Follow coordinated maintenance → drain old callbacks → user SQL
-  → deploy/promote → verify → reopen sequence. Old code deletes confirmed images.
-- Stage 4: decide/run cleanup routine and hosted rehearsal; no automatic worker yet.
-- Real iPhone/Android, VoiceOver/TalkBack/manual keyboard and working-host Firefox.
-- Credential rotation and deployed normal/blocked-flow checks remain pending.
-- Production still `32355c4`; Local/Preview/Production share `uvznqgkbodejvksmtafh`.
-  Preview RATE_LIMIT_SECRET is missing; account free-project limit blocks a test project.
-- Privacy/support content and the Privacy & Help page remain off the to-do list.
+- Oct 23: 5 expired drafts removed; 10 due file jobs processed across approved
+  batches without failure. Latest queue: 13 waiting, 0 due; no leases.
+- Deleted bill's 3 folders empty; 10 draft targets absent. Active bills=19,
+  confirmed receipts=8, expenses=10, unchanged. Last checked ~02:33 GMT+7.
+- Final sweeps after Oct 24 02:30 GMT+7; verify active confirmed receipt still opens.
+- QR replacement failures lack live-bill orphan retries; documented limitation.
+- Credential rotation, broader deployed-flow tests, real devices/screen readers
+  and Firefox remain. Preview shares Production; prior missing RATE_LIMIT_SECRET.
+- Privacy/support content and Privacy & Help page remain off the to-do list.

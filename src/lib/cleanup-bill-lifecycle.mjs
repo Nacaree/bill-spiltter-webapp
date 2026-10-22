@@ -58,7 +58,10 @@ export async function previewBillLifecycle(db, now = Date.now()) {
   };
 }
 
-export async function cleanupLifecycleFiles(db, { billId = null } = {}) {
+export async function cleanupLifecycleFiles(
+  db,
+  { billId = null, stopOnFailure = false } = {},
+) {
   const jobs =
     checked(
       await db.rpc("claim_lifecycle_file_jobs", {
@@ -140,13 +143,17 @@ export async function cleanupLifecycleFiles(db, { billId = null } = {}) {
       (!drained || new Date(job.final_sweep_after).getTime() > Date.now())
     )
       result.waiting++;
+    // Other claimed jobs keep their leases and can be retried after five minutes.
+    if (!succeeded && stopOnFailure) break;
   }
   return result;
 }
 
+export async function cleanupExpiredLifecycleRecords(db) {
+  return checked(await db.rpc("cleanup_bill_lifecycle", { batch_size: 20 }));
+}
+
 export async function cleanupBillLifecycle(db) {
-  const removed = checked(
-    await db.rpc("cleanup_bill_lifecycle", { batch_size: 20 }),
-  );
+  const removed = await cleanupExpiredLifecycleRecords(db);
   return { ...removed, files: await cleanupLifecycleFiles(db) };
 }

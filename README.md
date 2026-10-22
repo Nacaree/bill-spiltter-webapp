@@ -151,8 +151,10 @@ flow works. Automated hosted verification by the agent has not been run.
 
 ### Bill lifecycle and permanent deletion — Stage 3
 
-Implemented locally; requires `20261022000000_bill_lifecycle.sql` and the coordinated
-rollout below. Stage 2 backup/recovery was skipped at the user's request.
+Implemented and committed on `main`. The user reported applying
+`20261022000000_bill_lifecycle.sql` and passing the Stage 3 live smoke checks on
+2026-10-23. Exact hosted deployment identity has not been independently captured.
+Stage 2 backup/recovery was skipped at the user's request.
 
 - A bill expires after 12 calendar months in UTC without a qualifying change.
   Successful participant changes, expense/payment/QR changes, completed receipt
@@ -212,13 +214,176 @@ failed jobs retry after five minutes, partial jobs are due immediately, and a
 drained initial job waits until its 24-hour final-sweep time. Future jobs remain
 in `pendingFileJobs`, so a nonzero queue count does not necessarily mean failure.
 Repeat bounded runs for due work and return after final-sweep times. Scheduling,
-monitoring cadence and hosted cleanup rehearsal are Stage 4 work; this command
-has not been run against Production. Expiry enforcement does not need the worker.
+monitoring cadence and hosted cleanup rehearsal are Stage 4 work. One approved
+Production apply batch and subsequent due-file batches completed on 2026-10-23;
+final sweeps remain, as recorded in HANDOFF. Expiry enforcement does not need the worker.
+
+#### Stage 4 automated daily cleanup
+
+The daily worker is implemented and tested locally. **It is not deployed or
+active yet.** On 2026-10-23, the agent saved only these Vercel **Production**
+config variables: `LIFECYCLE_CLEANUP_ENABLED=false` and
+`LIFECYCLE_CLEANUP_PROJECT_REF=uvznqgkbodejvksmtafh`. The user subsequently saved
+`CRON_SECRET` as a Production-only Secret. Worker publication/activation remains
+pending; redeploying old commit `f4f8b00` does not include it. No additional SQL
+migration is needed.
+
+`vercel.json` schedules `GET /api/cron/lifecycle-cleanup` at `0 20 * * *` UTC:
+**3–4 a.m. Phnom Penh time daily**. Hobby execution can happen anywhere in the
+selected hour. Delivery is best effort, so this is not an exact removal-time
+promise. The database continues enforcing expiry even when cleanup is delayed.
+See [Vercel scheduling limits](https://vercel.com/docs/cron-jobs/usage-and-pricing).
+
+The route requires a constant-time checked `Authorization: Bearer <CRON_SECRET>`
+header, `VERCEL_ENV=production`, the explicit enable flag, matching HTTPS Supabase
+project coordinates and the existing service-role key. It rejects query
+parameters, returns uncached responses and explicitly rejects HEAD/other methods.
+All gates run before creating the database client. Missing/invalid secret returns
+503; wrong/missing authorization returns 401 once the secret is configured;
+Preview/development returns 404; disabled or mismatched configuration returns 503.
+
+Each invocation runs one database lifecycle batch (at most 20 expired bills and
+20 expired unconfirmed receipts), one stale-upload batch (at most 20 reservations
+older than 24 hours), one counter batch (at most 100 windows expired over 24 hours
+ago), then at most 40 sequential file batches of three jobs. Confirmed receipt
+images stay until bill deletion. Global/IP counters remain until their normal
+old-window cleanup deadline. Existing row locks, job leases and idempotent file
+removal support overlapping/duplicate invocations without a new database schema.
+
+The Node function allows 300 seconds, stops starting batches at 210 seconds,
+aborts cleanup requests at 240 seconds, and caps individual requests at 15
+seconds. Leases survive interrupted acknowledgement. No final sweep is claimed
+before its database deadline. Remaining due work is counted separately from all
+pending jobs, so future/leased jobs alone do not produce a partial/failure status.
+
+One structured `scheduled_cleanup` log and the authenticated JSON response contain
+only aggregate counts, duration, remaining due work and stopping reason.
+`status=completed` or `partial` returns HTTP 200; operation/deadline failures return
+500 and use the existing Sentry `lifecycle_cleanup` error helper. Unknown progress
+after a lost response is marked `countsComplete=false`; a timeout does not imply
+transaction rollback. No provider errors, credentials, object paths, bill contents
+or image URLs are emitted. A Storage failure stops further removals; claimed but
+unprocessed jobs retain five-minute leases and remain retryable.
+
+Failed/unfinished work is revisited by the next daily invocation, not an immediate
+Vercel retry. No new email or missed-run monitor is configured. Inspect
+**Vercel → Settings → Cron Jobs / Logs**, and Sentry's `lifecycle_cleanup` errors.
+An authorized operator can invoke the same route manually with the private bearer
+header for earlier recovery; never put the secret in a URL, command log or chat.
+See [Vercel cron operation](https://vercel.com/docs/cron-jobs/manage-cron-jobs).
+
+**Activation order:**
+
+1. Keep the current branch and existing changes; review the tested implementation.
+   The three cron variables are optional at build time, validated at the route.
+2. The user generates a new secret from at least 32 random bytes and saves it as
+   `CRON_SECRET` in Vercel, type **Secret**, **Production only**. The computer-use
+   credential-entry rules require the user to enter and save it themselves.
+   Do not copy the value into documentation or chat. Retain the two config values
+   above, with cleanup still disabled.
+3. Publish/deploy the new candidate while disabled. Verify Production is Ready
+   for that commit, unauthenticated GET returns 401, HEAD returns 405, and an
+   authenticated operator request returns 503 without database access. Cron's
+   bearer header must pass any existing deployment protection; do not make old
+   deployments public or weaken protection to bypass a failure.
+4. Change the Production enable flag to `true` and redeploy. Verify the intended
+   release and daily cron registration. The enabled endpoint performs project-wide
+   agreed cleanup; it is not restricted to today's 13 jobs.
+5. Verify the first scheduled invocation and aggregate result. For the existing
+   jobs, all final deadlines have passed after **2026-10-24 02:30 GMT+7**. Confirm
+   their final sweeps remove the queue entries and their exact Storage folders/
+   objects remain absent. Check an active bill's **View receipt** still opens
+   after refreshing. Record evidence in HANDOFF before closing Stage 4.
+
+**Emergency stop:** disable Cron Jobs in Vercel to stop future scheduled calls;
+set `LIFECYCLE_CLEANUP_ENABLED=false` and redeploy to disable the current endpoint.
+Neither action undoes completed deletion or cancels an already-running request.
+Do not roll back to the pre-lifecycle release that deletes confirmed images.
+Manual operator commands remain available below; do not run them concurrently
+while investigating an unexpected result.
+
+#### Stage 4 manual fallback and completed rehearsal
+
+Initial user decision (2026-10-23): **manual first**, followed by the daily
+automation decision above. This fallback routine
+uses the existing commands and requires no additional migration or deployment.
+It does not install a scheduler. The user approved one Production batch on
+2026-10-23: five expired drafts were removed and three file jobs processed without
+failure. The user then authorized continuation: seven remaining due file jobs
+succeeded in three files-only batches. All 13 jobs now await final sweeps; Storage
+metadata checks found the deleted bill folders empty and expired-draft targets
+absent. HANDOFF records exact results and authorization scope. The procedure below
+is the repeatable operator runbook.
+
+1. From `main`, verify that `.env.local` targets the intended project without
+   printing keys. Run `npm run lifecycle:cleanup` first. It only counts expired
+   bills, expired unconfirmed drafts and all pending file jobs; it does not list
+   which bills are affected or distinguish due jobs from future jobs. Record the
+   observation time, public project ref, counts and command exit status.
+2. Review the scope before the first destructive run. Apply is project-wide,
+   including all eligible existing data, not just the latest test bill. With
+   approval, run one bounded batch for the current Production target:
+
+   ```bash
+   npm run lifecycle:cleanup -- --apply --project-ref uvznqgkbodejvksmtafh
+   ```
+
+   It permanently removes up to 20 expired bills and 20 expired unconfirmed drafts
+   and processes up to three due file jobs. Record `bills_removed`,
+   `drafts_removed`, `files.processed`, `files.failed`, `files.waiting` and exit
+   status. Counts can change between preview and apply. Do not invoke cleanup RPCs
+   directly or edit timestamps to force Production fixtures to expire.
+
+3. Run the count-only preview again. Check a retained disposable active bill and
+   its confirmed receipt still work. Stop on unexpected removals, command errors
+   or storage failures and investigate configuration, schema and Storage access
+   before retrying. Never clear jobs manually to hide a failure. A failed job or
+   interrupted lease can retry after five minutes; partial jobs may be due
+   immediately. Repeat reviewed bounded batches for eligible work as needed.
+4. Pending file jobs can legitimately remain until their final sweep, at least
+   24 hours after each job was created. Return after that deadline and apply
+   again. Do not loop solely because `pendingFileJobs` is nonzero: it includes
+   future and leased jobs. Use read-only `lifecycle_file_jobs` timing metadata to
+   distinguish due work from waiting work. Verify the known disposable bill's
+   exact folders are empty in receipt, QR and staging buckets after its final
+   sweep; active bills' files must remain. Store only aggregate evidence.
+5. For the initial manual period, the project owner should check once daily and
+   after testing deletion. This is an operating cadence, not an automated task or
+   a cleanup-time guarantee. Record each run and its next required follow-up in
+   HANDOFF. Review growing overdue counts or repeated failed attempts rather than
+   ignoring them. A day with no eligible work needs only the count-only check.
+
+Two additional commands **mutate immediately and have no dry-run mode**:
+
+- `npm run uploads:cleanup`: up to 20 upload reservations older than 24 hours,
+  their staging files and incomplete receipt copies. Completed receipt images
+  are retained. Failures preserve reservations for retry. Check eligibility with
+  metadata-only counts first; with approved scope, repeat until zero.
+- `npm run rate-limits:cleanup`: up to 100 counter windows expired more than
+  24 hours ago. It does not reset live counters or policies. Check eligibility
+  with metadata-only counts first; with approved scope, repeat until zero.
+
+QR replacement/removal deletes the previous QR at request time. Failures are
+reported as `qr_cleanup`; there is currently no durable retry for these orphans
+while their bill remains active. Lifecycle folder sweeps remove them when the
+bill is deleted. Do not claim the manual lifecycle routine repairs all live-bill
+QR orphans; investigate logged failures separately before targeted removal.
+
+Stage 4 completion requires recorded successful eligible cleanup, preservation
+of active/confirmed data, repeat-run results and final-sweep/file evidence.
+Offline tests cover controlled failures and late uploads. There is no isolated
+hosted backend, so do not inject outages or artificial expiry into Production.
+Stage 2 remains skipped. Daily automation is now implemented locally, with hosted
+activation and scheduled/final-sweep verification pending as described above.
 
 #### Coordinated lifecycle rollout — later explicit operator action
 
-The current deployed release deletes images in an `after()` confirmation callback.
-Use a short maintenance window so that code cannot delete newly retained images:
+The pre-lifecycle release deleted images in an `after()` confirmation callback.
+The following runbook records the intended transition; the migration and smoke
+checks are now user-reported complete, but individual maintenance steps were not
+independently verified. Do not reapply SQL just to repeat this runbook. When
+transitioning from old code, use a short maintenance window so that code cannot
+delete newly retained images:
 
 1. Prepare the tested candidate. In Vercel Security → Deployment Protection,
    temporarily use Vercel Authentication for **All Deployments**, including
@@ -309,8 +474,9 @@ copies. Completed receipt images remain under the normal receipt lifecycle.
 Reservation records are retained long enough to clean files uploaded late using
 the two-hour storage token. Cleanup failures retain records for another attempt.
 
-There is no scheduled cleanup worker yet. For an idle project, run this private
-operator command with the project's `.env.local`; repeat until it reports zero:
+The daily cron worker includes this cleanup once activated. Until then, or for
+manual recovery on an idle project, use this private operator command with the
+project's `.env.local`; repeat until it reports zero:
 
 ```bash
 npm run uploads:cleanup
@@ -789,7 +955,8 @@ A scan is a temporary, editable draft until it is confirmed. OCR requests run as
 | `error_code`                                                                | `text`        | Nullable safe error category for retry and support.                                 |
 | `expires_at`, `confirmed_at`, `created_at`, `updated_at`                    | `timestamptz` | Draft lifecycle and audit timestamps.                                               |
 
-Only one expense may reference a confirmed scan, enforced by a unique constraint on `expenses.receipt_scan_id`. Confirmation accepts an idempotency key so browser or network retries return the existing expense instead of creating a duplicate. Unconfirmed scans become inaccessible after 24 hours and eligible for cleanup. Confirmed receipt images remain until bill deletion, with their structured items and financial records. Storage removal is performed by the retryable lifecycle cleanup; no periodic scheduler is configured yet.
+Only one expense may reference a confirmed scan, enforced by a unique constraint on `expenses.receipt_scan_id`. Confirmation accepts an idempotency key so browser or network retries return the existing expense instead of creating a duplicate. Unconfirmed scans become inaccessible after 24 hours and eligible for cleanup. Confirmed receipt images remain until bill deletion, with their structured items and financial records. Storage removal is performed by the retryable lifecycle
+cleanup; daily scheduling is implemented locally but awaits hosted activation.
 
 ### `receipt_items`
 

@@ -1,42 +1,158 @@
 # Bill Splitter — Computer Handoff
 
 Read this file and `CURRENT_WORK.md` when resuming.
-Working branch: `work/mobile-accessibility-lifecycle`; Production branch: `main`.
+Current branch: `main`. The earlier `work/mobile-accessibility-lifecycle` branch
+contains the same saved changes.
 Phase 3 implementation is included in this checkout; use `git log -1` for the
-latest commit. Check out/pull the working branch and run `npm ci` when moving
-to another computer.
+latest commit. Check out/pull `main` and run `npm ci` when moving to another
+computer.
 The user wants migration SQL saved in `supabase/migrations/` and will apply
 hosted migrations themselves. Tell them when a new migration is required.
 
-## Resume here — migration NOT APPLIED
+## Resume here — secret saved; publish worker and verify activation
 
-**User-confirmed on 2026-10-22:**
-`supabase/migrations/20261022000000_bill_lifecycle.sql` has **NOT been applied
-to hosted Supabase**. Offline PGlite tests applied it only to temporary databases.
-The next agent must not infer hosted application from passing tests or this SQL
-file's presence. The user will apply hosted migrations themselves.
+Status refreshed **2026-10-23 (Asia/Phnom_Penh)**. Current branch remains `main`;
+existing uncommitted documentation and mobile/accessibility work were preserved.
+No new migration is required. Stage 2 remains skipped.
 
-The mobile/accessibility and Stage 3 changes are saved on
-`work/mobile-accessibility-lifecycle`, leaving Production `main` at `32355c4`.
-Do not merge/promote/deploy this candidate before the coordinated lifecycle
-rollout in README. A Git push may create a Preview automatically; that does not
-apply SQL or make this branch ready for hosted validation. No hosted lifecycle
-cleanup has been run. Check `git log -1` for the saved code revision.
+- User changed the initial manual-first decision to **daily Vercel automation for
+  all agreed cleanup**, then explicitly requested implementation of the plan.
+- Added `/api/cron/lifecycle-cleanup` and `vercel.json`, schedule `0 20 * * *` UTC
+  (03:00–03:59 Phnom Penh time). Production only; private constant-time checked
+  bearer secret; enable flag; explicit project-ref/HTTPS URL match. Auth/config
+  gates precede client construction; HEAD and other methods reject, no caching,
+  no request-controlled target/deadlines/scope.
+- Worker reuses existing RPCs/helpers: at most 20 expired bills + 20 drafts,
+  20 stale uploads and 100 old counter windows, then up to 40 batches of 3 file
+  jobs. No early final sweeps. Node maxDuration 300s; soft stop 210s, hard abort
+  240s, individual request cap 15s. Storage failure stops further removals;
+  interrupted leases and failed jobs remain retryable. Manual CLI behavior is
+  preserved. Active-bill QR-orphan retry remains outside this implementation.
+- Safe aggregate response/log includes status, counts, remaining due work,
+  duration/stopping reason. Failure uses existing Sentry `lifecycle_cleanup`;
+  `countsComplete=false` marks uncertain progress. No new notifications or
+  missed-run alert service. Vercel does not immediately retry failed cron calls.
+- **Validation:** 280 offline tests passed, 8 hosted/provider tests skipped;
+  lint and webpack production build passed with source-map uploads disabled.
+  Local built-server HTTP checks passed: unauthenticated GET 401, authenticated
+  disabled GET 503, HEAD/POST/OPTIONS 405, all no-store. They used a dummy secret,
+  disabled worker and placeholder service key. No Production cleanup ran while
+  implementing automation. Full-repository formatting and diff checks passed.
+- **Hosted preparation confirmed via Chrome:** saved config variables
+  `LIFECYCLE_CLEANUP_ENABLED=false` and
+  `LIFECYCLE_CLEANUP_PROJECT_REF=uvznqgkbodejvksmtafh`, both **Production only**,
+  in Vercel project `nacarees-projects/bill-spiltter-webapp`. Reloaded the list and
+  verified both entries. Cleanup remains disabled pending worker publication.
+- **Secret entry complete:** user reported saving `CRON_SECRET` and manually
+  redeploying. Chrome verified Secret type and Production-only scope; value was
+  not revealed. The manual redeployment `AS8JUv1uSfJXwqzB5r5BvVzL66JZ` rebuilt
+  **f4f8b00**, which predates the worker. Public GET/HEAD on the new route still
+  returned 404; this does not verify the worker's access gates.
+- **Next:** commit/push the tested worker on the current `main` branch, deploy
+  while disabled, verify the new commit and 401/405/disabled-503 behavior; then
+  enable/redeploy and verify cron registration/first scheduled invocation. README
+  records activation and emergency-stop instructions. User requested the full
+  automation rollout; do not ask them to save the secret again or create a new
+  branch. Do not claim automation is running until verified.
+- Existing 13 file jobs still require final sweeps after Oct 24, 02:30 GMT+7 and
+  an active confirmed-receipt UI check. Last known queue/storage evidence below;
+  no new hosted mutation is inferred from the offline tests. Stage 4 stays open.
+
+## Manual cleanup evidence before automation (2026-10-23)
+
+Status refreshed **2026-10-23 (Asia/Phnom_Penh)**.
+
+- **User-reported complete:** hosted migration
+  `supabase/migrations/20261022000000_bill_lifecycle.sql` and the Stage 3 live
+  smoke-test checklist. On 2026-10-23 the user said “everything seems to be good”
+  after the deployment/creation/retained-receipt/participant/deletion/mobile
+  checklist. Treat the smoke checks as passed by user report; exact deployment
+  identity and individual test evidence were not independently captured.
+  Do not rerun SQL based on historical NOT APPLIED notes or migration-history gaps.
+- **Git verified:** checkout is `main` at
+  `f4f8b0071c0037df5adaaa75ab01ccd51d7abf23`; its `origin/main` tracking ref and
+  earlier feature branch point to the same commit. No further merge is needed
+  for this revision. Stage 1's deployed `32355c4` entry is historical.
+- **Initial Stage 4 decision:** manual cleanup first, then decide automation.
+  The user subsequently requested daily automation; current status is above.
+- **Read-only hosted evidence:** lifecycle count-only dry-run at approximately
+  **2026-10-23 02:24 GMT+7**, target `uvznqgkbodejvksmtafh`, succeeded:
+  **0 expired bills, 5 expired unconfirmed receipt drafts, 3 pending file jobs**.
+  Additional metadata-only reads at `2026-10-22T19:24:21.092Z` found **0 upload
+  reservations older than 24 hours** and **0 rate-limit windows expired more
+  than 24 hours ago**. No customer bill contents or credential values were read
+  into the report. The first sandboxed network attempt failed; the same read-only
+  command succeeded with network access.
+- **Initial file-job timing snapshot:** three jobs, one per bucket, zero due/leased,
+  all waiting until approximately **2026-10-24 02:22:07 GMT+7** for their final
+  sweeps; highest attempt count is one. Their timing is consistent with an initial
+  successful drained pass, but file absence has not been independently checked.
+  A nonzero pending count currently does not indicate a failure.
+- **First Production apply authorized and completed:** user explicitly approved
+  one manual cleanup batch. Fresh dry-run still showed 0 expired bills, 5 expired
+  drafts and 3 jobs. At approximately **2026-10-23 02:29 GMT+7**, ran exactly once:
+  `npm run lifecycle:cleanup -- --apply --project-ref uvznqgkbodejvksmtafh`.
+  Exit 0; result: `bills_removed=0`, `drafts_removed=5`,
+  `files={processed:3,failed:0,waiting:3}`. No upload/counter cleanup was run.
+- **Post-run read-only verification** at `2026-10-22T19:29:23.103Z`:
+  **0 expired bills, 0 expired drafts, 13 pending file jobs**. Active bills **19**,
+  confirmed receipts **8**, expenses **10**, all unchanged from the pre-run
+  aggregate baseline at `2026-10-22T19:28:59.690Z`. This supports row-count
+  preservation; it is not an individual-row or image-availability audit.
+- **After the first batch (historical):** 7 jobs due, 6 waiting, 0 leased, highest attempt count 1;
+  bucket counts receipt-images 6, payment-qrs 1, image-upload-staging 6. The five
+  removed drafts created ten jobs (receipt + staging per draft), so the rise
+  from 3 to 13 is expected. Successfully drained jobs remain until their final
+  sweeps; the batch's three processed jobs were not removed from the queue yet.
+- **Continuation authorized and completed:** the user said “ok lets continue”
+  after the plan to process seven due file jobs and later verify final sweeps.
+  At approximately **2026-10-23 02:32 GMT+7**, invoked the existing
+  `cleanupLifecycleFiles` helper in files-only mode, checking the exact project
+  ref and reviewed due-job IDs. Three sequential bounded batches processed
+  **3, 3 and 1 jobs**, respectively; every batch had **0 failed**. No bill/draft
+  purge RPC was invoked and no further application records were removed.
+- **Latest queue/preservation evidence** at `2026-10-22T19:32:33.160Z`:
+  **13 pending, 0 due, 13 waiting, 0 leased**. Active bills **19**, confirmed
+  receipts **8**, expenses **10**, unchanged before/after every batch. The
+  immediately preceding count-only preview found 0 expired bills and 0 drafts.
+- **Storage metadata verification** at `2026-10-22T19:32:52.889Z`: the deleted
+  bill's **3 bucket folders were empty**; all **10 expired-draft object targets
+  were absent**. Each prefix-job parent was confirmed absent from `bills`.
+  Used Storage list metadata only: no images, customer bill contents, keys or
+  object paths were printed. Active/confirmed UI access still needs verification;
+  unchanged aggregate counts alone do not establish individual image availability.
+- **Previously recorded manual follow-up:** return after **2026-10-24 02:30 GMT+7** to cover all 13 jobs' final
+  sweep deadlines. Original jobs are due around 02:22:07; new jobs around
+  02:29:06 (latest `final_sweep_after` is `2026-10-23T19:29:05.859367Z`).
+  Refresh read-only job metadata and use the files-only helper in bounded batches
+  for this reviewed work, stopping on failures or unexpected scope. Repeat the
+  folder/object checks and verify a retained active bill's confirmed receipt
+  opens before closing Stage 4. User authorized this continuation; do not ask
+  again merely because a new session resumes it. New bill/draft deletion is
+  outside this file-only follow-up. No automatic task or reminder is scheduled;
+  a resumed agent turn is needed after the deadline. No Production failure
+  injection or timestamp edits were performed.
+- Stage 2 remains explicitly skipped. No isolated backend is available; broader
+  failure/retry cases retain their offline evidence rather than being simulated
+  against Production. Scheduling was initially deferred; daily automation is now
+  implemented locally as recorded above.
 
 ## Remaining Phase 4 work
 
 The user removed privacy/support content and the Privacy & Help page from the
 to-do list. Only mobile/accessibility reviews and operational checks remain.
 Stage 2 backup/restore was skipped at the user’s request. Stage 3 is implemented
-locally; hosted migration/deployment, Stage 4 cleanup operations, credential
-rotation and deployed-flow verification remain pending.
+and committed on `main`; its migration and live smoke checks are user-reported
+complete. Stage 4 automation activation/final sweeps, credential rotation and the
+broader deployed-flow verification remain pending; exact Production commit has not been independently captured.
 
 ## Stage 3 implementation (2026-10-22)
 
 Stage 1 is complete. **Stage 2 was explicitly skipped by the user.** Stage 3
-lifecycle/deletion code is implemented and tested, with its hosted migration
-explicitly NOT APPLIED. The mobile/accessibility work is included on the working
-branch. Production has not been updated; any automatic Preview is not a rollout.
+lifecycle/deletion code is implemented, tested and committed on `main` at
+`f4f8b00`. The user subsequently reported running the hosted lifecycle migration.
+Stage 3 hosted smoke checks subsequently passed by user report. Exact Production
+deployment identity has not been independently captured; see the resume section.
 
 - SQL: `supabase/migrations/20261022000000_bill_lifecycle.sql`, after rate limiting.
   Adds/backfills `last_activity_at`, renews active bills after qualifying changes
@@ -64,7 +180,8 @@ branch. Production has not been updated; any automatic Preview is not a rollout.
   `-- --apply --project-ref <matching-project-ref>`. At most 20 expired bills,
   20 drafts and three file jobs per call; each job removes up to 100 objects,
   traverses at most ten list pages/eight levels. Repeat for due work and revisit
-  after final-sweep times. No Production invocation was made.
+  after final-sweep times. No Production apply ran during Stage 3 implementation;
+  the subsequent approved Stage 4 batch and its results are recorded above.
 - Local validation: 243 offline tests pass; eight hosted/provider tests skipped.
   New lifecycle browser checks: 10 pass across Chromium/WebKit desktop, Chromium
   320px, Android and iPhone emulation, with no axe/reflow violations. They use
@@ -72,7 +189,7 @@ branch. Production has not been updated; any automatic Preview is not a rollout.
   Formatting, lint and the webpack build with source-map uploads disabled pass.
   PGlite covers controlled interleavings; live hosted concurrency remains pending.
 
-**Future rollout order:** use Vercel Authentication All Deployments for a short
+**Intended rollout order (completion not verified; migration now user-reported run):** use Vercel Authentication All Deployments for a short
 maintenance window, verify public/old URLs are gated and bypass traffic stopped,
 then wait at least three minutes after the final old request and confirm all
 old workers/callbacks drained. User applies SQL; deploy/promote the new candidate
@@ -81,8 +198,11 @@ Protection to reopen only current Production. Keep old generated URLs protected;
 do not roll back to image-deleting code. The detailed runbook and official Vercel
 reference are in README's lifecycle section. No hosting settings were changed.
 
-Stage 4 next: decide/run the cleanup routine and hosted rehearsal separately.
-Migration application, deployment and hosted verification are still pending.
+Stage 3 migration and live smoke checks are user-reported complete. Stage 4 is
+active: the initial Production batch and seven remaining due file jobs completed,
+and daily automation is implemented locally. Activation, final sweeps and
+active/confirmed UI verification are pending.
+Exact deployment identity has not been independently captured.
 
 ## Stage 1 inventory (2026-10-22)
 
@@ -224,7 +344,9 @@ application tests were not rerun for these documentation-only edits.
 ## Operational verification plan (2026-10-22)
 
 This is the execution order: Stage 1 complete, Stage 2 skipped by user,
-Stage 3 implemented locally with hosted rollout pending, and Stages 4–7 pending. Work proceeds one stage at a time, with observed
+Stage 3 committed on `main` with migration and live smoke checks user-reported
+complete; Stage 4 daily automation is implemented locally with activation and
+final-sweep verification pending; Stages 5–7 remain pending. Work proceeds one stage at a time, with observed
 results and unresolved decisions recorded here
 and a concise status in CURRENT_WORK. Hosted migrations remain user-applied.
 
@@ -253,7 +375,8 @@ and a concise status in CURRENT_WORK. Hosted migrations remain user-applied.
    uploads, abandoned receipt drafts, replaced/removed QR files and old counters.
    Verify bounded batches, valid-data preservation, failure recovery and repeat
    runs. Test the operator commands on an isolated backend first. Decide/document
-   the idle-time routine; scheduling is not implemented today.
+   the idle-time routine. Daily Vercel scheduling is now implemented locally;
+   activation and first scheduled/final-sweep verification remain pending.
    Done: demonstrated cleanup and an explicit manual or scheduled operating plan.
 5. **Credential rotation rehearsal.** Inventory Supabase, Gemini, session-signing,
    rate-limit and Sentry credentials. Rehearse on isolated test credentials;
