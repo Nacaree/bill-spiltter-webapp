@@ -53,6 +53,10 @@ export function CreateBillForm() {
         <select
           id="currency"
           name="currency"
+          aria-invalid={Boolean(state.errors?.currency)}
+          aria-describedby={
+            state.errors?.currency ? "currency-error" : undefined
+          }
           defaultValue="USD"
           className="min-h-12 rounded-xl border border-slate-300 bg-white px-4 text-base font-normal shadow-sm outline-none focus:border-teal-700 focus:ring-3 focus:ring-teal-100"
         >
@@ -62,6 +66,11 @@ export function CreateBillForm() {
             </option>
           ))}
         </select>
+        {state.errors?.currency ? (
+          <span id="currency-error" className="font-normal text-red-700">
+            {state.errors.currency}
+          </span>
+        ) : null}
       </label>
       {state.errors?.form ? (
         <p role="alert" className="text-sm text-red-700">

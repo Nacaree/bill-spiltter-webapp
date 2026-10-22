@@ -1,3 +1,4 @@
+import { DeleteBillForm } from "@/components/delete-bill-form";
 import Link from "next/link";
 import { reportAppError } from "@/server/monitoring";
 import { cookies } from "next/headers";
@@ -16,7 +17,10 @@ import {
   EXPENSE_CATEGORY_LABELS,
 } from "@/lib/expense-input";
 import { formatMoney } from "@/lib/money";
-import { PARTICIPANT_COOKIE_NAME } from "@/lib/participant-session";
+import {
+  CREATOR_COOKIE_NAME,
+  PARTICIPANT_COOKIE_NAME,
+} from "@/lib/participant-session";
 import {
   BillNotFoundError,
   getBillByShareToken,
@@ -147,11 +151,34 @@ export default async function BillPage({ params, searchParams }) {
             {bill.name}
           </h1>
           <p className="mt-2 text-slate-600">Currency: {bill.currency}</p>
+          {bill.expires_at ? (
+            <p className="mt-2 text-sm text-slate-600">
+              Expires{" "}
+              <time dateTime={bill.expires_at}>
+                {new Intl.DateTimeFormat("en-US", {
+                  dateStyle: "medium",
+                  timeZone: "UTC",
+                }).format(new Date(bill.expires_at))}{" "}
+                (UTC)
+              </time>{" "}
+              after 12 months without changes.
+            </p>
+          ) : null}
+          {bill.expiresSoon ? (
+            <p
+              role="status"
+              className="mt-3 rounded-xl bg-amber-50 p-4 text-sm text-amber-950"
+            >
+              This bill expires within 30 days and will become eligible for
+              permanent deletion. A successful bill change extends its life by
+              12 months; viewing it does not.
+            </p>
+          ) : null}
         </div>
         <ShareBillButton />
       </div>
 
-      <div className="mt-10 grid gap-6 md:grid-cols-[1.3fr_0.7fr]">
+      <div className="mt-10 grid gap-6 md:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)]">
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
           <h2 className="text-xl font-bold text-slate-950">People</h2>
           <ul className="mt-5 divide-y divide-slate-100">
@@ -248,6 +275,10 @@ export default async function BillPage({ params, searchParams }) {
           </div>
           <div>
             <h3 className="text-lg font-bold text-slate-950">Recent uploads</h3>
+            <p className="mt-3 text-sm leading-6 text-slate-500">
+              Unconfirmed receipts expire after 24 hours. Confirmed receipt
+              images stay until the bill is deleted.
+            </p>
             {receiptError ? (
               <p role="alert" className="mt-4 text-sm text-red-700">
                 We couldn’t load recent receipt uploads.
@@ -310,7 +341,7 @@ export default async function BillPage({ params, searchParams }) {
       </section>
 
       <section className="mt-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col flex-wrap gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-2xl font-bold text-slate-950">
               Expense history
@@ -319,7 +350,10 @@ export default async function BillPage({ params, searchParams }) {
               Newest expenses appear first.
             </p>
           </div>
-          <form method="get" className="flex flex-col gap-3 sm:flex-row">
+          <form
+            method="get"
+            className="flex flex-col flex-wrap gap-3 sm:flex-row"
+          >
             <label className="grid gap-1 text-xs font-semibold text-slate-700">
               Category
               <select
@@ -397,7 +431,10 @@ export default async function BillPage({ params, searchParams }) {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-lg font-bold text-slate-950">
+                      <h3
+                        id={`expense-${expense.id}-heading`}
+                        className="text-lg font-bold text-slate-950"
+                      >
                         {expense.description}
                       </h3>
                       <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
@@ -432,6 +469,15 @@ export default async function BillPage({ params, searchParams }) {
                     </li>
                   ))}
                 </ul>
+                {expense.receipt_scan_id ? (
+                  <Link
+                    href={`/b/${shareToken}/receipts/${expense.receipt_scan_id}`}
+                    aria-describedby={`expense-${expense.id}-heading`}
+                    className="mt-3 inline-flex min-h-11 items-center font-semibold text-teal-700 underline underline-offset-4"
+                  >
+                    View receipt
+                  </Link>
+                ) : null}
                 {expense.notes ? (
                   <p className="mt-4 text-sm leading-6 whitespace-pre-wrap text-slate-600">
                     {expense.notes}
@@ -439,7 +485,7 @@ export default async function BillPage({ params, searchParams }) {
                 ) : null}
 
                 {participant ? (
-                  <div className="mt-5 flex flex-col gap-4 border-t border-slate-100 pt-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="mt-5 grid gap-4 border-t border-slate-100 pt-4">
                     <ExpenseEditor bill={formBill} expense={expense} />
                     <RemoveExpenseForm
                       expenseId={expense.id}
@@ -472,6 +518,10 @@ export default async function BillPage({ params, searchParams }) {
             ))}
           </ul>
         </section>
+      ) : null}
+      {participant?.is_creator &&
+      cookieStore.get(CREATOR_COOKIE_NAME)?.value ? (
+        <DeleteBillForm shareToken={shareToken} />
       ) : null}
     </div>
   );

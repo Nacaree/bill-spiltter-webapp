@@ -2,7 +2,14 @@
 
 import { RetainedForm } from "@/components/retained-form";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import {
+  useActionState,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import { confirmReceiptAction } from "@/app/actions";
 import { Button } from "@/components/ui/button";
@@ -31,6 +38,10 @@ function readMoney(value, currency, allowZero = false) {
 
 export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
   const router = useRouter();
+  const prefix = useId();
+  const addButton = useRef(null);
+  const itemInputs = useRef(new Map());
+  const focusItem = useRef(null);
   const allParticipantIds = useMemo(
     () => bill.participants.map((person) => person.id),
     [bill.participants],
@@ -72,6 +83,40 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
   useEffect(() => {
     if (state.success) router.push(`/b/${bill.shareToken}`);
   }, [bill.shareToken, router, state]);
+
+  useEffect(() => {
+    if (!focusItem.current) return;
+    if (focusItem.current === "add") addButton.current?.focus();
+    else itemInputs.current.get(focusItem.current)?.focus();
+    focusItem.current = null;
+  }, [items]);
+
+  function addItem() {
+    const clientKey = crypto.randomUUID();
+    focusItem.current = clientKey;
+    setItems((current) => [
+      ...current,
+      {
+        assignments: allParticipantIds,
+        clientKey,
+        confidence_basis_points: null,
+        description: "",
+        needs_review: false,
+        quantity: 1,
+        unit_price_minor: null,
+        unitPriceInput: "",
+        totalInput: "",
+      },
+    ]);
+  }
+
+  function removeItem(index) {
+    focusItem.current =
+      items[index + 1]?.clientKey ?? items[index - 1]?.clientKey ?? "add";
+    setItems((current) =>
+      current.filter((item) => item.clientKey !== items[index].clientKey),
+    );
+  }
 
   const totalMinor = readMoney(totalInput, bill.currency);
   const itemAmounts = items.map((item) =>
@@ -226,50 +271,44 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
         </label>
       </div>
 
-      <fieldset className="grid min-w-0 gap-4">
-        <div className="flex items-end justify-between gap-4">
+      <fieldset
+        className="grid min-w-0 gap-4"
+        aria-invalid={Boolean(state.errors?.items)}
+        aria-describedby={
+          state.errors?.items ? `${prefix}-items-error` : undefined
+        }
+        tabIndex={state.errors?.items ? -1 : undefined}
+      >
+        <legend className="text-lg font-bold text-slate-950">
+          Receipt items
+        </legend>
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <legend className="text-lg font-bold text-slate-950">
-              Receipt items
-            </legend>
             <p className="mt-1 text-sm text-slate-600">
               Fix each line and choose everyone who shared it.
             </p>
           </div>
           <button
             type="button"
-            onClick={() =>
-              setItems((current) => [
-                ...current,
-                {
-                  assignments: allParticipantIds,
-                  clientKey: crypto.randomUUID(),
-                  confidence_basis_points: null,
-                  description: "",
-                  needs_review: false,
-                  quantity: 1,
-                  unit_price_minor: null,
-                  unitPriceInput: "",
-                  totalInput: "",
-                },
-              ])
-            }
-            className="text-sm font-semibold text-teal-700"
+            ref={addButton}
+            onClick={addItem}
+            className="min-h-11 px-2 text-sm font-semibold text-teal-700"
           >
             + Add item
           </button>
         </div>
 
         {items.map((item, index) => (
-          <div
+          <fieldset
             key={item.clientKey}
             className="@container min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4"
           >
-            <div className="flex items-start justify-between gap-3">
+            <legend className="sr-only">Item {index + 1}</legend>
+            <div className="flex flex-wrap items-start justify-between gap-3">
               <p className="text-sm font-bold text-slate-800">
                 Item {index + 1}
               </p>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 {item.needs_review ? (
                   <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900">
                     Low confidence
@@ -277,14 +316,9 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
                 ) : null}
                 <button
                   type="button"
-                  onClick={() =>
-                    setItems((current) =>
-                      current.filter(
-                        (entry) => entry.clientKey !== item.clientKey,
-                      ),
-                    )
-                  }
-                  className="text-xs font-semibold text-red-700"
+                  onClick={() => removeItem(index)}
+                  aria-label={`Remove item ${index + 1}`}
+                  className="min-h-11 min-w-11 px-2 text-xs font-semibold text-red-700"
                 >
                   Remove
                 </button>
@@ -299,6 +333,10 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
               <label className="col-span-2 grid min-w-0 gap-1 text-xs font-semibold text-slate-700 @md:col-span-1">
                 Description
                 <input
+                  ref={(node) => {
+                    if (node) itemInputs.current.set(item.clientKey, node);
+                    else itemInputs.current.delete(item.clientKey);
+                  }}
                   name={`item-${index}-description`}
                   value={item.description}
                   onChange={(event) =>
@@ -359,7 +397,7 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
                 {bill.participants.map((person) => (
                   <label
                     key={person.id}
-                    className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm"
+                    className="flex min-h-11 items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm"
                   >
                     <input
                       type="checkbox"
@@ -380,16 +418,27 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
                 ))}
               </div>
             </fieldset>
-          </div>
+          </fieldset>
         ))}
         {state.errors?.items ? (
-          <p role="alert" className="text-sm text-red-700">
+          <p
+            id={`${prefix}-items-error`}
+            role="alert"
+            className="text-sm text-red-700"
+          >
             {state.errors.items}
           </p>
         ) : null}
       </fieldset>
 
-      <fieldset className="grid min-w-0 gap-4 rounded-2xl border border-slate-200 p-5">
+      <fieldset
+        className="grid min-w-0 gap-4 rounded-2xl border border-slate-200 p-5"
+        aria-invalid={Boolean(state.errors?.totals)}
+        aria-describedby={
+          state.errors?.totals ? `${prefix}-totals-error` : undefined
+        }
+        tabIndex={state.errors?.totals ? -1 : undefined}
+      >
         <legend className="px-1 text-lg font-bold text-slate-950">
           Receipt totals
         </legend>
@@ -493,7 +542,11 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
           </p>
         )}
         {state.errors?.totals ? (
-          <p role="alert" className="text-sm text-red-700">
+          <p
+            id={`${prefix}-totals-error`}
+            role="alert"
+            className="text-sm text-red-700"
+          >
             {state.errors.totals}
           </p>
         ) : null}
@@ -503,6 +556,10 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
         Allocate tax, tip, discount, and rounding difference
         <select
           name="adjustmentMethod"
+          aria-invalid={Boolean(state.errors?.allocation)}
+          aria-describedby={
+            state.errors?.allocation ? `${prefix}-allocation-error` : undefined
+          }
           value={adjustmentMethod}
           onChange={(event) => setAdjustmentMethod(event.target.value)}
           className="min-h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-4 font-normal"
@@ -532,7 +589,11 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
         </div>
       ) : null}
       {state.errors?.allocation ? (
-        <p role="alert" className="text-sm text-red-700">
+        <p
+          id={`${prefix}-allocation-error`}
+          role="alert"
+          className="text-sm text-red-700"
+        >
           {state.errors.allocation}
         </p>
       ) : null}

@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   rpc: vi.fn(),
   sign: vi.fn(),
   bill: vi.fn(),
+  activeBill: vi.fn(),
   ledger: vi.fn(),
 }));
 vi.mock("@/lib/supabase-server", () => ({
@@ -17,6 +18,7 @@ vi.mock("@/lib/supabase-server", () => ({
 }));
 vi.mock("@/server/bills", () => ({
   getBillByShareToken: mocks.bill,
+  requireActiveBillId: mocks.activeBill,
   getSessionParticipant: vi.fn(),
   ParticipantSessionRequiredError: class extends Error {},
   BillNotFoundError: class extends Error {},
@@ -38,6 +40,7 @@ let method;
 let query;
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.activeBill.mockResolvedValue({ id: "bill", expires_at: null });
   method = {
     id: "method",
     owner_participant_id: "owner",
@@ -95,4 +98,18 @@ it("does not let signed access outlive the dynamic QR expiry", async () => {
   await openOwnerQr({ shareToken: "private", ...transfer });
   expect(mocks.sign.mock.calls[0][1]).toBeGreaterThan(0);
   expect(mocks.sign.mock.calls[0][1]).toBeLessThanOrEqual(20);
+});
+
+it("caps QR access at the bill expiry and refuses an expired/deleted parent", async () => {
+  mocks.activeBill.mockResolvedValue({
+    expires_at: new Date(Date.now() + 10_000).toISOString(),
+  });
+  await openOwnerQr({ shareToken: "private", ...transfer });
+  expect(mocks.sign.mock.calls[0][1]).toBeLessThanOrEqual(10);
+  mocks.sign.mockClear();
+  mocks.activeBill.mockRejectedValue(new Error("Bill unavailable"));
+  await expect(
+    openOwnerQr({ shareToken: "private", ...transfer }),
+  ).rejects.toThrow("Bill unavailable");
+  expect(mocks.sign).not.toHaveBeenCalled();
 });

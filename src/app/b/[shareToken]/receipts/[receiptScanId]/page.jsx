@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
+import { ReceiptImage } from "@/components/receipt-image";
 import { readableWait } from "@/lib/rate-limit-error";
 import Link from "next/link";
 import { cookies } from "next/headers";
@@ -39,6 +39,8 @@ const errorMessages = {
   provider_unavailable: "The extraction provider could not be reached.",
 };
 
+export const metadata = { title: "Review receipt" };
+
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
@@ -77,7 +79,7 @@ export default async function ReceiptPage({ params }) {
     <div className="mx-auto max-w-5xl px-5 py-10 sm:px-8 sm:py-14">
       <Link
         href={`/b/${shareToken}`}
-        className="text-sm font-semibold text-teal-700"
+        className="inline-flex min-h-11 items-center text-sm font-semibold text-teal-700"
       >
         ← Back to {bill.name}
       </Link>
@@ -163,17 +165,7 @@ export default async function ReceiptPage({ params }) {
       {scan.status === "needs_review" && participant ? (
         <div className="mt-8 grid gap-6 lg:grid-cols-[0.75fr_1.25fr] lg:items-start">
           <aside className="min-w-0 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-6">
-            {scan.imageUrl ? (
-              <img
-                src={scan.imageUrl}
-                alt="Uploaded receipt"
-                className="max-h-[70vh] w-full rounded-2xl object-contain"
-              />
-            ) : (
-              <p className="p-4 text-sm text-slate-600">
-                Receipt preview unavailable.
-              </p>
-            )}
+            <ReceiptImage src={scan.imageUrl} />
             {scan.currency !== bill.currency ? (
               <div className="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-900">
                 Extracted currency {scan.currency} does not match this bill’s{" "}
@@ -202,8 +194,12 @@ export default async function ReceiptPage({ params }) {
         <div className="mt-8 rounded-3xl border border-teal-200 bg-teal-50 p-8 text-center">
           <h2 className="text-xl font-bold text-teal-950">Receipt confirmed</h2>
           <p className="mt-2 text-sm text-teal-900">
-            Its expense is now part of the bill ledger.
+            Its expense is now part of the bill ledger. The receipt image stays
+            until the bill is deleted.
           </p>
+          <div className="mt-5">
+            <ReceiptImage src={scan.imageUrl} />
+          </div>
           <Link
             href={`/b/${shareToken}`}
             className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white"

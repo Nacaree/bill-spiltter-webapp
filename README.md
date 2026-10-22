@@ -6,7 +6,7 @@ Bill Splitter is a responsive web app for creating a shared bill, adding people 
 
 ### Prerequisites
 
-- Node.js 22 or newer and npm
+- Node.js 22.12 or newer and npm
 - A hosted Supabase project (the backend runs on Supabase)
 - A Gemini API key for receipt scanning
 - Docker Desktop and the Supabase CLI only if you choose a local database
@@ -76,6 +76,53 @@ skipped in the normal test suite.
 The normal checks do not use hosted Supabase or Gemini. Opt-in browser and
 integration checks create synthetic test bills in the configured project.
 
+## Mobile and accessibility checks
+
+Install the browser engines once after `npm ci`:
+
+```bash
+npx playwright install chromium firefox webkit
+npm run test:e2e:a11y
+```
+
+The default accessibility suite checks the home and invalid-link pages without
+writing hosted data. It runs axe WCAG A/AA checks, keyboard/skip-link navigation,
+and reflow at 320, 375, 768 and 1280 CSS pixels. The matrix includes Chromium,
+Firefox, desktop WebKit, Android emulation and iPhone WebKit emulation.
+
+After the existing migrations and `.env.local` are configured, run:
+
+```bash
+npm run test:e2e:a11y:live
+```
+
+This explicitly creates synthetic bills/people and exercises expense validation,
+editing, payment controls and receipt review against the local Next.js server.
+It seeds ready receipt drafts directly, makes no Gemini calls and spends no scan
+quota. Its bill rows and drafts are removed in `finally`; no storage images or
+bank transfers are created. UI writes still use the normal action limits.
+Narrow bill/receipt screenshots are saved under ignored `test-results/`.
+Use `-- --project=iphone` (or another project name) to run one configuration.
+
+The UI keeps rejected form entries, links validation messages to controls/groups,
+and focuses the first invalid field or action error. Receipt rows keep focus
+when added/removed; saved expense editors return focus to Edit. Shared fields
+have separate labels and descriptions. Native controls reflow (including long native options in WebKit), touch inputs use
+16px text, disclosure and receipt actions have larger targets, keyboard focus is
+visible, and reduced-motion preferences disable animations. Copying the private
+link announces success and offers a selected text field if clipboard access fails.
+No migration is required for these changes.
+
+Automated checks and device emulation do not replace the remaining manual pass:
+
+- On a real iPhone/Safari and Android/Chrome, check portrait/landscape, file
+  pickers, the on-screen keyboard, focus visibility, zoom and large text.
+- With VoiceOver or TalkBack, create/join a bill, correct an invalid expense,
+  assign receipt items and review/record a payment. Check field names, group
+  names, error announcements and focus after actions.
+- On a desktop keyboard, complete those flows using Tab/Shift+Tab, Enter and
+  Space, including disclosures, exact splits, corrections and removals.
+
 ## Vercel live testing
 
 The first live test uses the existing hosted Supabase project. Vercel runs the
@@ -91,14 +138,135 @@ files are:
 1. `20261017000000_phase_3_settlements.sql`
 2. `20261019000000_dual_currency_payment_qrs.sql`
 3. `20261020000000_direct_image_uploads.sql`
+4. `20261021000000_rate_limiting.sql`
+5. `20261022000000_bill_lifecycle.sql` — follow the lifecycle rollout below.
 
-Run each complete file, including its transaction. The newest migration adds
+Run each complete file, including its transaction. The direct-upload migration adds
 private upload reservations/staging storage and guarded extraction RPCs. It
 preserves existing expenses, receipt scans, and owner payment images. Apply it
 when no extraction is running, then restart/deploy the updated code: the old
 unguarded extraction RPCs are retired, so older receipt workers are incompatible.
 The user reports the required migrations were applied and the deployed live
 flow works. Automated hosted verification by the agent has not been run.
+
+### Bill lifecycle and permanent deletion — Stage 3
+
+Implemented locally; requires `20261022000000_bill_lifecycle.sql` and the coordinated
+rollout below. Stage 2 backup/recovery was skipped at the user's request.
+
+- A bill expires after 12 calendar months in UTC without a qualifying change.
+  Successful participant changes, expense/payment/QR changes, completed receipt
+  uploads and receipt confirmation renew the deadline. Reads, rejected requests,
+  retries and extraction processing do not. The page shows the expiry date and
+  warns during its final 30 days; there are no email notifications.
+- Expiry immediately blocks reads, writes, upload completion, receipt workers,
+  confirmation and new image links. Physical deletion is eligible immediately,
+  with no grace/undo period; it happens when the private cleanup command runs.
+- Unconfirmed receipt drafts become inaccessible at 24 hours. Confirmed receipt
+  images remain until bill deletion and can be opened from the associated
+  expense's View receipt link. Older images already removed by previous code
+  display “Receipt image unavailable”; their financial records remain intact.
+- Creator deletion requires the existing creator device's valid participant and
+  recovery cookies plus typing `DELETE`. Authorization is repeated inside SQL.
+  There is no cross-device recovery or new archive flow. Existing credential
+  lifetimes are unchanged; the creator must still have valid credentials.
+- One transaction queues Storage removal and deletes the bill, participants,
+  expenses/shares, receipt items/assignments/scans, payment records/methods,
+  upload reservations, activity and bill/participant quota rows. Shared IP/global
+  quotas remain. Other bills are untouched; duplicate requests cannot resurrect
+  deleted records. Only this bill's cookies are cleared.
+- Private file jobs have no parent FK, so deletion cannot erase retry work.
+  An initial sweep removes files in this bill's exact folder in all three
+  buckets; orphan and nested files are included. Jobs remain for a final sweep
+  at least 24 hours later, catching late uploads with two-hour signed tokens.
+  Partial removal resumes at offset zero; timeouts, storage failures and stale
+  leases preserve work. Storage bytes are deleted through the Storage API,
+  never by deleting `storage.objects` SQL rows.
+- Receipt links last at most five minutes and QR links at most 60 seconds, capped
+  by the remaining bill/draft/QR lifetime. Previously issued links can remain
+  usable until their deadline if file removal is still pending. No new app
+  access is granted after expiry/deletion.
+
+#### Private lifecycle command
+
+After the migration is applied, inspect counts without changing records:
+
+```bash
+npm run lifecycle:cleanup
+# Equivalent: npm run lifecycle:cleanup -- --dry-run
+```
+
+Apply mode requires the explicit ref to match the configured URL:
+
+```bash
+npm run lifecycle:cleanup -- --apply --project-ref <matching-project-ref>
+```
+
+The command uses the URL/service-role key from `.env.local`; it logs only the
+public project ref, mode and aggregate counts. Each apply run removes at most
+20 expired bills plus 20 expired drafts, then handles at most three due file
+jobs. Each file job lists at most ten pages and removes at most 100 objects;
+nested traversal is capped at eight levels. Unexpected paths remain failed
+rather than escaping the bill folder. Leases expire after five minutes;
+failed jobs retry after five minutes, partial jobs are due immediately, and a
+drained initial job waits until its 24-hour final-sweep time. Future jobs remain
+in `pendingFileJobs`, so a nonzero queue count does not necessarily mean failure.
+Repeat bounded runs for due work and return after final-sweep times. Scheduling,
+monitoring cadence and hosted cleanup rehearsal are Stage 4 work; this command
+has not been run against Production. Expiry enforcement does not need the worker.
+
+#### Coordinated lifecycle rollout — later explicit operator action
+
+The current deployed release deletes images in an `after()` confirmation callback.
+Use a short maintenance window so that code cannot delete newly retained images:
+
+1. Prepare the tested candidate. In Vercel Security → Deployment Protection,
+   temporarily use Vercel Authentication for **All Deployments**, including
+   Production domains. Record existing settings and ensure exceptions/bypass
+   access cannot continue sending application traffic. Operators must close old
+   app tabs and stop invoking old deployment URLs. Verify the public domains and
+   old immutable URLs are gated before proceeding. This scope is available on
+   every plan per [Vercel's September 2026 announcement](https://vercel.com/changelog/protect-production-deployments-for-free-on-every-plan).
+2. Wait at least three minutes after the last old request and confirm old workers
+   and confirmation callbacks have finished. The receipt routes have a 120-second
+   function budget. Keep traffic gated throughout migration and deployment.
+3. The user applies the complete lifecycle migration, after the existing rate-limit
+   schema. It adds/backfills metadata and replaces guarded RPCs; applying it does
+   not purge data. Existing expired/archived bills are not reopened. Do not reapply
+   earlier SQL merely because manually applied migrations are absent from history.
+4. Deploy/promote the new candidate while gated, verify its commit/build and schema,
+   and verify generated/old deployment URLs remain protected. Only the new current
+   Production domain should be public when restoring **Standard Protection**.
+   Reopen traffic only after these checks. Stage 6 owns real hosted journey tests;
+   no customer bill is used as a deletion test.
+5. Do not roll back to the old image-deleting release once retention is enabled.
+   If rollout fails, keep traffic gated and fix forward or use a compatible build
+   that retains images. Cleanup operation remains a separate Stage 4 action.
+
+No deployment protection, credential, migration or deployment setting was changed
+while implementing Stage 3. This is a future rollout runbook, not an instruction
+to apply the migration while the old release is serving traffic.
+
+#### Offline lifecycle verification
+
+```bash
+npm test
+npm run test:e2e:lifecycle
+npm run lint
+npm run format:check
+SENTRY_AUTH_TOKEN='' npm run build -- --webpack
+```
+
+The lifecycle browser suite uses the real client components with mocked actions,
+the generated app stylesheet and the static deletion-result page. It covers
+Chromium/WebKit desktop, 320px Chromium, Android and iPhone emulation, axe,
+keyboard errors/pending states and reflow; it does not call Supabase or create
+live data. `esbuild` is a dev dependency for this isolated client fixture. It
+reuses the local server on port 3000 or starts one there. Install the matching
+browsers with `npx playwright install chromium webkit`. Firefox remains a manual
+follow-up on a working host. PGlite and mocked Storage tests cover migration,
+authorization, boundary/UTC dates, cleanup batches, stale workers/leases and
+controlled race interleavings; hosted concurrency is not claimed.
 
 ### Upload and processing behavior
 
@@ -240,8 +408,8 @@ access to those logs private.
 Local development error capture, tracing and production-build source maps were
 verified against Sentry. The synthetic production verification issue is
 [BILL-SPLITTER-WEBAPP-3](https://nathan-d2.sentry.io/issues/BILL-SPLITTER-WEBAPP-3).
-Temporary verification routes were removed. This SDK setup has not yet been
-deployed to Vercel; alerts and uptime monitoring remain separate follow-up work.
+Temporary verification routes were removed. The SDK is deployed on Vercel,
+and production receipt errors and traces have been observed in Sentry.
 
 ## Rate limiting
 
@@ -280,7 +448,8 @@ Supabase project share counters and the app-wide scan cap.
    secret into chat or prefix it with `NEXT_PUBLIC_`. Restart/redeploy afterward.
 4. Deploy, create a fresh test bill, and verify normal actions and a controlled
    limit denial. The user reports migration/configuration are complete and both
-   hosted concurrency tests passed. Deployment of this code remains pending.
+   hosted concurrency tests passed. Release `32355c4` was confirmed deployed;
+   a controlled deployed limit-denial check remains part of operational validation.
 
 Vercel requests use only its validated `x-vercel-forwarded-for` header. IPs are
 normalized and HMAC-hashed before storage; raw IPs, capability links, cookies,
@@ -543,7 +712,8 @@ bills ──< bill_participants
 | `creator_key_hash`          | `text`        | Hash of a separate recovery key used for destructive bill actions. |
 | `name`                      | `text`        | Required.                                                          |
 | `currency`                  | `char(3)`     | USD or KHR; immutable after the first expense in the MVP.          |
-| `archived_at`, `expires_at` | `timestamptz` | Nullable lifecycle timestamps.                                     |
+| `last_activity_at`          | `timestamptz` | Required timestamp of the latest qualifying successful change.     |
+| `archived_at`, `expires_at` | `timestamptz` | Nullable archive timestamp and inactivity deadline.                |
 | `created_at`, `updated_at`  | `timestamptz` | Audit timestamps.                                                  |
 
 The raw share and creator keys are returned only at creation, placed in the link/session as appropriate, and never stored in plaintext. Share identifiers require at least 128 bits of cryptographically secure randomness.
@@ -619,7 +789,7 @@ A scan is a temporary, editable draft until it is confirmed. OCR requests run as
 | `error_code`                                                                | `text`        | Nullable safe error category for retry and support.                                 |
 | `expires_at`, `confirmed_at`, `created_at`, `updated_at`                    | `timestamptz` | Draft lifecycle and audit timestamps.                                               |
 
-Only one expense may reference a confirmed scan, enforced by a unique constraint on `expenses.receipt_scan_id`. Confirmation accepts an idempotency key so browser or network retries return the existing expense instead of creating a duplicate. Unconfirmed scans and their images expire automatically after 24 hours. The product should define a separate, visible retention setting for images attached to confirmed expenses.
+Only one expense may reference a confirmed scan, enforced by a unique constraint on `expenses.receipt_scan_id`. Confirmation accepts an idempotency key so browser or network retries return the existing expense instead of creating a duplicate. Unconfirmed scans become inaccessible after 24 hours and eligible for cleanup. Confirmed receipt images remain until bill deletion, with their structured items and financial records. Storage removal is performed by the retryable lifecycle cleanup; no periodic scheduler is configured yet.
 
 ### `receipt_items`
 
@@ -935,10 +1105,17 @@ original RPC remains available for existing clients and removal.
 
 ### Phase 4 — Hardening and launch
 
-- Complete accessibility, responsive, and cross-browser reviews.
-- Add rate limiting, redacted structured logging, analytics consent, and Sentry.
-- Test backup/restore, migrations, key rotation, expiration, and permanent deletion.
-- Add privacy information, support guidance, monitoring, and a launch checklist.
+Sentry monitoring and rate limiting are implemented and deployed. The user has
+removed the Privacy & Help page and privacy/support content from the remaining
+work. Two workstreams remain:
+
+- **Mobile and accessibility:** responsive/focus/error fixes and an automated
+  axe/browser matrix are implemented locally. Finish real-device,
+  VoiceOver/TalkBack and manual keyboard reviews; verify Firefox on a working
+  browser host. See the mobile/accessibility checks above and CURRENT_WORK.
+- **Operational checks:** Stage 2 backup/restore was skipped by the user. Verify migrations and key rotation,
+  expiration, upload cleanup and permanent deletion. Include a controlled
+  deployed rate-limit denial and final checks of the main app flows.
 
 **Exit criteria:** critical journeys pass automated and manual checks and the MVP is ready for invited users.
 
@@ -968,9 +1145,9 @@ Money utilities need table-driven tests for indivisible equal splits, exact tota
 2. Should changes require joining as a participant first? **Proposed: yes.**
 3. Can one participant identity be claimed on only one device in the MVP? **Proposed: yes; add a separate participant on another device.**
 4. Who may edit expenses? **Proposed: any joined participant, with every change recorded in activity.**
-5. Should unused bills expire automatically? **Proposed: expire after 12 months without activity, with a warning before deletion.**
+5. Should unused bills expire automatically? **Agreed: expire after 12 calendar months without a qualifying change, show an inline warning during the final 30 days, and become immediately eligible for deletion at expiry.**
 6. Should optional accounts be postponed until users request cross-device sync or recovery? **Proposed: yes.**
 7. How should tax, tip, and discounts be shared? **Proposed: proportional to each person's assigned item subtotal by default, with equal and custom alternatives.**
-8. How long should confirmed receipt images be retained? **Proposed: delete the image after extraction and confirmation by default, while retaining the corrected structured items.**
+8. How long should confirmed receipt images be retained? **Agreed: retain confirmed images until bill deletion. Unconfirmed drafts expire after 24 hours.**
 
 Confirming these access and retention decisions is the final planning gate before application scaffolding begins.

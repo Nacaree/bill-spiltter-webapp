@@ -1,3 +1,4 @@
+import { imageLinkLifetime, receiptIsAvailable } from "@/lib/bill-lifecycle";
 import { RateLimitError } from "@/lib/rate-limit-error";
 import { hashAccessToken } from "@/lib/access-tokens";
 import { reportAppError } from "@/server/monitoring";
@@ -17,6 +18,7 @@ import {
   BillNotFoundError,
   getBillByShareToken,
   getSessionParticipant,
+  requireActiveBillId,
   ParticipantSessionRequiredError,
 } from "@/server/bills";
 import { ExpenseValidationError } from "@/server/expenses";
@@ -223,7 +225,7 @@ export async function getReceiptScan(billId, receiptScanId) {
     .eq("bill_id", billId)
     .maybeSingle();
   if (error) throw databaseError(error);
-  if (!scan) throw new ReceiptNotFoundError();
+  if (!receiptIsAvailable(scan)) throw new ReceiptNotFoundError();
   const { data: items, error: itemError } = await supabase
     .from("receipt_items")
     .select(
@@ -234,10 +236,19 @@ export async function getReceiptScan(billId, receiptScanId) {
   if (itemError) throw databaseError(itemError);
 
   let imageUrl = null;
-  if (scan.status !== "confirmed" && scan.status !== "expired") {
+  const { data: exists, error: existsError } = await supabase.storage
+    .from(RECEIPT_BUCKET)
+    .exists(scan.storage_key);
+  const bill = await requireActiveBillId(billId);
+  const seconds = imageLinkLifetime(
+    [bill.expires_at, scan.status === "confirmed" ? null : scan.expires_at],
+    300,
+  );
+  if (!seconds || !receiptIsAvailable(scan)) throw new ReceiptNotFoundError();
+  if (exists && !existsError) {
     const { data: signed } = await supabase.storage
       .from(RECEIPT_BUCKET)
-      .createSignedUrl(scan.storage_key, 300);
+      .createSignedUrl(scan.storage_key, seconds);
     imageUrl = signed?.signedUrl ?? null;
   }
   return {
@@ -269,11 +280,13 @@ export async function getReceiptScan(billId, receiptScanId) {
 }
 
 export async function getRecentReceiptScans(billId) {
+  await requireActiveBillId(billId);
   const { data, error } = await getServerSupabase()
     .from("receipt_scans")
     .select("id, status, merchant_name, original_filename, created_at")
     .eq("bill_id", billId)
     .neq("status", "expired")
+    .or(`status.eq.confirmed,expires_at.gt.${new Date().toISOString()}`)
     .order("created_at", { ascending: false })
     .limit(8);
   if (error) throw databaseError(error);
@@ -327,16 +340,4 @@ export async function confirmReceiptExpense(input) {
   if (!confirmed?.expense_id)
     throw new Error("Receipt confirmation returned no expense.");
   return { expenseId: confirmed.expense_id };
-}
-
-export async function deleteReceiptImage(receiptScanId) {
-  const supabase = getServerSupabase();
-  const { data } = await supabase
-    .from("receipt_scans")
-    .select("storage_key, status")
-    .eq("id", receiptScanId)
-    .maybeSingle();
-  if (data?.status === "confirmed") {
-    await supabase.storage.from(RECEIPT_BUCKET).remove([data.storage_key]);
-  }
 }

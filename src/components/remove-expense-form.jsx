@@ -33,7 +33,12 @@ export function RemoveExpenseForm({ expenseId, shareToken }) {
     >
       <input type="hidden" name="shareToken" value={shareToken} />
       <input type="hidden" name="expenseId" value={expenseId} />
-      <Button type="submit" variant="secondary" disabled={pending}>
+      <Button
+        type="submit"
+        variant="secondary"
+        disabled={pending}
+        aria-describedby={`expense-${expenseId}-heading`}
+      >
         {pending ? "Removing…" : "Remove expense"}
       </Button>
       {state.errors?.form ? (

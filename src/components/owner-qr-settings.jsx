@@ -2,7 +2,7 @@
 
 import { RetainedForm } from "@/components/retained-form";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   removeOwnerQrAction,
@@ -29,6 +29,10 @@ function MethodIdentity({ method, shareToken }) {
 export function OwnerQrSettings({ method, shareToken, currency }) {
   const router = useRouter();
   const upload = useDirectImageUpload({ shareToken, purpose: "owner_qr" });
+  const imageInput = useRef(null);
+  useEffect(() => {
+    if (upload.error) imageInput.current?.focus();
+  }, [upload.error]);
   const inspecting = upload.pending;
   const labels = {
     preparing: "Preparing upload…",
@@ -67,7 +71,10 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
         <label className="grid gap-2 text-sm font-semibold text-slate-800">
           QR image
           <input
+            ref={imageInput}
             name="qrImage"
+            aria-invalid={Boolean(upload.error)}
+            aria-describedby={upload.error ? "qr-image-error" : undefined}
             type="file"
             accept="image/jpeg,image/png"
             required
@@ -88,7 +95,11 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
         </Button>
       </form>
       {upload.error ? (
-        <p role="alert" className="mt-3 text-sm text-red-700">
+        <p
+          id="qr-image-error"
+          role="alert"
+          className="mt-3 text-sm text-red-700"
+        >
           {upload.error}
         </p>
       ) : null}
@@ -104,6 +115,9 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
           action={save}
           className="mt-5 grid gap-4 rounded-xl border border-teal-200 bg-white p-4"
         >
+          <p role="status" className="text-sm text-teal-800">
+            QR image inspected. Review the recipient and currencies below.
+          </p>
           <MethodIdentity method={method} shareToken={shareToken} />
           <input type="hidden" name="previewToken" value={draft.token} />
           <input type="hidden" name="previewImage" value={draft.image} />
@@ -130,7 +144,7 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
               <legend className="mb-2 font-semibold text-slate-900">
                 Currencies this QR accepts
               </legend>
-              <label className="flex items-start gap-3">
+              <label className="flex min-h-11 items-start gap-3">
                 <input
                   type="radio"
                   name="currencyMode"
@@ -141,7 +155,7 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
                 />
                 {draft.currency} only
               </label>
-              <label className="flex items-start gap-3">
+              <label className="flex min-h-11 items-start gap-3">
                 <input
                   type="radio"
                   name="currencyMode"
@@ -165,7 +179,7 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
               Expires: {new Date(draft.expiresAt).toLocaleString()}
             </p>
           ) : null}
-          <label className="flex gap-3 text-sm leading-6">
+          <label className="flex min-h-11 gap-3 text-sm leading-6">
             <input
               type="checkbox"
               name="confirmed"
@@ -175,6 +189,11 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
             />
             I confirm this is my recipient name and the correct currency.
           </label>
+          {saved.errors?.form ? (
+            <p role="alert" className="text-sm text-red-700">
+              {saved.errors.form}
+            </p>
+          ) : null}
           <Button type="submit" disabled={saving || inspecting}>
             {saving ? "Saving…" : method ? "Replace owner QR" : "Save owner QR"}
           </Button>
@@ -193,6 +212,11 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
           }}
         >
           <MethodIdentity method={method} shareToken={shareToken} />
+          {removed.errors?.form ? (
+            <p role="alert" className="text-sm text-red-700">
+              {removed.errors.form}
+            </p>
+          ) : null}
           <Button
             type="submit"
             variant="secondary"
@@ -202,13 +226,6 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
           </Button>
         </RetainedForm>
       ) : null}
-      {[saved, removed].map((state, index) =>
-        state.errors?.form ? (
-          <p key={index} role="alert" className="mt-3 text-sm text-red-700">
-            {state.errors.form}
-          </p>
-        ) : null,
-      )}
       {saved.success || removed.success ? (
         <p role="status" className="mt-3 text-sm text-teal-800">
           Owner QR updated.

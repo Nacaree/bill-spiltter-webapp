@@ -67,7 +67,10 @@ export async function BalancesSection({ bill, participant, shareToken }) {
             key={person.id}
             className="min-w-0 rounded-2xl bg-slate-50 p-4"
           >
-            <p className="font-semibold break-words text-slate-900">
+            <p
+              id={`balance-${person.id}-name`}
+              className="font-semibold break-words text-slate-900"
+            >
               {person.display_name}
               {person.deactivated_at ? " (inactive)" : ""}
             </p>
@@ -79,7 +82,10 @@ export async function BalancesSection({ bill, participant, shareToken }) {
                 : `${person.netMinor < 0 ? "Owes" : "Is owed"} ${formatMoney(Math.abs(person.netMinor), bill.currency)}`}
             </p>
             <details className="mt-3 text-sm">
-              <summary className="cursor-pointer font-semibold text-slate-700">
+              <summary
+                aria-describedby={`balance-${person.id}-name`}
+                className="cursor-pointer font-semibold text-slate-700"
+              >
                 How this balance is calculated
               </summary>
               <dl className="mt-3 grid grid-cols-2 gap-2 text-slate-600 [&_dd]:text-right [&_dd]:break-all">
@@ -139,7 +145,10 @@ export async function BalancesSection({ bill, participant, shareToken }) {
                   key={`${transfer.fromParticipantId}-${transfer.toParticipantId}`}
                   className="min-w-0 rounded-2xl border border-slate-200 p-4 sm:p-5"
                 >
-                  <p className="font-semibold break-words text-slate-900">
+                  <p
+                    id={`transfer-${requestId}`}
+                    className="font-semibold break-words text-slate-900"
+                  >
                     {names.get(transfer.fromParticipantId)} →{" "}
                     {names.get(transfer.toParticipantId)}
                   </p>
@@ -158,7 +167,10 @@ export async function BalancesSection({ bill, participant, shareToken }) {
                   ) : null}
                   {participant ? (
                     <details className="mt-4">
-                      <summary className="cursor-pointer text-sm font-semibold text-teal-700">
+                      <summary
+                        aria-describedby={`transfer-${requestId}`}
+                        className="cursor-pointer text-sm font-semibold text-teal-700"
+                      >
                         Record this payment
                       </summary>
                       <div className="mt-4">
@@ -204,7 +216,10 @@ export async function BalancesSection({ bill, participant, shareToken }) {
         <ul className="mt-4 divide-y divide-slate-100">
           {ledger.settlements.map((payment) => (
             <li key={payment.id} className="py-4 first:pt-0">
-              <p className="font-semibold break-words text-slate-900">
+              <p
+                id={`payment-${payment.id}`}
+                className="font-semibold break-words text-slate-900"
+              >
                 {names.get(payment.from_participant_id)} paid{" "}
                 {names.get(payment.to_participant_id)}{" "}
                 {formatMoney(payment.amount_minor, bill.currency)}
@@ -220,7 +235,10 @@ export async function BalancesSection({ bill, participant, shareToken }) {
               ) : null}
               {participant ? (
                 <details className="mt-3">
-                  <summary className="cursor-pointer text-sm font-semibold text-teal-700">
+                  <summary
+                    aria-describedby={`payment-${payment.id}`}
+                    className="cursor-pointer text-sm font-semibold text-teal-700"
+                  >
                     Correct payment record
                   </summary>
                   <div className="mt-4">

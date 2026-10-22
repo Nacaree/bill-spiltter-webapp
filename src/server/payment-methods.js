@@ -9,7 +9,12 @@ import {
   verifyQrPreview,
 } from "@/lib/payment-qr";
 import { getServerSupabase } from "@/lib/supabase-server";
-import { getBillByShareToken, getSessionParticipant } from "@/server/bills";
+import { imageLinkLifetime } from "@/lib/bill-lifecycle";
+import {
+  getBillByShareToken,
+  getSessionParticipant,
+  requireActiveBillId,
+} from "@/server/bills";
 import {
   getBillLedger,
   phaseThreeError,
@@ -21,6 +26,7 @@ const BUCKET = "payment-qrs";
 export class CreatorAccessRequiredError extends Error {}
 
 export async function getPaymentMethod(billId) {
+  await requireActiveBillId(billId);
   const { data, error } = await getServerSupabase()
     .from("bill_payment_methods")
     .select(
@@ -190,8 +196,9 @@ export async function openOwnerQr({
   if (error) throw phaseThreeError(error);
   if (!data)
     throw new SettlementValidationError("The QR changed. Refresh the bill.");
+  const activeBill = await requireActiveBillId(bill.id);
   const seconds = Math.min(
-    60,
+    imageLinkLifetime([activeBill.expires_at], 60),
     method.expires_at
       ? Math.floor((new Date(method.expires_at).getTime() - Date.now()) / 1000)
       : 60,

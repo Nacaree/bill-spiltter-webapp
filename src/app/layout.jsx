@@ -21,7 +21,7 @@ export default function RootLayout({ children }) {
           Skip to content
         </a>
         <header className="border-b border-slate-200 bg-white/90">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
             <Link
               className="text-lg font-bold tracking-tight text-slate-950"
               href="/"
@@ -31,7 +31,9 @@ export default function RootLayout({ children }) {
             <span className="text-sm text-slate-500">No account needed</span>
           </div>
         </header>
-        <main id="main">{children}</main>
+        <main id="main" tabIndex={-1}>
+          {children}
+        </main>
       </body>
     </html>
   );

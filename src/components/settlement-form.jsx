@@ -63,6 +63,10 @@ export function SettlementForm({ bill, settlementId, settlement, transfer }) {
             {label}
             <select
               name={name}
+              aria-invalid={Boolean(state.errors?.[name])}
+              aria-describedby={
+                state.errors?.[name] ? `${prefix}-${name}-error` : undefined
+              }
               defaultValue={value ?? ""}
               required
               className="min-h-12 min-w-0 rounded-xl border border-slate-300 bg-white px-3 font-normal"
@@ -77,6 +81,14 @@ export function SettlementForm({ bill, settlementId, settlement, transfer }) {
                 </option>
               ))}
             </select>
+            {state.errors?.[name] ? (
+              <span
+                id={`${prefix}-${name}-error`}
+                className="font-normal text-red-700"
+              >
+                {state.errors[name]}
+              </span>
+            ) : null}
           </label>
         ))}
         <Field
@@ -84,6 +96,7 @@ export function SettlementForm({ bill, settlementId, settlement, transfer }) {
           className="w-full min-w-0"
           label={`Payment amount (${bill.currency})`}
           name="amount"
+          error={state.errors?.amount}
           inputMode="decimal"
           required
           defaultValue={
@@ -99,6 +112,7 @@ export function SettlementForm({ bill, settlementId, settlement, transfer }) {
           className="w-full min-w-0"
           label="Payment date"
           name="settledDate"
+          error={state.errors?.settledDate}
           type="date"
           required
           defaultValue={settlement?.settled_at.slice(0, 10) ?? localDate()}
@@ -109,25 +123,37 @@ export function SettlementForm({ bill, settlementId, settlement, transfer }) {
         className="w-full min-w-0"
         label="Payment notes (optional)"
         name="notes"
+        error={state.errors?.notes}
         maxLength={1000}
         defaultValue={settlement?.notes ?? ""}
       />
-      <label className="flex items-start gap-3 text-sm leading-6 text-slate-700">
+      <label className="flex min-h-11 items-start gap-3 text-sm leading-6 text-slate-700">
         <input
           type="checkbox"
           name="confirmed"
+          aria-invalid={Boolean(state.errors?.confirmed)}
+          aria-describedby={
+            state.errors?.confirmed ? `${prefix}-confirmed-error` : undefined
+          }
           value="yes"
           required
           className="mt-1 size-4 accent-teal-700"
         />
         I confirm this payment already happened outside the app.
       </label>
-      {state.errors ? (
-        <div role="alert" className="text-sm text-red-700">
-          {Object.values(state.errors).map((error, i) => (
-            <p key={i}>{error}</p>
-          ))}
-        </div>
+      {state.errors?.confirmed ? (
+        <p
+          id={`${prefix}-confirmed-error`}
+          role="alert"
+          className="text-sm text-red-700"
+        >
+          {state.errors.confirmed}
+        </p>
+      ) : null}
+      {state.errors?.form ? (
+        <p role="alert" className="text-sm text-red-700">
+          {state.errors.form}
+        </p>
       ) : null}
       {state.success ? (
         <p role="status" className="text-sm font-semibold text-teal-800">

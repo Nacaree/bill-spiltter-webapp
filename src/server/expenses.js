@@ -3,6 +3,7 @@ import { verifyParticipantSession } from "@/lib/participant-session";
 import { getServerSupabase } from "@/lib/supabase-server";
 import {
   BillNotFoundError,
+  requireActiveBillId,
   ParticipantSessionRequiredError,
 } from "@/server/bills";
 
@@ -128,10 +129,11 @@ export async function removeExpense({ cookieValue, expenseId, shareToken }) {
 }
 
 export async function getExpenses(billId, { category, participantId } = {}) {
+  await requireActiveBillId(billId);
   let query = getServerSupabase()
     .from("expenses")
     .select(
-      "id, description, amount_minor, paid_by_participant_id, split_method, category, expense_date, notes, created_by_participant_id, updated_by_participant_id, created_at, updated_at",
+      "id, description, amount_minor, paid_by_participant_id, split_method, category, expense_date, notes, receipt_scan_id, created_by_participant_id, updated_by_participant_id, created_at, updated_at",
     )
     .eq("bill_id", billId)
     .is("deleted_at", null)
@@ -177,6 +179,7 @@ export async function getExpenses(billId, { category, participantId } = {}) {
 }
 
 export async function getExpenseActivity(billId, limit = 12) {
+  await requireActiveBillId(billId);
   const { data, error } = await getServerSupabase()
     .from("activity_log")
     .select("id, actor_participant_id, action, metadata, created_at")
@@ -189,6 +192,7 @@ export async function getExpenseActivity(billId, limit = 12) {
 }
 
 export async function getBillActivity(billId, limit = 12) {
+  await requireActiveBillId(billId);
   const { data, error } = await getServerSupabase()
     .from("activity_log")
     .select("id, actor_participant_id, action, metadata, created_at")

@@ -172,3 +172,17 @@ describe("Receipt review totals", () => {
     );
   });
 });
+
+it("keeps keyboard focus on receipt items when adding or removing rows", () => {
+  show();
+  fireEvent.click(screen.getByRole("button", { name: "+ Add item" }));
+  const second = screen.getByRole("group", { name: "Item 2", exact: true });
+  expect(within(second).getByLabelText("Description")).toHaveFocus();
+  fireEvent.click(
+    within(second).getByRole("button", { name: "Remove item 2" }),
+  );
+  const first = screen.getByRole("group", { name: "Item 1", exact: true });
+  expect(within(first).getByLabelText("Description")).toHaveFocus();
+  fireEvent.click(within(first).getByRole("button", { name: "Remove item 1" }));
+  expect(screen.getByRole("button", { name: "+ Add item" })).toHaveFocus();
+});

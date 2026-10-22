@@ -3,16 +3,15 @@
 import { useEffect, useRef } from "react";
 
 // React resets uncontrolled fields after a fulfilled form action, including
-// expected denials returned as state. Restore just those denied submissions.
+// expected errors returned as state. Keep rejected entries available to correct.
 export function RetainedForm({ state, children, onSubmit, ...props }) {
   const form = useRef(null);
   const submitted = useRef(null);
   useEffect(() => {
-    if (
-      !["rate_limited", "rate_limit_unavailable"].includes(state?.code) ||
-      !submitted.current
-    )
-      return;
+    const rejected =
+      Object.values(state?.errors ?? {}).some(Boolean) ||
+      ["rate_limited", "rate_limit_unavailable"].includes(state?.code);
+    if (!rejected || !submitted.current) return;
     const restore = () => {
       for (const element of form.current?.elements ?? []) {
         if (
@@ -28,6 +27,16 @@ export function RetainedForm({ state, children, onSubmit, ...props }) {
           for (const option of element.options)
             option.selected = values.includes(option.value);
         } else element.value = values[0] ?? "";
+      }
+      // Move to the first invalid field, or the form error if there is no
+      // field-level error. Only do this in response to a submitted action.
+      const target = form.current?.querySelector(
+        '[aria-invalid="true"], [role="alert"]',
+      );
+      if (target) {
+        if (!target.matches("input, select, textarea, button, [tabindex]"))
+          target.setAttribute("tabindex", "-1");
+        target.focus();
       }
     };
     const frame = requestAnimationFrame(restore);

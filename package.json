@@ -18,7 +18,11 @@
     "test:integration:gemini": "RUN_GEMINI_INTEGRATION=1 node --env-file=.env.local ./node_modules/vitest/vitest.mjs run tests/integration/gemini-receipt.integration.test.js",
     "test:e2e:supabase": "npm run test:integration:supabase && RUN_SUPABASE_E2E=1 playwright test tests/e2e/phase-1.spec.js",
     "rate-limits:cleanup": "node --env-file=.env.local scripts/cleanup-rate-limits.mjs",
-    "test:integration:rate-limits": "RUN_RATE_LIMIT_INTEGRATION=1 node --env-file=.env.local ./node_modules/vitest/vitest.mjs run tests/integration/rate-limits.integration.test.js"
+    "test:integration:rate-limits": "RUN_RATE_LIMIT_INTEGRATION=1 node --env-file=.env.local ./node_modules/vitest/vitest.mjs run tests/integration/rate-limits.integration.test.js",
+    "test:e2e:a11y": "playwright test --config=playwright.accessibility.config.mjs",
+    "test:e2e:a11y:live": "RUN_SUPABASE_E2E=1 node --env-file=.env.local ./node_modules/@playwright/test/cli.js test --config=playwright.accessibility.config.mjs",
+    "lifecycle:cleanup": "node --env-file=.env.local scripts/cleanup-bill-lifecycle.mjs",
+    "test:e2e:lifecycle": "playwright test --config=playwright.lifecycle.config.mjs"
   },
   "dependencies": {
     "@sentry/nextjs": "^11.8.0",
@@ -34,11 +38,13 @@
     "zod": "^4.1.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@electric-sql/pglite": "^0.5.10",
     "@playwright/test": "^1.55.0",
     "@tailwindcss/postcss": "^4.1.13",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
+    "esbuild": "^0.28.2",
     "eslint": "^9.34.0",
     "eslint-config-next": "^16.3.1",
     "eslint-config-prettier": "^10.1.8",

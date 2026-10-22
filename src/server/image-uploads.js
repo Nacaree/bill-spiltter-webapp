@@ -87,7 +87,12 @@ export async function prepareImageUpload(input) {
   const db = getServerSupabase();
   const id = randomUUID();
   const path = `${bill.id}/${id}`;
-  const expiresAt = new Date(Date.now() + 15 * 60_000).toISOString();
+  const expiresAt = new Date(
+    Math.min(
+      Date.now() + 15 * 60_000,
+      bill.expires_at ? new Date(bill.expires_at).getTime() : Infinity,
+    ),
+  ).toISOString();
   const { error } = await db.from("image_upload_reservations").insert({
     id,
     bill_id: bill.id,

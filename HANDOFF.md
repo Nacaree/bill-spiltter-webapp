@@ -1,14 +1,318 @@
 # Bill Splitter — Computer Handoff
 
-Read this file and `CURRENT_WORK.md` when resuming. Branch: `main`.
+Read this file and `CURRENT_WORK.md` when resuming.
+Working branch: `work/mobile-accessibility-lifecycle`; Production branch: `main`.
 Phase 3 implementation is included in this checkout; use `git log -1` for the
-latest commit. Pull `main` and run `npm ci` when moving to another computer.
+latest commit. Check out/pull the working branch and run `npm ci` when moving
+to another computer.
 The user wants migration SQL saved in `supabase/migrations/` and will apply
 hosted migrations themselves. Tell them when a new migration is required.
 
+## Resume here — migration NOT APPLIED
+
+**User-confirmed on 2026-10-22:**
+`supabase/migrations/20261022000000_bill_lifecycle.sql` has **NOT been applied
+to hosted Supabase**. Offline PGlite tests applied it only to temporary databases.
+The next agent must not infer hosted application from passing tests or this SQL
+file's presence. The user will apply hosted migrations themselves.
+
+The mobile/accessibility and Stage 3 changes are saved on
+`work/mobile-accessibility-lifecycle`, leaving Production `main` at `32355c4`.
+Do not merge/promote/deploy this candidate before the coordinated lifecycle
+rollout in README. A Git push may create a Preview automatically; that does not
+apply SQL or make this branch ready for hosted validation. No hosted lifecycle
+cleanup has been run. Check `git log -1` for the saved code revision.
+
+## Remaining Phase 4 work
+
+The user removed privacy/support content and the Privacy & Help page from the
+to-do list. Only mobile/accessibility reviews and operational checks remain.
+Stage 2 backup/restore was skipped at the user’s request. Stage 3 is implemented
+locally; hosted migration/deployment, Stage 4 cleanup operations, credential
+rotation and deployed-flow verification remain pending.
+
+## Stage 3 implementation (2026-10-22)
+
+Stage 1 is complete. **Stage 2 was explicitly skipped by the user.** Stage 3
+lifecycle/deletion code is implemented and tested, with its hosted migration
+explicitly NOT APPLIED. The mobile/accessibility work is included on the working
+branch. Production has not been updated; any automatic Preview is not a rollout.
+
+- SQL: `supabase/migrations/20261022000000_bill_lifecycle.sql`, after rate limiting.
+  Adds/backfills `last_activity_at`, renews active bills after qualifying changes
+  using 12 UTC calendar months, preserves already-expired/archived status, and
+  hardens guarded mutation/upload/extraction functions. It does not purge rows
+  when applied. New metadata and RPCs require the coordinated rollout in README.
+- Successful participant/expense/payment/QR changes, completed receipt uploads and
+  confirmation renew the clock. Reads, failures, retries and processing do not.
+  Bills become inaccessible/cleanup-eligible at expiry, without grace or undo.
+- Drafts expire at 24 hours; confirmed images now remain until bill deletion.
+  Removed the old after-confirmation deletion callback. Receipt links are visible
+  on expense cards; missing historical images show an unavailable fallback.
+  Private image links are capped by parent/draft/QR deadlines.
+- Creator-device deletion requires valid creator session/recovery cookies and
+  typing DELETE. SQL checks ownership again under the bill lock, queues file
+  removal, deletes dependent app/scoped-quota records atomically, and preserves
+  other bills/global/IP quotas. The action clears only bill-scoped cookies and
+  redirects to the static deletion-result page.
+- Durable private file jobs survive parent deletion, use five-minute leases and
+  retry failed work after five minutes. Initial exact-folder sweeps cover all
+  three buckets, including orphan/nested objects; a final sweep waits 24 hours
+  for late signed uploads. Already issued image URLs may work until expiry if
+  physical removal is pending. No periodic worker is configured yet.
+- `npm run lifecycle:cleanup` is count-only dry-run. Apply requires
+  `-- --apply --project-ref <matching-project-ref>`. At most 20 expired bills,
+  20 drafts and three file jobs per call; each job removes up to 100 objects,
+  traverses at most ten list pages/eight levels. Repeat for due work and revisit
+  after final-sweep times. No Production invocation was made.
+- Local validation: 243 offline tests pass; eight hosted/provider tests skipped.
+  New lifecycle browser checks: 10 pass across Chromium/WebKit desktop, Chromium
+  320px, Android and iPhone emulation, with no axe/reflow violations. They use
+  mocked actions/static UI, never Supabase. Firefox remains unverified on this Mac.
+  Formatting, lint and the webpack build with source-map uploads disabled pass.
+  PGlite covers controlled interleavings; live hosted concurrency remains pending.
+
+**Future rollout order:** use Vercel Authentication All Deployments for a short
+maintenance window, verify public/old URLs are gated and bypass traffic stopped,
+then wait at least three minutes after the final old request and confirm all
+old workers/callbacks drained. User applies SQL; deploy/promote the new candidate
+while gated; verify identity/schema/protection before restoring Standard
+Protection to reopen only current Production. Keep old generated URLs protected;
+do not roll back to image-deleting code. The detailed runbook and official Vercel
+reference are in README's lifecycle section. No hosting settings were changed.
+
+Stage 4 next: decide/run the cleanup routine and hosted rehearsal separately.
+Migration application, deployment and hosted verification are still pending.
+
+## Stage 1 inventory (2026-10-22)
+
+Historical audit evidence and original follow-ups are retained below. Stage 2
+was subsequently skipped by the user; Stage 3 above is the current work status.
+
+**Status: Stage 1 complete.** The user confirmed the hosted project mapping
+and reported keeping everything in Production; no independent backups or
+designated test backend were identified. Recovery gaps remain recorded; Stage 2 was subsequently skipped. This inventory supersedes older
+handoff claims about deployment settings, shared databases and managed backups.
+Chrome inspection and read-only catalog queries were used. No application rows,
+image objects or credential values were inspected. No operational changes made.
+
+Observation times below use Asia/Phnom_Penh (UTC+7), on 2026-10-22:
+V = 02:49–02:53 (Vercel); S = 02:54–02:58 (Supabase/catalogs);
+L = 02:48–02:58 (local repository and presence-only environment checks).
+U = 02:59 (user confirmation in this conversation, received 19:59 UTC Oct 21).
+Statuses describe the evidence, not an assertion that a configuration is ideal.
+
+### Deployment identity
+
+| Finding                                                                                                                                                                                                                                | Status    | Evidence / observation                                                                                                                                                                                                                                               | Next action / owner                                                                                                                                                                       |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Production is Ready/current on `main`, commit `32355c4ab85630e9ac5a18475a846a849d8bbd0d`; deployed Oct 21, 01:41:43 GMT+7                                                                                                              | Confirmed | V: [deployment details](https://vercel.com/nacarees-projects/bill-spiltter-webapp/BSwrfSxw3pgZvudZ6gsowSs4vGEQ)                                                                                                                                                      | Agent: use this release as the baseline; deployment of local changes is a later step.                                                                                                     |
+| Production URL: `https://bill-spiltter-webapp.vercel.app/`; immutable URL: `https://bill-spiltter-webapp-87e8ovlpj-nacarees-projects.vercel.app/`; branch alias: `https://bill-spiltter-webapp-git-main-nacarees-projects.vercel.app/` | Confirmed | V: deployment Domains panel                                                                                                                                                                                                                                          | Agent: use immutable URL when identifying the audited release.                                                                                                                            |
+| Latest retained Preview URL/commit/status                                                                                                                                                                                              | Missing   | V: [Preview deployment filter](https://vercel.com/nacarees-projects/bill-spiltter-webapp/deployments?environment=preview) returned No Results; overview had No Active Branches. Project retention is 30 days, so this does not establish that Preview never existed. | Agent: record a future Preview's identity when one is explicitly deployed.                                                                                                                |
+| Local checkout is `main` at the same full commit; mobile/accessibility changes are uncommitted and undeployed                                                                                                                          | Confirmed | L: `git log -1`, `git status --short`; mobile section below                                                                                                                                                                                                          | Preserve pending work. Agent: include it only in a later requested deployment.                                                                                                            |
+| Vercel framework Next.js; build/install/output overrides off; root default `./`; repository build script `next build`                                                                                                                  | Confirmed | V: [Build and Deployment](https://vercel.com/nacarees-projects/bill-spiltter-webapp/settings/build-and-deployment); L: `package.json`                                                                                                                                | Agent: reconcile README's `npm ci` / webpack override instructions with observed settings in a later documentation task. Historical build internals were not independently reconstructed. |
+| Vercel Node `24.x`; local Node `24.22.0`; CI Node `22`                                                                                                                                                                                 | Confirmed | V: project and deployment runtime settings; L: `node --version`, `.github/workflows/ci.yml`; README recommends Node 22                                                                                                                                               | Agent/user: choose and align a supported version in a later stage; no setting changed.                                                                                                    |
+| Vercel team Hobby; Fluid Compute enabled, function region `sin1`, standard 1 vCPU / 2 GB; Standard deployment protection                                                                                                               | Confirmed | V: project/deployment settings                                                                                                                                                                                                                                       | Agent: retain as operating context.                                                                                                                                                       |
+
+### Environment mapping and variable inventory
+
+| Finding                                                                                                                                         | Status                            | Evidence / observation                                                                                                                                                                                                  | Next action / owner                                                                                                                             |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Local uses `https://uvznqgkbodejvksmtafh.supabase.co`                                                                                           | Confirmed                         | L: `.env.local`, public URL only; S: matching project overview URL                                                                                                                                                      | Agent: treat local live checks as using this hosted backend, not an isolated database.                                                          |
+| Hosted project inspected: `bill-spilter`, ref `uvznqgkbodejvksmtafh`, Orange Whiskers, Singapore `ap-southeast-1`, Nano, PostgreSQL `17.6`      | Confirmed                         | S: [project overview](https://supabase.com/dashboard/project/uvznqgkbodejvksmtafh), `current_setting('server_version')`; no Supabase branches shown                                                                     | Agent: schema/backup findings below apply to this project.                                                                                      |
+| Production and Preview share one configured `NEXT_PUBLIC_SUPABASE_URL` entry; no branch-specific override was shown; no linked shared variables | Confirmed                         | V: [project variables](https://vercel.com/nacarees-projects/bill-spiltter-webapp/settings/environment-variables), URL entry metadata and Shared tab. Both scopes selected, Custom Preview Branch unselected.            | Agent: regard ordinary Preview as sharing the configured Production target unless explicitly isolated later.                                    |
+| Production and Preview are configured for `uvznqgkbodejvksmtafh`, the same project as Local                                                     | Confirmed — user-reported mapping | U: user answered “yes it is” to the explicit Production/Preview project-ref question; V: both scopes share one saved URL entry. Write-only values and the deployed baked configuration were not independently revealed. | Agent: treat all three as sharing Production data/quota. Hidden credential consistency remains unverified and is reserved for later validation. |
+| Hidden anon/service/session/rate/Gemini/Sentry value consistency, validity and rotation state                                                   | Unverified                        | V/L: presence and scope checks only; no values compared or credentials exercised                                                                                                                                        | Agent/user: verify through the isolated rotation runbook later. Prior Sentry-token revocation remains unconfirmed.                              |
+
+Variable evidence: V project-variable list (eight entries), L `.env.local`,
+`.env.sentry-build-plugin`, `src/env.js`, `next.config.mjs`, Sentry configuration.
+All observations use V/L times above. “Present” means nonempty only, not valid.
+No Development-scoped entries were listed in Vercel.
+
+| Variable name                              | Local presence                                                          | Production scope   | Preview scope      | Status / next action and owner                                                                                                                                                                                                                    |
+| ------------------------------------------ | ----------------------------------------------------------------------- | ------------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`                 | Present                                                                 | Present            | Present            | Confirmed presence (V/L) and project mapping (U, user-reported); agent: use a different project ref for isolation later.                                                                                                                          |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`            | Present                                                                 | Present            | Present            | Confirmed presence; agent: verify pairing later without disclosing values.                                                                                                                                                                        |
+| `SUPABASE_SERVICE_ROLE_KEY`                | Present                                                                 | Present            | Present            | Confirmed presence; required for server data operations. Agent: verify later.                                                                                                                                                                     |
+| `PARTICIPANT_SESSION_SECRET`               | Present                                                                 | Present            | Present            | Confirmed presence; required session-signing key. Agent: rotation rehearsal later.                                                                                                                                                                |
+| `RATE_LIMIT_SECRET`                        | Present                                                                 | Present            | **Absent**         | **Missing in Preview.** `src/env.js` and limiter code allow reads but fail writes closed without a valid key. User/agent: correct scope at the authorized configuration stage before Preview write tests; shared-backend limiter keys must agree. |
+| `GEMINI_API_KEY`                           | Present                                                                 | Present            | Present            | Confirmed presence; needed for real extraction. Agent: real-provider verification later.                                                                                                                                                          |
+| `GEMINI_RECEIPT_MODEL`                     | Present                                                                 | Present            | Present            | Confirmed optional model override; agent: retain for later verification.                                                                                                                                                                          |
+| `SENTRY_AUTH_TOKEN`                        | Present in ignored `.env.sentry-build-plugin`, absent from `.env.local` | Present            | Present            | Confirmed presence; `next.config.mjs` requires it for Vercel builds. Agent: rotation/source-map checks later.                                                                                                                                     |
+| `PARTICIPANT_SESSION_PREVIOUS_SECRET`      | Absent                                                                  | Absent             | Absent             | Confirmed optional fallback absent; agent: exercise during isolated rotation rehearsal.                                                                                                                                                           |
+| `RECEIPT_EXTRACTION_DEV_FIXTURE`           | Absent                                                                  | Absent             | Absent             | Confirmed optional fixture absent; agent: keep real deployment verification free of fixtures.                                                                                                                                                     |
+| `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_RELEASE` | No local override                                                       | No listed override | No listed override | Confirmed optional overrides absent; repository supplies DSN/default release behavior. Agent: no action for Stage 1.                                                                                                                              |
+
+### Hosted schema and storage
+
+**Confirmed compatibility** (S): all 11 sorted SQL files in
+`supabase/migrations/` were loaded into a temporary in-memory PGlite database
+without application fixtures. Read-only hosted catalog SELECTs compared sorted
+metadata fingerprints against that expected schema. No application/cleanup RPC
+was invoked. SQL Editor location:
+`https://supabase.com/dashboard/project/uvznqgkbodejvksmtafh/sql`
+(private query workspace `73847e31-c1fe-4613-aa90-42773acadcee`; query text/results
+may not persist after navigation). Evidence includes the following observed
+counts and matching reference fingerprints; MD5 is used for drift comparison,
+not credential handling or a security guarantee.
+
+| Catalog comparison                                                                                                                                                                            | Objects | Matching reference fingerprint     | Status / next action and owner                                                                                                                  |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Columns: table/column names, types, nullability and defaults (`pg_attribute`, `pg_attrdef`)                                                                                                   | 142     | `4d3d20b4b36ef205105d320daf868753` | Confirmed; agent: no migration indicated by this comparison.                                                                                    |
+| PK/FK/unique/check constraints (`pg_constraint`, excluding `contype='n'`)                                                                                                                     | 105     | `3249dc9808c99b16bb8449d5e8ed4140` | Confirmed; agent: no action. PGlite PostgreSQL 18 adds 110 NOT NULL catalog rows absent on hosted 17; nullability was separately matched above. |
+| Index definitions (`pg_indexes`)                                                                                                                                                              | 40      | `c9cf61bed3cfdfed540e8ee12883635e` | Confirmed; agent: no action.                                                                                                                    |
+| Noninternal trigger definitions (`pg_trigger`)                                                                                                                                                | 7       | `4e482f185b59655c927deef4671f3e0f` | Confirmed; agent: no action.                                                                                                                    |
+| Function identities/results, whitespace-normalized bodies, security-definer/volatility/search-path configuration and effective anon/authenticated/service-role EXECUTE privileges (`pg_proc`) | 25      | `7f024dc8920eee1ae38f3d9f8a0d2a75` | Confirmed; agent: no action. Includes v3 rate-limited extraction and retired legacy execute access.                                             |
+
+| Finding                                                                                                                                                           | Status                              | Evidence / observation                                                                                                      | Next action / owner                                                                                                    |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| All 13 expected public application tables exist with RLS enabled; anon/authenticated have no SELECT/INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER table grants | Confirmed                           | S: `pg_class`, `has_table_privilege`; tables listed below                                                                   | Agent: preserve service-mediated access during restore rehearsal.                                                      |
+| Zero policies in `public` or `storage`; `storage.objects` has RLS enabled                                                                                         | Confirmed                           | S: `pg_policies`, `pg_class`; matches expected service-only access                                                          | Agent: verify private signed-file behavior during isolated recovery, without opening customer files now.               |
+| Migration history lists only six versions, `20260815110000` through `20260816011000`; five later migration IDs are absent despite matching actual schema          | Confirmed                           | S: `supabase_migrations.schema_migrations`; L: 11 migration files                                                           | User/agent: do not reapply SQL based only on missing history; reconcile history separately if adopting CLI migrations. |
+| Project health                                                                                                                                                    | Confirmed point-in-time observation | S: overview initially displayed Unhealthy during loading, then Healthy on revisit at 02:57–02:58; catalog queries succeeded | Agent: this is not an uptime guarantee; recheck before Stage 2.                                                        |
+
+Expected tables: `bills`, `bill_participants`, `activity_log`, `expenses`,
+`expense_shares`, `receipt_scans`, `receipt_items`, `receipt_item_assignments`,
+`settlements`, `bill_payment_methods`, `image_upload_reservations`,
+`rate_limit_policies`, `rate_limit_counters`.
+
+Bucket settings are **confirmed** from `storage.buckets` metadata SELECTs (S).
+No bucket objects, filenames or image contents were read.
+
+| Bucket                 | Public | File-size limit  | Allowed MIME types                                    | Next action / owner                                                                           |
+| ---------------------- | ------ | ---------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `receipt-images`       | false  | 10,485,760 bytes | `image/jpeg`, `image/png`, `image/heic`, `image/heif` | Agent: include private receipt bytes in Stage 2 backup design.                                |
+| `image-upload-staging` | false  | 10,485,760 bytes | `image/jpeg`, `image/png`, `image/heic`, `image/heif` | Agent/user: decide whether transient staging is restored or deliberately excluded in Stage 2. |
+| `payment-qrs`          | false  | 2,097,152 bytes  | `image/png`                                           | Agent: include private QR bytes in Stage 2 backup design.                                     |
+
+### Recovery coverage and isolated destination
+
+| Finding                                                                                                                                                                | Status                                                           | Evidence / observation                                                                                                                                                                                                                                                                                                               | Next action / owner                                                                                                                                            |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Organization is Free; scheduled project backups are unavailable; latest successful managed backup and retained restore points: none available                          | Missing coverage, confirmed plan limitation                      | S: [Scheduled backups](https://supabase.com/dashboard/project/uvznqgkbodejvksmtafh/database/backups/scheduled) says Free Plan does not include project backups; overview says No backups                                                                                                                                             | User/agent: choose manual protected exports or an appropriate paid backup plan in Stage 2; no upgrade/export performed.                                        |
+| PITR is unavailable on current plan; requires Pro plus add-on. Restore-to-new-project is unavailable; requires Pro or above and physical backups                       | Missing on current plan                                          | S: [PITR](https://supabase.com/dashboard/project/uvznqgkbodejvksmtafh/database/backups/pitr), [restore-to-new-project](https://supabase.com/dashboard/project/uvznqgkbodejvksmtafh/database/backups/restore-to-new-project)                                                                                                          | User/agent: select recovery method later; dashboard upgrade text is not enabled coverage.                                                                      |
+| Current-plan recovery route is a manually created logical export restored to a separate compatible database; no export or restore was tested                           | Confirmed available documented method; recoverability unverified | S: [Supabase backup documentation](https://supabase.com/docs/guides/platform/backups) and [CLI backup/restore guide](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore), checked 02:57; L: Supabase CLI, Docker, psql and pg_dump not on PATH                                                       | Agent: prepare tooling and protected export/restore runbook in Stage 2; user supplies existing connection access securely when needed. No password reset now.  |
+| Independent database exports / off-site backup process, latest successful backup, retention and protected location                                                     | Missing — no independent coverage identified                     | U: in response to the backup/test-target question, user said “i put everything in hte prod database”. No external export process/location was supplied; L: none found in repository. This is owner-reported coverage, not an audit of external accounts.                                                                             | Agent/user: establish protected database exports or managed backup coverage in Stage 2, with explicit retention and successful-backup evidence.                |
+| Independent receipt/QR file backup process and protected backup location                                                                                               | Missing — no independent coverage identified                     | U: user reports everything kept in Production, with no separate file-backup process/location supplied; L: no repository workflow found. S: [database backups exclude Storage file bytes](https://supabase.com/docs/guides/platform/backups), checked 02:57. The database stores object metadata; private file bytes live in Storage. | Agent/user: include receipt and QR bytes in the Stage 2 recovery design and verify protected copies separately from the database.                              |
+| Existing designated isolated Bill Splitter test backend                                                                                                                | Missing — none identified                                        | U: user reports everything in Production; S: current project has no branches. Other organization projects have unrelated names and were not inspected/reused; designation was not inferred from names.                                                                                                                               | Agent/user: proceed with the dedicated project proposal below when provisioning is explicitly reached.                                                         |
+| Proposed destination: new dedicated `bill-splitter-ops-test`, with its own Supabase ref/database/buckets and test credentials, separately scoped Preview configuration | Confirmed proposal; not provisioned                              | S/U: no isolated Bill Splitter target identified; current Local/Preview/Production share the Production backend.                                                                                                                                                                                                                     | Agent/user: provision only in a later explicit step, resolve the account limit below, then verify backend separation before synthetic recovery/lifecycle work. |
+| Creating another free project in Orange Whiskers is currently blocked: Nacaree has reached the active free-project limit of 2                                          | Confirmed prerequisite                                           | S: [New project form](https://supabase.com/dashboard/new/wbbtmnbcoeigvylejwup) displayed limit warning and disabled Create; no form submitted                                                                                                                                                                                        | User: choose an existing designated isolated target, arrange a paid project, or separately decide how to free a slot. No project was paused/deleted/upgraded.  |
+
+### Acceptance and change boundary
+
+**Stage 1 acceptance is complete.** Deployment identity, the shared backend
+mapping (user-confirmed), direct schema compatibility, storage configuration,
+missing independent recovery coverage and the proposed isolated test destination
+with its account prerequisite are established. Unknown hidden credential values
+remain explicitly unverified, as allowed by the inventory scope. Missing backups
+and the test-project slot are Stage 2 prerequisites, not remaining inventory
+questions. No recoverability or restore success is claimed.
+
+Subsequent user decision: skip Stage 2. No backup/recovery or test-project
+provisioning work is currently requested. Follow Stage 3 above and then Stage 4;
+the audit's original Stage 2 next-action cells are historical context only.
+
+Only `HANDOFF.md` and `CURRENT_WORK.md` were edited during this inventory.
+Preexisting mobile/accessibility source, tests, package files and README changes
+were preserved. Read-only queries inspected catalog/configuration metadata;
+the SQL Editor may retain a private query snippet automatically. No deployment,
+migration, app mutation/RPC, cleanup, restore, backup download, credential change,
+test-data creation or test-project provisioning was performed. Documentation
+formatting, diff checks and a before/after file-hash comparison validate scope;
+application tests were not rerun for these documentation-only edits.
+
+## Operational verification plan (2026-10-22)
+
+This is the execution order: Stage 1 complete, Stage 2 skipped by user,
+Stage 3 implemented locally with hosted rollout pending, and Stages 4–7 pending. Work proceeds one stage at a time, with observed
+results and unresolved decisions recorded here
+and a concise status in CURRENT_WORK. Hosted migrations remain user-applied.
+
+1. **Read-only baseline.** Record the deployed release, local pending changes,
+   Preview/Production database targets, migration/schema compatibility, private
+   buckets, secret names/scopes (never values), and available backup facilities.
+   The user confirms Local/Preview/Production use `uvznqgkbodejvksmtafh`;
+   current Vercel scopes share one configured URL entry. A Preview hostname alone does not isolate backend
+   changes. Identify a separate test backend/local restore destination before
+   lifecycle or rotation rehearsals.
+   Done: an inventory with confirmed/unknown items and a chosen test target.
+2. **Recovery rehearsal — skipped by user; historical outline only.** Confirm backup coverage, retention and acceptable data
+   loss/recovery time. Database backups exclude Storage file contents:
+   https://supabase.com/docs/guides/platform/backups
+   Define a separate private-file backup method and protected backup location.
+   Rehearse synthetic bill data plus receipt/QR file recovery on an isolated
+   destination; compare counts, financial balances, file access and permissions.
+   Document the actual hosted recovery method supported by the user's plan.
+   Done: verified recovery evidence and repeatable steps, not just a saved dump.
+3. **Lifecycle rules — implemented locally.** Twelve months of inactivity,
+   24-hour drafts, confirmed images until bill deletion, immediate cleanup
+   eligibility at expiry and permanent creator-device deletion were agreed.
+   See Stage 3 above and README for code, tests, migration and coordinated rollout.
+   Hosted SQL application and deployment remain user-controlled later actions.
+4. **Cleanup rehearsal and routine.** Test expired staging reservations, rejected
+   uploads, abandoned receipt drafts, replaced/removed QR files and old counters.
+   Verify bounded batches, valid-data preservation, failure recovery and repeat
+   runs. Test the operator commands on an isolated backend first. Decide/document
+   the idle-time routine; scheduling is not implemented today.
+   Done: demonstrated cleanup and an explicit manual or scheduled operating plan.
+5. **Credential rotation rehearsal.** Inventory Supabase, Gemini, session-signing,
+   rate-limit and Sentry credentials. Rehearse on isolated test credentials;
+   document scope, update order, verification, retirement and failure recovery.
+   Test the previous session-signing-key support and the impact of retiring it
+   on existing participants. Keep shared-project limiter keys consistent across
+   deployments. Confirm revocation of the previously exposed Sentry token;
+   HANDOFF records that revocation as unconfirmed. Production credential changes
+   are coordinated operator actions after the exact runbook is reviewable.
+   Done: verified credential replacement steps and documented access impact.
+6. **Deployed verification.** Deploy the intended candidate when requested, then
+   use fresh synthetic bills on that hostname. Check create/share/join, expenses,
+   receipt review/confirmation, QR access and payment records. Use one generated
+   receipt for the real-provider path; record scan usage. Scope a controlled
+   rate-limit denial to synthetic bill/participant identities, preserving shared
+   policies/global quota. Verify retained input, retry timing and monitoring of
+   unexpected failures. Missing-secret/store-outage tests use an isolated backend.
+   Done: normal and blocked flows pass on the intended deployment; fixtures gone.
+7. **Closeout.** Record each check, expected/observed result, evidence and any
+   remaining action. Keep recovery, cleanup, rotation and deployment/rollback
+   instructions concise and reproducible. Finish the outstanding real-device,
+   screen-reader and Firefox checks before declaring Phase 4 complete.
+
+The agent prepares code, tests, scripts, SQL and runbooks. The user confirms
+hosting/account settings and applies hosted migrations; provisioning a test
+project, deploying, restoring or changing production credentials is handled as
+an explicit concrete step when reached. No operational changes were made while
+preparing this plan.
+
+## Mobile and accessibility (2026-10-22)
+
+Local code adds responsive native controls/long-name wrapping (including a
+WebKit native-option overflow and undersized dropdown fixes), consistent focus
+outlines, a focusable skip target, larger disclosure/receipt/checkbox targets,
+16px touch-input text and reduced-motion support. Receipt pages have their own
+title. Form errors are associated with fields/groups; rejected entries survive
+React action resets and focus moves to the first invalid field or form error.
+Receipt add/remove keeps focus, and saving an expense editor returns it to Edit.
+QR action errors now live inside their forms so they receive focus. File errors
+focus their picker. Link copying announces success and provides a selected URL
+field if clipboard access fails. No migrations or deployment changes are needed.
+
+New axe/Playwright suite: `npm run test:e2e:a11y` for home/invalid-link checks;
+`npm run test:e2e:a11y:live` explicitly creates/cleans synthetic bill/draft rows
+and tests expense/payment/receipt controls. It seeds ready receipts directly,
+never calls Gemini, never consumes scan quota, creates no storage files and
+never initiates bank payments. Normal UI write quotas still apply. Install
+Chromium/Firefox/WebKit with `npx playwright install chromium firefox webkit`.
+The matrix covers desktop engines, 320px Chromium, Android and iPhone emulation.
+See CURRENT_WORK for verified results and README for the remaining manual
+real-device/VoiceOver/TalkBack pass. Firefox headless could not launch on this
+Mac (sandbox/compositor failures), so that engine remains unverified.
+For local build checks, `SENTRY_AUTH_TOKEN='' npm run build -- --webpack` skips
+external source-map uploads; the configured deployment workflow is unchanged.
+These local changes are not deployed.
+
 ## Rate limiting (2026-10-21)
 
-Implementation is ready for deployment. Do not apply hosted migrations for the
+Commit 32355c4 was confirmed deployed on Vercel. Do not apply hosted migrations for the
 user. SQL: `supabase/migrations/20261021000000_rate_limiting.sql`, after direct
 uploads. Pause extraction, wait for workers, apply SQL, deploy updated code, then
 resume: service-role access to claim_receipt_extraction_v2 is retired. The new v3
@@ -35,15 +339,17 @@ projects: npm run rate-limits:cleanup until zero. No scheduler added.
 Opt-in hosted check: npm run test:integration:rate-limits AFTER migration; synthetic
 concurrency checks, no Gemini, consumes one global attempt and cleans test records.
 The user reports the migration/secret setup is complete and supplied passing
-output for both hosted concurrency tests (2/2). This verifies Supabase, not the
-deployed code. Push and wait for Vercel before resuming scans, then check app flows.
+output for both hosted concurrency tests (2/2). The deployed release was later
+confirmed, and a recent receipt processed and was confirmed successfully.
+A controlled deployed rate-limit denial remains part of operational validation.
 See CURRENT_WORK for final validation.
 
 ## Sentry setup (2026-10-20)
 
 The user reports all required migrations, Vercel deployment and live bill flows
 are working. Phase 4 has started with Sentry; SDK setup is documented below.
-Deployed Sentry reporting remains to be verified. No Sentry migration is required.
+Production receipt errors and traces were observed in Sentry. No Sentry migration
+is required.
 
 The Codex plugin is connected, and the application now uses `@sentry/nextjs`
 11.8.0. Project: `nathan-d2 / bill-splitter-webapp`, team `nathan`, US region.
@@ -73,8 +379,8 @@ browser navigation while secrets may be copied.
 Set `SENTRY_AUTH_TOKEN` in Vercel Preview and Production before deploying these
 changes; builds fail on Vercel if missing. Vercel environment/Git SHA identify
 events and releases. Local builds without a token skip source-map uploads.
-Commit/push/deploy only when requested, then verify a deployed error. Rate limits,
-alerts, mobile/accessibility review and privacy/support content remain future work.
+Commit/push/deploy only when requested. Remaining Phase 4 work is listed above:
+mobile/accessibility review and operational checks.
 
 ## Vercel preparation (2026-10-20)
 
@@ -228,8 +534,7 @@ npm run build -- --webpack
 
 ## Resume
 
-1. Read CURRENT_WORK for Sentry's latest validation and remaining deployment steps.
-2. Set the replacement build token in Vercel Preview and Production.
-3. Commit/push/deploy Sentry only when requested, then verify deployed reporting.
-4. Continue Phase 4 hardening as directed by the user. Existing opt-in hosted
-   browser tests remain available if automated hosted verification is requested.
+1. Read CURRENT_WORK for the latest validation and current task.
+2. Finish real-device, screen-reader and Firefox accessibility verification.
+3. Complete remaining operational checks (Stage 2 backup/restore skipped): migrations, key rotation,
+   expiration, cleanup, permanent deletion and deployed-flow verification.

@@ -2,7 +2,7 @@
 
 import { RetainedForm } from "@/components/retained-form";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useEffect, useId, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createExpenseAction, updateExpenseAction } from "@/app/actions";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ export function ExpenseForm({
   expense = null,
   onSaved,
 }) {
+  const prefix = useId();
   const editing = Boolean(expense);
   const router = useRouter();
   const defaultParticipantIds = useMemo(
@@ -68,7 +69,7 @@ export function ExpenseForm({
 
       <div className="grid gap-5 sm:grid-cols-2">
         <Field
-          id={`${editing ? expense.id : "new"}-description`}
+          id={`${prefix}-description`}
           name="description"
           label="What was it?"
           placeholder="Dinner"
@@ -81,7 +82,7 @@ export function ExpenseForm({
           error={state.errors?.description}
         />
         <Field
-          id={`${editing ? expense.id : "new"}-amount`}
+          id={`${prefix}-amount`}
           name="amount"
           label={`Total (${bill.currency})`}
           placeholder={bill.currency === "KHR" ? "40000" : "40.00"}
@@ -101,6 +102,12 @@ export function ExpenseForm({
           Paid by
           <select
             name="paidByParticipantId"
+            aria-invalid={Boolean(state.errors?.paidByParticipantId)}
+            aria-describedby={
+              state.errors?.paidByParticipantId
+                ? `${prefix}-paidByParticipantId-error`
+                : undefined
+            }
             defaultValue={
               expense?.paid_by_participant_id ?? bill.currentParticipantId
             }
@@ -113,7 +120,10 @@ export function ExpenseForm({
             ))}
           </select>
           {state.errors?.paidByParticipantId ? (
-            <span className="font-normal text-red-700">
+            <span
+              id={`${prefix}-paidByParticipantId-error`}
+              className="font-normal text-red-700"
+            >
               {state.errors.paidByParticipantId}
             </span>
           ) : null}
@@ -123,6 +133,12 @@ export function ExpenseForm({
           <input
             type="date"
             name="expenseDate"
+            aria-invalid={Boolean(state.errors?.expenseDate)}
+            aria-describedby={
+              state.errors?.expenseDate
+                ? `${prefix}-expenseDate-error`
+                : undefined
+            }
             defaultValue={
               expense?.expense_date ?? defaults?.expenseDate ?? today()
             }
@@ -130,7 +146,10 @@ export function ExpenseForm({
             className="min-h-12 rounded-xl border border-slate-300 bg-white px-4 text-base font-normal shadow-sm outline-none focus:border-teal-700 focus:ring-3 focus:ring-teal-100"
           />
           {state.errors?.expenseDate ? (
-            <span className="font-normal text-red-700">
+            <span
+              id={`${prefix}-expenseDate-error`}
+              className="font-normal text-red-700"
+            >
               {state.errors.expenseDate}
             </span>
           ) : null}
@@ -163,7 +182,20 @@ export function ExpenseForm({
         </label>
       </div>
 
-      <fieldset className="grid gap-3">
+      <fieldset
+        className="grid min-w-0 gap-3"
+        tabIndex={
+          state.errors?.participantIds || state.errors?.shares ? -1 : undefined
+        }
+        aria-invalid={Boolean(
+          state.errors?.participantIds || state.errors?.shares,
+        )}
+        aria-describedby={
+          state.errors?.participantIds || state.errors?.shares
+            ? `${prefix}-shares-error`
+            : undefined
+        }
+      >
         <legend className="text-sm font-semibold text-slate-800">
           Split between
         </legend>
@@ -178,7 +210,7 @@ export function ExpenseForm({
                 key={participant.id}
                 className="rounded-xl border border-slate-200 bg-slate-50 p-3"
               >
-                <label className="flex min-h-8 items-center gap-3 text-sm font-medium text-slate-800">
+                <label className="flex min-h-11 items-center gap-3 text-sm font-medium text-slate-800">
                   <input
                     type="checkbox"
                     name="participantId"
@@ -193,7 +225,7 @@ export function ExpenseForm({
                 </label>
                 {splitMethod === "exact" && selected ? (
                   <label className="mt-2 grid gap-1 text-xs font-semibold text-slate-600">
-                    Their amount ({bill.currency})
+                    {participant.display_name}’s amount ({bill.currency})
                     <input
                       name={`share-${participant.id}`}
                       inputMode="decimal"
@@ -216,7 +248,11 @@ export function ExpenseForm({
           })}
         </div>
         {(state.errors?.participantIds ?? state.errors?.shares) ? (
-          <p role="alert" className="text-sm text-red-700">
+          <p
+            id={`${prefix}-shares-error`}
+            role="alert"
+            className="text-sm text-red-700"
+          >
             {state.errors.participantIds ?? state.errors.shares}
           </p>
         ) : null}
@@ -226,13 +262,22 @@ export function ExpenseForm({
         Notes <span className="font-normal text-slate-500">(optional)</span>
         <textarea
           name="notes"
+          aria-invalid={Boolean(state.errors?.notes)}
+          aria-describedby={
+            state.errors?.notes ? `${prefix}-notes-error` : undefined
+          }
           defaultValue={expense?.notes ?? ""}
           maxLength={1000}
           rows={3}
           className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-base font-normal shadow-sm outline-none focus:border-teal-700 focus:ring-3 focus:ring-teal-100"
         />
         {state.errors?.notes ? (
-          <span className="font-normal text-red-700">{state.errors.notes}</span>
+          <span
+            id={`${prefix}-notes-error`}
+            className="font-normal text-red-700"
+          >
+            {state.errors.notes}
+          </span>
         ) : null}
       </label>
 

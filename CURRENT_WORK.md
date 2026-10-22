@@ -5,38 +5,45 @@
 
 ## Task
 
-Phase 4: Supabase-backed rate limiting for public live testing.
+Phase 4: Stage 3 lifecycle/permanent deletion implemented locally and tested.
+Stage 1 complete; Stage 2 skipped by user. Hosted rollout pending.
+Working branch: `work/mobile-accessibility-lifecycle`; keep Production `main` unchanged.
 
-## Completed
+## Implemented locally
 
-- Private counter/policy migration and service-only atomic consume/cleanup RPCs.
-- All actions: 300/min/IP before business queries; authorized operation quotas
-  cover bills/people, uploads/completion, expenses/settlements and owner QR writes.
-- Extraction v3 claim atomically consumes quotas and assigns attempts; 100/day
-  across the app, 10/10min per acting participant and 30/hour per bill.
-- Fixed windows use database time; daily reset 00:00 UTC (07:00 Cambodia).
-- Duplicate claims do not spend scan quota; failed winning attempts still count.
-- App quota denial retains images, persists next_retry_at and offers manual entry.
-- Existing attempt guards, 90-second processing and stale retry remain intact.
-- Trusted Vercel IP header, normalized HMAC subjects; fixed local development IP.
-- Five-second limiter deadline; missing config/store fails closed, bill reads remain.
-- Expected denials preserve form values, selected files, reservations and response
-  shapes; no automatic retries. Static limiter failures report to Sentry.
-- Bounded expired-counter cleanup plus npm run rate-limits:cleanup for idle projects.
-- Added offline coverage and opt-in synthetic hosted concurrency checks.
-- README/HANDOFF include policies, secret, migration and rollout instructions.
+- Bills expire after 12 UTC calendar months without a qualifying successful change.
+  Reads/failures/retries/background processing do not renew them; inline expiry
+  dates and a final-30-day warning are shown. No grace/undo at automatic expiry.
+- Draft receipts expire at 24 hours. Confirmed images remain until bill deletion;
+  expense cards link to receipts and old missing images have an accessible fallback.
+- Creator-device deletion requires session/recovery cookies and typing DELETE.
+  SQL atomically queues file cleanup and removes dependent app/scoped-quota rows;
+  other bills/global/IP quotas remain. Only this bill's cookies are cleared.
+- Private retry jobs sweep receipt/QR/staging folders, including orphan/nested files.
+  Five-minute leases/retries and a final 24-hour sweep handle failures/late uploads.
+- `npm run lifecycle:cleanup` defaults to count-only dry-run; apply requires
+  `-- --apply --project-ref <matching-project-ref>`. Bounded batches; no scheduler.
+- Migration `20261022000000_bill_lifecycle.sql`: **NOT APPLIED to hosted Supabase**,
+  explicitly confirmed by the user on 2026-10-22. User applies it after rate limiting.
+- Mobile/accessibility and lifecycle work saved together; not released to Production.
+  Automatic Preview builds do not apply SQL and are not ready for hosted validation.
 
 ## Validation
 
-- Full suite: 206 offline tests pass; eight live tests skipped.
-- Formatting, lint and webpack production build pass.
-- User reports both hosted concurrency tests passed (2/2), without Gemini calls.
-- User reports migration and secret configuration complete; deployment pending.
+- 243 offline tests pass; eight hosted/provider tests skipped. PGlite and mocked
+  Storage cover lifecycle, authorization, batches, failures and race interleavings.
+- 10 new offline lifecycle browser checks pass: Chromium/WebKit desktop, 320px
+  Chromium, Android/iPhone emulation; keyboard/error/pending/fallback/axe/reflow.
+- Formatting, lint and webpack production build pass; source-map uploads disabled.
+- No Production data tests, cleanup, migration, deployment or credential changes.
 
-## Remaining rollout
+## Remaining
 
-- Push the updated main branch and wait for Vercel deployment to finish.
-- Keep scanning paused until deployment: migration retires the old v2 claim RPC.
-- Verify deployed normal and blocked flows using a fresh test bill.
-- Hosted test success verifies Supabase; it does not verify deployed app code.
-- Remaining Phase 4: mobile/accessibility, privacy/support, backup/deletion reviews.
+- Do not merge/promote this branch yet. Follow coordinated maintenance → drain old callbacks → user SQL
+  → deploy/promote → verify → reopen sequence. Old code deletes confirmed images.
+- Stage 4: decide/run cleanup routine and hosted rehearsal; no automatic worker yet.
+- Real iPhone/Android, VoiceOver/TalkBack/manual keyboard and working-host Firefox.
+- Credential rotation and deployed normal/blocked-flow checks remain pending.
+- Production still `32355c4`; Local/Preview/Production share `uvznqgkbodejvksmtafh`.
+  Preview RATE_LIMIT_SECRET is missing; account free-project limit blocks a test project.
+- Privacy/support content and the Privacy & Help page remain off the to-do list.

@@ -45,7 +45,6 @@ import {
 } from "@/server/expenses";
 import {
   confirmReceiptExpense,
-  deleteReceiptImage,
   processReceiptScan,
   ReceiptNotFoundError,
   retryReceiptScan,
@@ -357,7 +356,6 @@ export async function confirmReceiptAction(_previousState, formData) {
         ...parsed.data,
         cookieValue: cookieStore.get(PARTICIPANT_COOKIE_NAME)?.value,
       });
-      after(() => deleteReceiptImage(parsed.data.receiptScanId));
       revalidatePath(`/b/${shareToken}`);
       revalidatePath(`/b/${shareToken}/receipts/${parsed.data.receiptScanId}`);
       return { expenseId: confirmed.expenseId, success: true };

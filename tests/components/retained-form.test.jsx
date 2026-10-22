@@ -60,3 +60,67 @@ it("keeps normal successful reset behavior", () => {
   container.querySelector("form").reset();
   expect(screen.getByLabelText("Name")).toHaveValue("");
 });
+
+it("retains rejected entries and focuses the invalid field after server validation", async () => {
+  function contents(error) {
+    return (
+      <>
+        <label htmlFor="amount">Amount</label>
+        <input
+          id="amount"
+          name="amount"
+          defaultValue=""
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? "amount-error" : undefined}
+        />
+        {error ? <p id="amount-error">Enter a valid amount.</p> : null}
+        <button type="submit">Save</button>
+      </>
+    );
+  }
+  const { container, rerender } = render(
+    <RetainedForm state={{}} onSubmit={(e) => e.preventDefault()}>
+      {contents(false)}
+    </RetainedForm>,
+  );
+  fireEvent.change(screen.getByLabelText("Amount"), {
+    target: { value: "bad amount" },
+  });
+  fireEvent.submit(container.querySelector("form"));
+  container.querySelector("form").reset();
+  rerender(
+    <RetainedForm state={{ errors: { amount: "Enter a valid amount." } }}>
+      {contents(true)}
+    </RetainedForm>,
+  );
+  await waitFor(() => expect(screen.getByLabelText("Amount")).toHaveFocus());
+  expect(screen.getByLabelText("Amount")).toHaveValue("bad amount");
+  expect(screen.getByLabelText("Amount")).toHaveAccessibleDescription(
+    "Enter a valid amount.",
+  );
+});
+
+it("focuses a general action error only after submission", async () => {
+  const contents = (
+    <>
+      <input aria-label="Name" name="name" />
+      <p role="alert">Please try later.</p>
+    </>
+  );
+  const { container, rerender } = render(
+    <RetainedForm
+      state={{ errors: { form: "Please try later." } }}
+      onSubmit={(e) => e.preventDefault()}
+    >
+      {contents}
+    </RetainedForm>,
+  );
+  expect(screen.getByRole("alert")).not.toHaveFocus();
+  fireEvent.submit(container.querySelector("form"));
+  rerender(
+    <RetainedForm state={{ errors: { form: "Please try later." } }}>
+      {contents}
+    </RetainedForm>,
+  );
+  await waitFor(() => expect(screen.getByRole("alert")).toHaveFocus());
+});

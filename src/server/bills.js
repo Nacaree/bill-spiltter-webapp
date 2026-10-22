@@ -1,3 +1,5 @@
+import { billIsActive } from "@/lib/bill-lifecycle";
+
 import {
   createAccessToken,
   createBillAccess,
@@ -94,15 +96,13 @@ export async function getBillByShareToken(shareToken) {
   const supabase = getServerSupabase();
   const { data: bill, error: billError } = await supabase
     .from("bills")
-    .select("id, name, currency, expires_at, archived_at, created_at")
+    .select(
+      "id, name, currency, expires_at, archived_at, created_at, last_activity_at",
+    )
     .eq("public_id_hash", shareHash)
     .maybeSingle();
   if (billError) throwDatabaseError(billError);
-  if (
-    !bill ||
-    bill.archived_at ||
-    (bill.expires_at && new Date(bill.expires_at).getTime() <= Date.now())
-  ) {
+  if (!billIsActive(bill)) {
     throw new BillNotFoundError();
   }
 
@@ -116,6 +116,10 @@ export async function getBillByShareToken(shareToken) {
 
   return {
     ...bill,
+    expiresSoon: Boolean(
+      bill.expires_at &&
+      new Date(bill.expires_at).getTime() - Date.now() <= 30 * 24 * 60 * 60_000,
+    ),
     participants: participants.map(
       ({ session_token_hash: sessionTokenHash, ...participant }) => ({
         ...participant,
@@ -240,4 +244,16 @@ export async function addParticipant({
     throw new Error("Database did not return the added participant identity.");
   }
   return { participantId: added.participant_id };
+}
+
+// Recheck at point of use rather than trusting a previously rendered bill.
+export async function requireActiveBillId(billId) {
+  const { data, error } = await getServerSupabase()
+    .from("bills")
+    .select("id, expires_at, archived_at")
+    .eq("id", billId)
+    .maybeSingle();
+  if (error) throwDatabaseError(error);
+  if (!billIsActive(data)) throw new BillNotFoundError();
+  return data;
 }

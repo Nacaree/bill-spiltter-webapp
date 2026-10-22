@@ -29,15 +29,15 @@ export function PayOwnerQr({ shareToken, transfer }) {
         <Button type="submit" variant="secondary" disabled={pending}>
           {pending ? "Opening…" : "Pay with ABA QR"}
         </Button>
+        {state.errors?.form ? (
+          <p role="alert" className="mt-2 text-sm text-red-700">
+            {state.errors.form}
+          </p>
+        ) : null}
       </RetainedForm>
-      {state.errors?.form ? (
-        <p role="alert" className="mt-2 text-sm text-red-700">
-          {state.errors.form}
-        </p>
-      ) : null}
       {visible ? (
         <div className="mt-4 rounded-xl border border-teal-200 bg-white p-4">
-          <p className="text-lg font-bold text-slate-950">
+          <p role="status" className="text-lg font-bold text-slate-950">
             Send {formatMoney(state.qr.amountMinor, state.qr.currency)}
           </p>
           <p className="mt-2 text-sm text-slate-700">

@@ -5,17 +5,14 @@ export function Field({ label, hint, error, className, id, ...props }) {
   const errorId = error ? `${id}-error` : undefined;
 
   return (
-    <label
-      className="grid gap-2 text-sm font-semibold text-slate-800"
-      htmlFor={id}
-    >
-      {label}
+    <div className="grid min-w-0 gap-2 text-sm font-semibold text-slate-800">
+      <label htmlFor={id}>{label}</label>
       <input
         id={id}
         aria-describedby={errorId ?? hintId}
         aria-invalid={Boolean(error)}
         className={cn(
-          "min-h-12 rounded-xl border border-slate-300 bg-white px-4 text-base font-normal shadow-sm outline-none placeholder:text-slate-400 focus:border-teal-700 focus:ring-3 focus:ring-teal-100",
+          "min-h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-4 text-base font-normal shadow-sm outline-none placeholder:text-slate-400 focus:border-teal-700 focus:ring-3 focus:ring-teal-100",
           error && "border-red-600 focus:border-red-600 focus:ring-red-100",
           className,
         )}
@@ -30,6 +27,6 @@ export function Field({ label, hint, error, className, id, ...props }) {
           {hint}
         </span>
       ) : null}
-    </label>
+    </div>
   );
 }
