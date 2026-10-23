@@ -137,6 +137,34 @@ describe("Gemini receipt extraction", () => {
       "models/gemini-3.8-flash:generateContent",
     );
   });
+  it.each([401, 403])(
+    "uses a replacement key after HTTP %s without leaking either key",
+    async (status) => {
+      const oldKey = "old-disposable-gemini-key";
+      const newKey = "new-disposable-gemini-key";
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce({ ok: false, status })
+        .mockResolvedValueOnce(mockResponse());
+      vi.stubGlobal("fetch", fetchMock);
+      vi.stubEnv("GEMINI_API_KEY", oldKey);
+      const failure = await extract().catch((error) => error);
+      expect(failure).toMatchObject({
+        code: "provider_auth_failed",
+        retryable: false,
+      });
+      expect(String(failure)).not.toContain(oldKey);
+      expect(String(failure)).not.toContain(newKey);
+      vi.stubEnv("GEMINI_API_KEY", newKey);
+      expect(await extract()).toMatchObject({
+        provider: "gemini",
+        totalMinor: 1200,
+      });
+      expect(
+        fetchMock.mock.calls.map(([, init]) => init.headers["x-goog-api-key"]),
+      ).toEqual([oldKey, newKey]);
+    },
+  );
   it.each([
     [401, "provider_auth_failed"],
     [403, "provider_auth_failed"],

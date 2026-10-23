@@ -5,44 +5,42 @@
 
 ## Task
 
-Stage 4 daily cleanup is ENABLED in Production; worker revision `b0ba0ac` on main.
-No new migration; Stage 2 skipped. Existing work preserved, no new branch.
-Implementation committed/pushed; documentation follow-up records rollout results.
+Stage 5 credential readiness implemented on existing `main`, 2026-10-23 GMT+7.
+Documentation/tests only; live credentials/settings unchanged. No commit/push.
+Stage 2 remains skipped. User reports Stage 3 lifecycle migration already applied;
+this stage adds no migration, runtime behavior or API/schema changes.
 
-## Implementation and validation
+## Deliverables and validation
 
-- GET `/api/cron/lifecycle-cleanup`, daily `0 20 * * *` UTC (03–04 Phnom Penh).
-- Production-only bearer auth, enable flag, matching explicit project ref;
-  gates precede client construction. HEAD/other methods reject; no-store responses.
-- Per run: up to 20 bills + 20 drafts, 20 old uploads, 100 old counter windows,
-  then 40 file batches of 3. Database deadlines/leases remain enforced.
-- Limits: 300s function, 210s soft stop, 240s hard abort, 15s per request.
-- Safe aggregate reporting + existing Sentry lifecycle_cleanup; stops on failure.
-  No new email/missed-run alerts. Unfinished work retries on later daily runs.
-- 280 offline tests pass; 8 hosted/provider tests skipped. Lint, formatting/diff
-  and webpack build pass; source-map uploads disabled. Local HTTP checks passed.
-
-## Hosted rollout evidence — 2026-10-23, GMT+7
-
-- CRON_SECRET saved by user, Secret type, Production only; value never revealed.
-- Worker b0ba0ac published; disabled deployment DjzWeacd8 passed public GET 401,
-  HEAD/POST 405, no-store, and authenticated dashboard Run 503.
-- User completed Vercel email verification; agent set enable flag true/redeployed.
-- H8jKFNYNJ / b0ba0ac Ready Production at 03:00:28. Cron registration verified.
-- Exactly one enabled dashboard probe approved: completed at 03:02:39, 571ms;
-  all removals=0, files failed=0, countsComplete=true; 13 future sweeps kept queued.
-- Read-only check at 03:02:55: active bills=19, confirmed receipts=8, expenses=10,
-  unchanged. All eligible backlog counts=0; pendingFileJobs=13.
-- README/HANDOFF record release links, schedule and emergency-stop instructions.
+- README has seven replacement runbooks with owners, cutover/verification,
+  retirement and failure recovery. HANDOFF has timestamped evidence/status/actions.
+- 293 offline tests pass; 8 hosted/provider tests skipped. Added 13 credential
+  cases using disposable secrets, HTTP mocks and PGlite. Lint and webpack
+  production build pass, with external source-map uploads disabled. Formatting
+  and final diff checks pass; only documentation/test files changed.
+- Session bridge/cutover/retirement tested: cookies last 365 days, no automatic
+  renewal. Removing fallback early can lock creators out despite recovery cookie.
+  Old deployments and QR previews require coordinated handling; no behavior change.
+- Modern Supabase keys exist alongside enabled legacy keys. Local keys are
+  legacy-shaped; hidden hosted key types/equality remain unverified. SDK transport
+  tests are offline evidence, not proof of hosted acceptance/permissions.
+- Sentry old-token revocation/replacement resolved by user confirmation.
+- Gemini key FixFirst is owner-identified; Cloud metadata confirms bound account,
+  Gemini API restriction, application restrictions None. No settings changed.
+- Preview RATE_LIMIT_SECRET is still missing. Owner must separately configure
+  a consistent trusted key and redeploy before Preview write verification.
+- Hidden credential equality, effective provider permissions and future live
+  replacement checks stay unverified. Actual rotations remain future actions.
 
 ## Remaining
 
-- Verify first time-triggered scheduled invocation (manual probe is distinct).
-- Existing 13 final deadlines pass Oct 24 02:30 GMT+7; daily worker should handle
-  them in a later 03–04 run. No manual return is needed to trigger cleanup.
-- Verify final queue/file absence and active bill's confirmed receipt UI access
-  before closing Stage 4. No artificial expiry or Production failure injection.
+- Stage 4 cleanup is enabled per last verified worker release b0ba0ac/H8jKFNYNJ;
+  daily `0 20 * * *` UTC (03–04 Phnom Penh), Production-only protected worker.
+- Prior approved probe removed nothing; 13 future final sweeps remained queued.
+  Verify first scheduled invocation, final sweeps after Oct 24 02:30 GMT+7,
+  target file absence and an active confirmed receipt opening before closing it.
+- No cleanup invocation/provider call/live integration ran during Stage 5.
+- Stage 6 broader deployed flows and real-device/screen-reader/Firefox checks.
+- Preview shares Production. No isolated backend; Stage 2 remains skipped.
 - QR replacement failures lack live-bill orphan retries; documented limitation.
-- Credential rotation, broader deployed flows, real devices/screen readers and
-  Firefox remain. Preview shares Production; prior missing RATE_LIMIT_SECRET.
 - Privacy/support content and Privacy & Help page remain off the to-do list.

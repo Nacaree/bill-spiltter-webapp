@@ -9,7 +9,114 @@ computer.
 The user wants migration SQL saved in `supabase/migrations/` and will apply
 hosted migrations themselves. Tell them when a new migration is required.
 
-## Resume here — daily cleanup enabled; successful Production probe
+## Resume here — Stage 5 credential readiness implemented
+
+Status refreshed **2026-10-23, 03:26 GMT+7 (Asia/Phnom_Penh)** on existing
+`main`. Stage 5 contains documentation and offline tests only; no runtime/API,
+schema, credential, hosted-setting or deployment changes. No commit/push.
+Stage 2 remains explicitly skipped. **User previously reported applying the
+Stage 3 lifecycle migration**; this stage adds no migration.
+
+- Seven replacement runbooks are in README, **Credential readiness — Stage 5**.
+  Each includes consumers, prerequisites/owner, update order, verification,
+  retirement and failure recovery. These are future operator instructions,
+  not evidence of actual rotations. Use the inventory below before any cutover.
+- **Sentry exposure resolved by user confirmation:** user states the old token
+  was revoked and a new token generated. Do not request another revocation or
+  describe it as still unconfirmed. Hosted token identity/scopes and a new
+  source-map upload were not independently verified in this readiness review.
+- **Missing:** Preview `RATE_LIMIT_SECRET` remains absent in Vercel's current
+  metadata. Owner must coordinate the same trusted limiter key across retained
+  shared-backend deployments and redeploy before Preview write checks. Do not
+  silently fix it as part of this readiness task.
+- **Confirmed:** Supabase has modern publishable/secret keys available alongside
+  enabled legacy keys. Local public/server keys are legacy JWT-shaped; hosted
+  hidden key types/equality are unverified. Installed-SDK transport works with
+  disposable modern keys offline; this does not establish hosted acceptance.
+- **Confirmed by user mapping + provider metadata:** Bill Splitter's Gemini key
+  label is **FixFirst**, in **Default Gemini Project** /
+  `gen-lang-client-0617951019`. It is service-account-bound, Available, restricted
+  to Gemini API, with application restrictions **None**. No key values/suffixes
+  were saved in this report, and nothing was edited or submitted.
+- Session rotation needs care: cookies last 365 days, no read/write refresh
+  exists, and creator recovery alone cannot bypass an invalid session. Retiring
+  A early can lock creators out. The runbook covers the current/previous bridge,
+  old deployment/rollback compatibility and current-key-only QR previews. No
+  signing-key or session behavior was changed.
+- **Offline validation:** 293 tests pass, 8 hosted/provider tests skipped (43
+  passing files). Added 13 credential cases: mocked modern Supabase SDK RPC/Storage,
+  session overlap/retirement and creator authorization, QR reinspection, limiter
+  preservation, Gemini replacement and cron rejection. Lint and webpack
+  production build passed with external source-map uploads disabled. Full-repo
+  formatting and final diff checks passed; only documentation/test files changed.
+- Stage 4 remains enabled per its last verified rollout, with first scheduled
+  invocation, final sweeps after **Oct 24 02:30 GMT+7**, file absence and an active
+  confirmed-receipt UI check still pending. None were triggered by Stage 5.
+  Stage 6 deployed flows and real-device/screen-reader/Firefox checks remain.
+  Privacy/support content remains off the to-do list.
+
+### Stage 5 evidence inventory
+
+Observation window **2026-10-23 03:20–03:26 GMT+7**. Local inspection emitted only
+presence and Supabase key-type classifications, no values/payloads/fingerprints.
+Chrome inspection used metadata only; no credential Reveal/Copy/Save/Create/
+Rotate/Delete action was taken. Presence does not establish hidden equality or
+effective permissions. No new credential was generated, entered or submitted.
+
+- **V:** [Vercel variables](https://vercel.com/nacarees-projects/bill-spiltter-webapp/settings/environment-variables),
+  all-environment/all-variable list: 11 entries. Shared tab: no linked variables.
+  No Development scope or branch-specific entry was shown; immutable deployment
+  settings were not inspected. URL/public key/server key/session/rate/Gemini/
+  Sentry/cron entries are Secret type; model and lifecycle configuration are
+  Config. The URL and public key are public information despite the saved type.
+- **L:** ignored `.env.local` / `.env.sentry-build-plugin`, `src/env.js`,
+  `src/lib/{participant-session,payment-qr,supabase-server,direct-image-upload,receipt-extraction}.js`,
+  server bills/payment-methods/rate-limits/scheduled-cleanup, local cleanup
+  scripts, `next.config.mjs` and installed Next.js environment-variable guide.
+- **S:** [Supabase API keys](https://supabase.com/dashboard/project/uvznqgkbodejvksmtafh/settings/api-keys)
+  and Legacy tab; project `bill-spilter`, public URL/ref confirmed. Both modern
+  default key types exist; legacy tab offers Disable, so legacy API keys remain
+  enabled. No key action was taken.
+- **G:** [AI Studio](https://aistudio.google.com/api-keys), user identified the
+  Bill Splitter row; [Cloud key metadata](https://console.cloud.google.com/apis/credentials/key/79abb31d-c8e4-4af0-89d3-64bfce5ac7fc?project=gen-lang-client-0617951019).
+  FixFirst, created Jun 30 2026, service-account-bound, one selected API (Gemini),
+  application restriction None. Exited details with Cancel. AI Studio listed
+  Free tier; live billing/quota/permissions were not independently established.
+- **U:** current conversation: Sentry revocation/replacement confirmation and
+  Gemini row identification. Earlier user confirmation maps Local/Preview/
+  Production to shared project `uvznqgkbodejvksmtafh`.
+
+| Credential / configuration                            | Local                        | Production         | Preview            | Status, evidence and next action / owner                                                                                                                                                                                                                                                                                                      |
+| ----------------------------------------------------- | ---------------------------- | ------------------ | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Supabase public key (`NEXT_PUBLIC_SUPABASE_ANON_KEY`) | Present, legacy-shaped       | Present            | Present            | **Confirmed** presence (L/V), modern public key available (S); **unverified** deployed type/pairing. Owner: attest type and retained consumers before future migration; operator: separately verify signed browser uploads.                                                                                                                   |
+| Supabase server key (`SUPABASE_SERVICE_ROLE_KEY`)     | Present, legacy-shaped       | Present            | Present            | **Confirmed** presence (L/V), modern secret available/legacy enabled (S); **unverified** hosted type/permissions. Owner: audit app/cron/scripts/external integrations; operator: separately validate candidate RPC/Storage before retirement.                                                                                                 |
+| `PARTICIPANT_SESSION_SECRET`                          | Present                      | Present            | Present            | **Confirmed** presence (L/V); **unverified** equality/entropy. Owner: coordinate retained deployment scopes before future bridge/cutover; no automatic cookie renewal exists.                                                                                                                                                                 |
+| `PARTICIPANT_SESSION_PREVIOUS_SECRET`                 | Absent                       | Absent             | Absent             | **Confirmed** optional fallback absent (L/V). Operator/owner: follow README bridge and 365-day retirement criteria for a future routine rotation.                                                                                                                                                                                             |
+| `RATE_LIMIT_SECRET`                                   | Present                      | Present            | Absent             | **Missing** in Preview (V); **unverified** Local/Production equality. Owner: separately configure the intended consistent key and redeploy before Preview writes; do not reset counters/policies.                                                                                                                                             |
+| `GEMINI_API_KEY`                                      | Present                      | Present            | Present            | **Confirmed** presence (L/V); FixFirst mapping **user-confirmed** (U); binding/restrictions **confirmed** (G). Hidden equality and live permissions/quota **unverified**. Owner: confirm billing/quota and bound-account permissions before replacement; operator: separately authorize synthetic extraction.                                 |
+| `SENTRY_AUTH_TOKEN`                                   | Present in build-plugin file | Present            | Present            | Old-token revocation/replacement **user-confirmed** (U), exposure resolved; scoped presence **confirmed** (L/V). Token identity/scopes/upload validity **unverified**. Owner: confirm replacement targets nathan-d2 / bill-splitter-webapp with CI upload scope; operator: verify artifacts/readable frames on a separately authorized build. |
+| `CRON_SECRET`                                         | Absent                       | Present            | Absent             | Scope/presence **confirmed** (L/V); local/Preview absence intentional. Value/entropy not inspected; earlier enabled probe remains historical evidence. Owner: leave unchanged; use paused/disabled cutover only if later needed.                                                                                                              |
+| `NEXT_PUBLIC_SUPABASE_URL`                            | Shared project URL           | Present            | Present            | Local public URL **confirmed** (L/S), shared hosted mapping **user-confirmed** (U). Hidden deployed equality **unverified**. Operator: no target change; treat all scopes as Production data/quota.                                                                                                                                           |
+| `GEMINI_RECEIPT_MODEL`                                | Present                      | Present            | Present            | Config presence **confirmed** (L/V), not a credential. Operator: retain model during key-only replacement to isolate verification.                                                                                                                                                                                                            |
+| Lifecycle enable/project-ref                          | Absent                       | Both present       | Absent             | Scoped presence **confirmed** (L/V), not credentials. Stage 4 records last verified true / uvznqgkbodejvksmtafh values. Operator: leave settings/target/deadlines unchanged.                                                                                                                                                                  |
+| Sentry DSN                                            | Repository default           | No listed override | No listed override | Public ingestion coordinate **confirmed** in repository (L/V), not the auth token. Owner/operator: no change.                                                                                                                                                                                                                                 |
+
+### Stage 5 acceptance and follow-ups
+
+Seven runbooks and offline rehearsals implement readiness, **not hosted
+credential replacement**. No essential dashboard was inaccessible. Provider
+permissions, hidden equality and live acceptance remain explicitly unverified
+by design. Missing Preview limiter configuration blocks Preview writes and any
+hosted rehearsal requiring them; it does not block offline readiness tests.
+
+Before future live rotation, owner must confirm stored-value provenance,
+provider labels/types/scopes, retained deployment consumers and verification
+destination. If any cannot be established, stop that credential's cutover/
+retirement and record the missing evidence; do not reveal values to resolve it.
+No isolated backend was provisioned. No session renewal/third key slot, modern-key
+migration, counter reset, cron probe or credential change was performed.
+
+## Stage 4 rollout evidence — daily cleanup enabled; successful Production probe
 
 Status refreshed **2026-10-23 (Asia/Phnom_Penh)**. Current branch remains `main`;
 existing uncommitted documentation and mobile/accessibility work were preserved.
@@ -175,8 +282,10 @@ The user removed privacy/support content and the Privacy & Help page from the
 to-do list. Only mobile/accessibility reviews and operational checks remain.
 Stage 2 backup/restore was skipped at the user’s request. Stage 3 is implemented
 and committed on `main`; its migration and live smoke checks are user-reported
-complete. Stage 4 scheduled/final-sweep verification, credential rotation and the
-broader deployed-flow verification remain pending; exact Production commit has not been independently captured.
+complete. Stage 4 scheduled/final-sweep verification and broader deployed flows
+remain pending. Stage 5 readiness is implemented above; actual rotations remain
+separate future actions. Last independently verified worker source was `b0ba0ac`;
+this readiness review did not re-audit the current deployment identity.
 
 ## Stage 3 implementation (2026-10-22)
 
@@ -238,6 +347,10 @@ Exact deployment identity has not been independently captured.
 
 ## Stage 1 inventory (2026-10-22)
 
+Historical observations below retain their original date. The Stage 5 inventory
+above supersedes credential status/follow-ups, including the resolved Sentry
+revocation report; it does not establish hidden credential-value equality.
+
 Historical audit evidence and original follow-ups are retained below. Stage 2
 was subsequently skipped by the user; Stage 3 above is the current work status.
 
@@ -268,13 +381,13 @@ Statuses describe the evidence, not an assertion that a configuration is ideal.
 
 ### Environment mapping and variable inventory
 
-| Finding                                                                                                                                         | Status                            | Evidence / observation                                                                                                                                                                                                  | Next action / owner                                                                                                                             |
-| ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Local uses `https://uvznqgkbodejvksmtafh.supabase.co`                                                                                           | Confirmed                         | L: `.env.local`, public URL only; S: matching project overview URL                                                                                                                                                      | Agent: treat local live checks as using this hosted backend, not an isolated database.                                                          |
-| Hosted project inspected: `bill-spilter`, ref `uvznqgkbodejvksmtafh`, Orange Whiskers, Singapore `ap-southeast-1`, Nano, PostgreSQL `17.6`      | Confirmed                         | S: [project overview](https://supabase.com/dashboard/project/uvznqgkbodejvksmtafh), `current_setting('server_version')`; no Supabase branches shown                                                                     | Agent: schema/backup findings below apply to this project.                                                                                      |
-| Production and Preview share one configured `NEXT_PUBLIC_SUPABASE_URL` entry; no branch-specific override was shown; no linked shared variables | Confirmed                         | V: [project variables](https://vercel.com/nacarees-projects/bill-spiltter-webapp/settings/environment-variables), URL entry metadata and Shared tab. Both scopes selected, Custom Preview Branch unselected.            | Agent: regard ordinary Preview as sharing the configured Production target unless explicitly isolated later.                                    |
-| Production and Preview are configured for `uvznqgkbodejvksmtafh`, the same project as Local                                                     | Confirmed — user-reported mapping | U: user answered “yes it is” to the explicit Production/Preview project-ref question; V: both scopes share one saved URL entry. Write-only values and the deployed baked configuration were not independently revealed. | Agent: treat all three as sharing Production data/quota. Hidden credential consistency remains unverified and is reserved for later validation. |
-| Hidden anon/service/session/rate/Gemini/Sentry value consistency, validity and rotation state                                                   | Unverified                        | V/L: presence and scope checks only; no values compared or credentials exercised                                                                                                                                        | Agent/user: verify through the isolated rotation runbook later. Prior Sentry-token revocation remains unconfirmed.                              |
+| Finding                                                                                                                                         | Status                            | Evidence / observation                                                                                                                                                                                                  | Next action / owner                                                                                                                                       |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Local uses `https://uvznqgkbodejvksmtafh.supabase.co`                                                                                           | Confirmed                         | L: `.env.local`, public URL only; S: matching project overview URL                                                                                                                                                      | Agent: treat local live checks as using this hosted backend, not an isolated database.                                                                    |
+| Hosted project inspected: `bill-spilter`, ref `uvznqgkbodejvksmtafh`, Orange Whiskers, Singapore `ap-southeast-1`, Nano, PostgreSQL `17.6`      | Confirmed                         | S: [project overview](https://supabase.com/dashboard/project/uvznqgkbodejvksmtafh), `current_setting('server_version')`; no Supabase branches shown                                                                     | Agent: schema/backup findings below apply to this project.                                                                                                |
+| Production and Preview share one configured `NEXT_PUBLIC_SUPABASE_URL` entry; no branch-specific override was shown; no linked shared variables | Confirmed                         | V: [project variables](https://vercel.com/nacarees-projects/bill-spiltter-webapp/settings/environment-variables), URL entry metadata and Shared tab. Both scopes selected, Custom Preview Branch unselected.            | Agent: regard ordinary Preview as sharing the configured Production target unless explicitly isolated later.                                              |
+| Production and Preview are configured for `uvznqgkbodejvksmtafh`, the same project as Local                                                     | Confirmed — user-reported mapping | U: user answered “yes it is” to the explicit Production/Preview project-ref question; V: both scopes share one saved URL entry. Write-only values and the deployed baked configuration were not independently revealed. | Agent: treat all three as sharing Production data/quota. Hidden credential consistency remains unverified and is reserved for later validation.           |
+| Hidden anon/service/session/rate/Gemini/Sentry value consistency, validity and rotation state                                                   | Unverified                        | V/L: presence and scope checks only; no values compared or credentials exercised                                                                                                                                        | Stage 5 supersedes this historical status: Sentry revocation/replacement resolved by user confirmation. Other hidden-value/live checks remain unverified. |
 
 Variable evidence: V project-variable list (eight entries), L `.env.local`,
 `.env.sentry-build-plugin`, `src/env.js`, `next.config.mjs`, Sentry configuration.
@@ -410,15 +523,12 @@ and a concise status in CURRENT_WORK. Hosted migrations remain user-applied.
    the idle-time routine. Daily Vercel scheduling is now enabled and manually probed;
    first time-triggered invocation and final-sweep verification remain pending.
    Done: demonstrated cleanup and an explicit manual or scheduled operating plan.
-5. **Credential rotation rehearsal.** Inventory Supabase, Gemini, session-signing,
-   rate-limit and Sentry credentials. Rehearse on isolated test credentials;
-   document scope, update order, verification, retirement and failure recovery.
-   Test the previous session-signing-key support and the impact of retiring it
-   on existing participants. Keep shared-project limiter keys consistent across
-   deployments. Confirm revocation of the previously exposed Sentry token;
-   HANDOFF records that revocation as unconfirmed. Production credential changes
-   are coordinated operator actions after the exact runbook is reviewable.
-   Done: verified credential replacement steps and documented access impact.
+5. **Credential readiness — implemented 2026-10-23.** Seven runbooks and offline
+   disposable-key rehearsals cover Supabase public/server, Gemini, session,
+   rate-limit, Sentry and cron credentials. See the Stage 5 inventory above;
+   hidden-value/live acceptance checks remain unverified. Sentry revocation and
+   replacement are resolved by user report. Preview limiter configuration is
+   still missing. Actual hosted rotations are separate future operator actions.
 6. **Deployed verification.** Deploy the intended candidate when requested, then
    use fresh synthetic bills on that hostname. Check create/share/join, expenses,
    receipt review/confirmation, QR access and payment records. Use one generated

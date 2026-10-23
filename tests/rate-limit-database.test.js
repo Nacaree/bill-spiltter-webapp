@@ -81,6 +81,39 @@ it("consumes all applicable buckets or none and returns the longest blocked wait
     ).rows[0].used,
   ).toBe(0);
 });
+
+it("a fresh IP identity cannot reset existing actor, bill or global counters", async () => {
+  const shared = [
+    { policy: "extract_actor", subject: "actor" },
+    { policy: "extract_bill", subject: "bill" },
+    { policy: "extract_app", subject: "app" },
+  ];
+  await consume([{ policy: "action_ip", subject: "old-ip-digest" }, ...shared]);
+  const snapshot = async () =>
+    (
+      await db.query(
+        "select * from rate_limit_counters where policy like 'extract_%' order by policy,subject,window_start",
+      )
+    ).rows;
+  const before = await snapshot();
+  await consume([{ policy: "action_ip", subject: "new-ip-digest" }]);
+  expect(await snapshot()).toEqual(before);
+  await db.exec(
+    "update rate_limit_counters set used=100 where policy='extract_app'",
+  );
+  const denied = await consume([
+    { policy: "action_ip", subject: "new-ip-digest" },
+    ...shared,
+  ]);
+  expect(denied).toMatchObject({ allowed: false, policy: "extract_app" });
+  expect(
+    (
+      await db.query(
+        "select used from rate_limit_counters where policy='action_ip' and subject='old-ip-digest'",
+      )
+    ).rows[0].used,
+  ).toBe(1);
+});
 it("uses UTC calendar days and starts a new window rather than reusing expired counts", async () => {
   await db.exec("set timezone='Asia/Phnom_Penh'");
   await consume([{ policy: "create_ip_day", subject: "ip" }]);

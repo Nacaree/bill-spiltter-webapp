@@ -139,6 +139,27 @@ describe("payment QR validation", () => {
       ).toThrow();
     expect(() => verifyQrPreview(token + "x", options)).toThrow();
   });
+  it("requires reinspection after the current signing key changes, even with a participant fallback", () => {
+    const details = decodePaymentQr(payload());
+    const options = {
+      image: Buffer.from("disposable image"),
+      billId: "bill",
+      ownerId: "owner",
+      secret: "old-disposable-session-key-32-characters",
+      now: 1000,
+    };
+    const oldPreview = signQrPreview(details, options);
+    const changed = {
+      ...options,
+      secret: "new-disposable-session-key-32-characters",
+    };
+    expect(() => verifyQrPreview(oldPreview, changed)).toThrow(
+      /Inspect the image again/,
+    );
+    const reinspected = signQrPreview(details, changed);
+    expect(verifyQrPreview(reinspected, changed)).toMatchObject(details);
+    expect(() => verifyQrPreview(reinspected, options)).toThrow();
+  });
   it("reads, crops and rechecks a real bitmap and rejects blank/corrupt files", async () => {
     const image = await QRCode.toBuffer(payload(), { width: 500 });
     const result = await inspectPaymentQr(new File([image], "qr.png"));

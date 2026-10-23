@@ -109,3 +109,24 @@ it("returns clear delays and treats expected denials as normal results", async (
   expect(new RateLimitError(3601, "extract_app").message).toContain("manually");
   expect(readableWait(1)).toBe("1 second");
 });
+
+it("changes only IP bucket identities during a coordinated secret cutover", async () => {
+  vi.stubEnv("VERCEL", "1");
+  mocks.headers.mockResolvedValue({ get: () => "192.0.2.1" });
+  await guardOperation("upload", { billId: "bill", participantId: "actor" });
+  const oldBuckets = mocks.rpc.mock.calls.at(-1)[1].buckets;
+  vi.stubEnv(
+    "RATE_LIMIT_SECRET",
+    "replacement-test-secret-at-least-32-characters",
+  );
+  await guardOperation("upload", { billId: "bill", participantId: "actor" });
+  const newBuckets = mocks.rpc.mock.calls.at(-1)[1].buckets;
+  expect(newBuckets[0].subject).not.toBe(oldBuckets[0].subject);
+  expect(newBuckets.slice(1)).toEqual(oldBuckets.slice(1));
+});
+
+it("a missing cutover secret fails before consuming any quota", async () => {
+  vi.stubEnv("RATE_LIMIT_SECRET", "");
+  await expect(guardRequest()).rejects.toThrow(RateLimitUnavailableError);
+  expect(mocks.rpc).not.toHaveBeenCalled();
+});

@@ -667,6 +667,275 @@ calling Gemini or uploading an image. It cleans its bill and private test
 subjects. Its single winning claim consumes one app-wide daily attempt; it never
 resets or decrements the shared global counter. Run it when scan quota remains.
 
+## Credential readiness — Stage 5
+
+Reviewed 2026-10-23 (Asia/Phnom_Penh). This is a **readiness review and offline
+rehearsal**, not a hosted rotation. See HANDOFF's Stage 5 inventory for observed
+scopes, evidence and unresolved prerequisites. The owner confirms the exposed
+Sentry token was revoked and replaced; no repeat rotation is requested. Stage 2
+remains skipped. Local, Preview and Production share the Production backend;
+Preview is not an isolated rehearsal destination.
+
+### Common operating rules
+
+The **owner** manages provider permissions, generates/stores replacement values,
+updates ignored local files and hosted secrets, and authorizes future deployment
+or retirement. The **implementer/operator** prepares the candidate, runs offline
+checks and records safe verification evidence. All seven procedures below are
+future operator instructions, not actions performed by this review.
+
+Before any future change, record the credential label/type, consumers, scopes,
+current release, compatible rollback release, verification criteria and change
+time in HANDOFF. Use a password manager or provider secret store; never put
+values, partial values, JWT payloads, fingerprints or private image links in
+reports, shell history, screenshots or logs. Application HMAC secrets require
+at least 32 bytes; generate 32 random bytes or more. The cron boundary requires
+at least 32 non-whitespace characters. Keep all private keys server-only.
+
+Change one credential family at a time. Update every deployment/branch override
+that will remain active, plus local scripts; restart local processes. Environment
+edits affect new Vercel deployments, not existing immutable deployments. Public
+Next.js variables are baked into browser builds, so rebuild and refresh old
+tabs. Audit older deployment URLs before retiring credentials. A rollback must
+use compatible credential configuration, not merely an older commit. See
+[Vercel environment variables](https://vercel.com/docs/environment-variables)
+and the installed Next.js environment-variable guide.
+
+Verify on a separately authorized deployment using controlled fixtures, scoped
+checks and aggregate logs. Database/Storage/provider mocks establish application
+behavior only; they cannot prove hosted permissions, hidden-value equality or
+revocation. Never reuse a compromised key to recover service. For routine changes
+only, a still-trusted old key may remain temporarily active until verification;
+otherwise fix forward with another replacement and document access disruption.
+
+### 1. Supabase public key
+
+**Consumers:** `NEXT_PUBLIC_SUPABASE_ANON_KEY`, the cached browser Storage client
+and build-time environment validation. The project URL is a public coordinate;
+this public key and Sentry's DSN are not private server credentials.
+
+1. **Prerequisites/owner:** confirm the target project and all deployed/browser
+   consumers, RLS policies and direct-upload flow. Modern keys already exist in
+   this project; inventory their labels without copying values. Local keys are
+   legacy-shaped; hosted key types remain unverified. The installed SDK passes
+   the offline modern-key transport rehearsal, but hosted acceptance is untested.
+2. **Update:** owner selects/creates the intended publishable key. Keep the
+   existing environment-variable name, update Local/Preview/Production and any
+   branch overrides, then build fresh releases. Do not change the project URL.
+3. **Verify:** on an authorized candidate, check a fresh browser's signed receipt
+   and QR uploads, completion, and bill access. Confirm no server key enters the
+   bundle. Refresh old tabs; account for outstanding signed upload tokens (up to
+   two hours), old bundles and reachable older deployment URLs.
+4. **Retire:** only after auditing remaining consumers. The legacy disable control
+   covers legacy API keys; do not disable it while any server/script still uses
+   `service_role`. Do not rotate the project's JWT signing secret as a shortcut.
+5. **Failure recovery:** retain the trusted old public key during a routine
+   transition; rebuild with it if necessary. When retired, rebuild with a working
+   current key instead of promoting an incompatible old build.
+
+Supabase supports legacy/modern coexistence and maps the public replacement to a
+publishable key. See the
+[official migration guide](https://supabase.com/docs/guides/getting-started/migrating-to-new-api-keys).
+
+### 2. Supabase server key
+
+**Consumers:** `SUPABASE_SERVICE_ROLE_KEY`, cached server clients, receipt/QR
+Storage operations, the scheduled worker and the three local cleanup scripts.
+This key has elevated access and bypasses RLS.
+
+1. **Prerequisites/owner:** enumerate every backend consumer and any provider-side
+   integrations outside this repo. Check installed SDK compatibility offline;
+   confirm hosted key type, permissions and candidate acceptance separately.
+   New secret keys are not JWTs; audit custom Authorization headers, webhooks and
+   Edge Functions before a future migration. This app passes keys to the SDK.
+2. **Update:** owner creates/selects a server secret in the same project and
+   replaces the value under the existing variable name in all relevant scopes
+   and ignored local files. Deploy/restart all retained consumers. Pause scheduled
+   cleanup and drain in-flight runs while coordinating the worker's cutover.
+3. **Verify:** authorize separate read/write and Storage-signing/upload checks;
+   verify the worker's disabled/auth gates first. An enabled probe can delete due
+   work, so inspect its scope and authorize it separately. Keep receipt retention,
+   active bill access and cleanup queue deadlines intact.
+4. **Retire:** confirm app, worker, scripts and external integrations no longer
+   use the old key. Legacy deactivation also requires the public-key audit above;
+   deleting a modern secret is irreversible. Resume the schedule only after the
+   new worker configuration is verified.
+5. **Failure recovery:** leave cleanup paused while fixing deployment/configuration.
+   A routine rollback may use a still-trusted active key; after retirement or
+   compromise, deploy a working replacement. Do not delete data, alter RLS or
+   change the JWT signing secret to solve a credential mismatch.
+
+See [Supabase API-key rotation](https://supabase.com/docs/guides/getting-started/api-keys).
+No hosted migration to modern keys was performed in Stage 5.
+
+### 3. Participant session signing key
+
+**Consumers:** `PARTICIPANT_SESSION_SECRET`, optional
+`PARTICIPANT_SESSION_PREVIOUS_SECRET`, participant cookies and ten-minute QR
+preview signatures. Share/recovery capabilities and database session-token
+hashes are independent of the signing key.
+
+1. **Prerequisites/owner:** confirm this is routine rotation, both keys are trusted,
+   no previous generation still needs the fallback, and every retained deployment
+   can accept the intended key pair. Generate new key B privately; label existing
+   key A without recording values. Pause cutover if A/B cannot fit safely into
+   the two configured slots.
+2. **Bridge:** deploy current=A, previous=B to every deployment that will remain
+   in use. It still issues A cookies but accepts B. Older A-only URLs must be
+   protected/drained or retired; a code rollback to A-only rejects B cookies.
+3. **Cut over:** deploy current=B, previous=A consistently. Verify both generations
+   through participant writes and creator operations; creator access requires a
+   valid participant session **and** the private recovery cookie. Refresh tabs
+   hitting older deployments; record the **last possible A issuance**, including
+   old deployments/local processes sharing this database.
+4. **Retire:** cookies last 365 days and reads/writes do not refresh them. For
+   uninterrupted access, retain A until all A cookies expire, potentially 365
+   days after its final issuance. Earlier retirement invalidates those sessions
+   and can lock creators out; a recovery cookie alone is insufficient. No new
+   recovery/renewal flow is implemented. A third generation cannot be introduced
+   safely while both A and B are still required by the current two-key design.
+5. **Failure recovery:** for trusted keys, a bridge-compatible rollback can issue
+   A while still accepting B; include its new A issuance in the retirement date.
+   If a key is compromised, remove trust rather than retaining it for continuity;
+   session invalidation and recovery impact require an incident-specific decision.
+
+QR preview verification uses only the current key, not the participant fallback.
+After a switch, inspect an unsaved QR image again. Saved QR files, bills, expenses
+and balances are unaffected by signing-key replacement. Old deployment URLs
+issuing previews must be addressed along with cookies.
+
+### 4. Rate-limit secret
+
+**Consumers:** `RATE_LIMIT_SECRET`, request/action IP HMACs. It does not sign
+sessions or identify bill/participant/global quota subjects.
+
+1. **Prerequisites/owner:** resolve missing Preview configuration before Preview
+   write verification. Confirm all retained deployments sharing the backend use
+   the same trusted key; metadata alone cannot establish equality. Generate a
+   replacement of at least 32 bytes privately.
+2. **Update:** coordinate the same replacement across Production, Preview, branch
+   overrides and local files; deploy/restart and drain/protect older URLs. There
+   is no previous-key fallback. Mixed versions can give one IP separate allowances.
+3. **Verify:** offline tests demonstrate changed IP hashes, stable bill/actor
+   subjects, preserved global counters and fail-closed missing configuration.
+   A future deployed denial test must use controlled fixtures; never exhaust
+   shared global quota just to verify rotation.
+4. **Retire:** confirm no retained process uses the old key. Old IP windows remain
+   until normal expiry/cleanup. Do not delete counters, reset policies or claim
+   the change preserves existing IP allowance usage.
+5. **Failure recovery:** restore a still-trusted consistent key and redeploy, or
+   fix forward if compromised. Another switch changes IP identities again;
+   bill/participant/global counters remain enforced. Reads can still work while
+   protected writes fail closed with a missing/short key.
+
+### 5. Gemini API key
+
+**Consumers:** `GEMINI_API_KEY`, server receipt extraction through the
+`x-goog-api-key` header. The optional model setting is configuration, not a key.
+
+1. **Prerequisites/owner:** confirm the identified AI Studio key/project, key type,
+   API/application restrictions, billing/quota and required permissions. Record
+   metadata only; do not infer the hidden Vercel value from its presence. For a
+   future key, retain the intended Cloud project and restrict Gemini access.
+2. **Update:** owner creates the replacement and updates Local/Preview/Production
+   plus overrides. Deploy/restart server consumers; a new key in the same project
+   does not establish a new independent quota budget.
+3. **Verify:** offline 401/403-to-success rehearsals use mocked HTTP and disposable
+   keys. Later authorize one generated/redacted receipt extraction on the candidate,
+   recording quota usage, review/manual-entry behavior and safe error codes.
+   Existing provider-auth failures are nonretryable until configuration is fixed.
+4. **Retire:** after all consumers use the replacement, owner disables/deletes the
+   old provider key and checks usage. Do not assume older deployments gained the
+   new key merely because environment settings changed.
+5. **Failure recovery:** use a still-trusted old key temporarily or fix forward;
+   preserve the receipt draft for retry/manual entry. Never log key-bearing
+   headers, provider responses or receipt contents for diagnosis.
+
+Current Google guidance distinguishes authorization keys from restricted standard
+keys; inspect actual metadata rather than assuming a blanket standard-key expiry.
+See [Gemini API-key guidance](https://ai.google.dev/gemini-api/docs/api-key).
+
+### 6. Sentry source-map token
+
+**Consumers:** `SENTRY_AUTH_TOKEN`, Vercel Preview/Production builds and the ignored
+local `.env.sentry-build-plugin`. Runtime capture uses the public DSN, not this
+token. The owner's prior revocation/replacement is **resolved by user report**;
+this stage does not create another token or independently exercise the revoked one.
+
+1. **Prerequisites/owner:** confirm replacement token metadata targets `nathan-d2`
+   / `bill-splitter-webapp` and has source-map/release upload permissions. Prefer
+   an organization CI token; verify its scopes rather than expanding permissions
+   speculatively. See [Sentry permissions](https://docs.sentry.io/api/permissions/).
+2. **Update:** for a future rotation, owner updates both Vercel scopes, overrides
+   and the ignored build-token file, then starts fresh builds. Keep the DSN and
+   runtime monitoring configuration intact.
+3. **Verify:** on a separately authorized build, check upload success and matching
+   release/artifact metadata, then a readable known/synthetic stack trace without
+   private inputs. A successful local build with uploads disabled proves neither
+   token validity nor provider revocation.
+4. **Retire:** owner revokes the old token after verifying all build consumers.
+   The already reported exposed token stays revoked; do not rotate it again.
+5. **Failure recovery:** correct permissions/project/configuration or issue another
+   token. Retain the last working deployment while builds are repaired; do not
+   restore an exposed token. Runtime capture does not require the build token.
+
+### 7. Cron bearer secret
+
+**Consumers:** Production-only `CRON_SECRET`, Vercel scheduler and
+`GET /api/cron/lifecycle-cleanup`. The handler accepts one secret; it has no
+previous-key fallback. Keep the enable flag, project ref and deadlines intact.
+
+1. **Prerequisites/owner:** generate at least 32 random non-whitespace characters
+   privately; review the current release, queue and schedule. The recently created
+   key needs no additional rotation during this readiness review.
+2. **Pause/update:** disable the project's Cron Jobs control, deploy the application
+   flag false, and drain any in-flight invocation (up to 300 seconds). Owner updates
+   the Production secret, then redeploys with cleanup still disabled. Vercel supplies
+   the configured secret as a Bearer header; see
+   [cron management](https://vercel.com/docs/cron-jobs/manage-cron-jobs).
+3. **Verify:** on that future disabled deployment, unauthenticated/old-secret GETs
+   must return 401, the new secret 503, and other methods 405, all no-store. Use
+   a trusted operator tool without exposing the secret. An enabled successful
+   request runs real cleanup; inspect eligible work and authorize any manual
+   probe separately. No such probe is performed in Stage 5.
+4. **Activate/retire:** enable the application flag through a new deployment,
+   verify the intended release/configuration, then re-enable project Cron Jobs.
+   Verify the first scheduled invocation and safe aggregate results. Old callers
+   must use the new secret; older immutable deployments retain old settings and
+   need protection/retirement. Vercel's project cron-disable setting persists
+   across deployment rollbacks; explicitly check it before resuming.
+5. **Failure recovery:** disable project Cron Jobs and deploy the flag false;
+   let leases expire normally and fix credentials/configuration before resuming.
+   Never bypass bearer checks, shorten final-sweep deadlines or restore a leaked
+   secret. Queued work retries after a later successful authorized run.
+
+### Offline rehearsal and acceptance
+
+Run without hosted integration flags or real provider calls:
+
+```bash
+RUN_SUPABASE_INTEGRATION=0 RUN_GEMINI_INTEGRATION=0 RUN_RATE_LIMIT_INTEGRATION=0 npm test
+npm run lint
+npm run format:check
+SENTRY_AUTH_TOKEN='' npm run build -- --webpack
+git diff --check
+```
+
+The credential cases cover the full session bridge/cutover/retirement matrix,
+exact cookie expiry, tampering/cross-bill rejection, creator/recovery checks,
+QR reinspection, limiter identity/counter preservation, mocked Gemini key
+replacement, cron key replacement/configuration gates, and modern Supabase SDK
+RPC/Storage transport. PGlite provides database isolation; no test backend is
+provisioned. Existing lifecycle tests cover database creator authorization and
+preservation of unrelated records. No application/API/schema changes are needed.
+
+Readiness implementation is reviewable when these checks pass and the evidence
+inventory lists every unresolved provider prerequisite with an owner/action.
+Hidden credential equality, live replacement acceptance and revocation remain
+separate hosted verification. Do not describe an offline rehearsal as a completed
+Production rotation. Stage 4's scheduled invocation/final-sweep checks and broader
+Stage 6 deployed checks remain separate.
+
 ## Product direction
 
 The product should be **bill-first, not account-first**. A visitor can start immediately by naming a bill and entering their own name. The resulting bill page is the center of the experience: it contains participants, expenses, balances, settlement suggestions, and a shareable link.

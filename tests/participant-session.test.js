@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import {
   createParticipantSession,
+  PARTICIPANT_COOKIE_MAX_AGE,
   participantCookie,
   participantCookieOptions,
   verifyParticipantSession,
@@ -71,6 +72,56 @@ test("accepts an old signing key during rotation", () => {
       now,
     }),
   ).not.toBeNull();
+});
+
+test("rehearses old, bridge, cutover and retirement deployments", () => {
+  const issue = (secret) =>
+    createParticipantSession({ billId, participantId, secret, now }).value;
+  const oldCookie = issue(oldSecret);
+  const newCookie = issue(currentSecret);
+  const deployments = [
+    { keys: [oldSecret], accepted: [true, false] },
+    { keys: [oldSecret, currentSecret], accepted: [true, true] },
+    { keys: [currentSecret, oldSecret], accepted: [true, true] },
+    { keys: [currentSecret], accepted: [false, true] },
+  ];
+  for (const { keys, accepted } of deployments) {
+    for (const [index, cookie] of [oldCookie, newCookie].entries()) {
+      const options = { secrets: keys, expectedBillId: billId, now };
+      expect(Boolean(verifyParticipantSession(cookie, options))).toBe(
+        accepted[index],
+      );
+      expect(verifyParticipantSession(`${cookie}x`, options)).toBeNull();
+      expect(
+        verifyParticipantSession(cookie, {
+          ...options,
+          expectedBillId: otherBillId,
+        }),
+      ).toBeNull();
+    }
+  }
+});
+
+test("retains the original 365-day deadline during overlap without renewing it", () => {
+  const { value } = createParticipantSession({
+    billId,
+    participantId,
+    secret: oldSecret,
+    now,
+  });
+  const options = {
+    secrets: [currentSecret, oldSecret],
+    expectedBillId: billId,
+  };
+  const deadline = now + PARTICIPANT_COOKIE_MAX_AGE * 1000;
+  const before = verifyParticipantSession(value, {
+    ...options,
+    now: deadline - 1,
+  });
+  expect(before.exp * 1000).toBe(deadline);
+  expect(
+    verifyParticipantSession(value, { ...options, now: deadline }),
+  ).toBeNull();
 });
 
 test("can sign a pre-generated token for an atomic database insert", () => {

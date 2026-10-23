@@ -132,6 +132,28 @@ it("runs authorized Production cleanup once with a shared abort signal", async (
   expect(f.reportFailure).not.toHaveBeenCalled();
 });
 
+it("accepts only the replacement cron secret and never runs old-secret requests", async () => {
+  const replacement = "new-disposable-cron-secret-at-least-32-characters";
+  const f = fixture({ CRON_SECRET: replacement });
+  expect((await handleScheduledCleanup(request(), f)).status).toBe(401);
+  expect(f.createDb).not.toHaveBeenCalled();
+  expect(f.run).not.toHaveBeenCalled();
+  const result = await handleScheduledCleanup(
+    request({
+      headers: { authorization: `Bearer ${replacement}` },
+    }),
+    f,
+  );
+  expect(result.status).toBe(200);
+  expect(f.run).toHaveBeenCalledOnce();
+  const output = JSON.stringify({
+    body: await result.json(),
+    logs: f.log.mock.calls,
+  });
+  expect(output).not.toContain(replacement);
+  expect(output).not.toContain(secret);
+});
+
 it("returns successful partial results, but reports failures without forwarding exception contents", async () => {
   const partial = fixture();
   partial.run.mockResolvedValue({
