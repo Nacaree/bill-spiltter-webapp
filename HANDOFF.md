@@ -9,11 +9,176 @@ computer.
 The user wants migration SQL saved in `supabase/migrations/` and will apply
 hosted migrations themselves. Tell them when a new migration is required.
 
-## Resume here — Stage 5 credential readiness implemented
+## Resume here — Stage 6 functional checks complete; one provider incident open
+
+Stage 6 functional verification completed **2026-10-24, 00:23–00:48 GMT+7
+(Asia/Phnom_Penh)** on `main`, with the first upstream receipt incident recorded
+as unresolved rather than silently treated as fixed.
+User explicitly **deferred Preview RATE_LIMIT_SECRET configuration** and asked to
+move on. Leave Preview unchanged; test Production. Preview write verification
+remains unperformed, not a prerequisite for these Production checks. Stage 5
+readiness is complete and committed at `eec047e`; Stage 2 remains skipped.
+
+### Stage 6 evidence and results
+
+- **Confirmed target:** Chrome Vercel overview showed Ready Production deployment
+  [EBRMBcGuWB75FThg1UBPHURMzZud](https://vercel.com/nacarees-projects/bill-spiltter-webapp/EBRMBcGuWB75FThg1UBPHURMzZud),
+  commit `eec047e9435a5ac4c88ff26cc22b81f47614c485`, normal alias
+  `https://bill-spiltter-webapp.vercel.app/`, immutable hostname
+  `bill-spiltter-webapp-fpto6rz1m-nacarees-projects.vercel.app`.
+  No deployment or environment edit was performed by the agent.
+- **Initial synthetic fixture:** one bill named `Stage 6 synthetic 2026-10-24 0025`,
+  USD, `Stage6 Owner` and `Stage6 Guest`. Chrome normal/incognito sessions keep
+  creator and guest separate. No existing customer bill was modified.
+- **Passed UI:** create, add reserved guest, open link separately, view without
+  write access, claim reserved identity, persist guest session across reload,
+  guest expense $10 split $5 each, shared creator view after refresh.
+- **Receipt failure confirmed:** one generated, noncustomer PNG uploaded through
+  the real deployed direct-upload flow. Reservation completed and exactly one
+  scan/attempt was recorded. The scan failed with `error_code=provider_failed`.
+  The page showed extraction failure, Retry extraction and manual-entry fallback.
+  No immediate automatic retry was submitted. A later fresh Production attempt
+  was separately approved and is recorded below.
+- **Passed fallback:** creator manually entered the generated receipt's $12 total,
+  split $6 each. Draft failure did not create an automatic financial record;
+  manual entry created one expense. Net guest debt became $1 as expected.
+- **Passed QR/payment UI:** uploaded a generated nonpayable test KHQR, inspected
+  its KHR default, confirmed dual KHR/USD support and saved it as owner. Guest
+  lacked owner QR/deletion controls and could open the eligible $1 owner QR.
+  Opening left payment history empty. A labelled synthetic $1 payment settled
+  both balances; correction to $0.50 restored $0.50 guest debt. No bank app or
+  actual transfer was used.
+- **Passed scoped denial/recovery:** filled only the synthetic guest's current
+  `write_actor` counter to its existing quota (60/60s). Did not alter policies,
+  IP/global/other-bill counters or deadlines through that seed; ordinary actions
+  still consumed their normal applicable quotas. Guest expense submission was denied
+  with a 45-second retry instruction; title and $2 input remained populated.
+  After natural window expiry, the same form succeeded once. UI and fixture
+  metadata show three expenses, one settlement and one saved payment method.
+- **Monitoring confirmed:** one real handled error in this test window,
+  [BILL-SPLITTER-WEBAPP-7](https://nathan-d2.sentry.io/issues/BILL-SPLITTER-WEBAPP-7),
+  event time `2026-10-23T17:27:05.797Z`, release `eec047e…`, operation
+  `receipt_extract`. Readable source maps point to `receipt-extraction.js:311`,
+  the non-2xx HTTP branch, not JSON parsing or schema validation of a success
+  response. Exact upstream HTTP status/body were not retained by current error
+  reporting. Trace has one error and no retained spans/logs. Do not mark resolved
+  or invent a root cause from the generic code.
+- **One extra diagnostic authorized by user:** direct call using only the generated
+  PNG and the current **local** key/model returned **HTTP 200**, two items and
+  total 1200 cents, model `gemini-3.5-flash-lite`. One request exactly. This did
+  not create a second application scan or increment application extraction
+  counters. It does not establish equality with Vercel's hidden configuration.
+- **Initial quota accounting:** application extraction counter was empty before
+  upload and used=1 afterward. The local diagnostic made one separate provider
+  request without charging the application scan counter. Final totals, including
+  the explicitly approved fresh deployed attempt below: **3 provider requests,
+  2 application scans/attempts**, preserved application extraction counter used=2.
+  No quota resets or silent retries.
+- **Read-only baseline after creating fixture:** 20 bills (19 existing + fixture),
+  eight confirmed receipts. No confirmed receipt was created by the failed scan.
+
+### Approved Production receipt recheck and cleanup
+
+- **Confirmed owner authorization:** user approved one fresh Production receipt
+  attempt after the local diagnostic. Used a second labelled USD bill,
+  `Stage 6 synthetic receipt recheck 2026-10-24`, with Stage6 Owner/Stage6 Guest
+  and the same generated, noncustomer PNG. No credential/configuration change.
+- **Confirmed model metadata:** owner completed Vercel email verification. Agent
+  read only the non-secret Config value `GEMINI_RECEIPT_MODEL`, currently
+  `gemini-3.5-flash-lite` for Production/Preview, matching local. No key revealed,
+  no settings changed. Hidden credential equality remains unverified.
+- **Passed deployed extraction:** one attempt returned a reviewable Gemini draft:
+  Noodles 1 x $5=$5, Drinks 2 x $3.50=$7, subtotal/printed total $12, adjustments
+  zero. Before confirmation, SDK metadata showed `needs_review`, attempt_count=1,
+  completed reservation and **zero expenses**. Low-confidence review wording was
+  present, so inferred items were not silently accepted.
+- **Passed confirmation:** reviewed matching totals and both participant shares,
+  submitted once. Metadata showed exactly one confirmed scan and one expense;
+  bill ledger showed $12, $6 each, owner owed $6 / guest owing $6.
+- **Passed retained viewing:** reopened from the ledger's View receipt link and
+  from a separate incognito session using the same private bill capability.
+  Both showed Receipt confirmed + Uploaded receipt, no missing-image fallback,
+  and no confirmation form. Existing stale cookies from the first deleted bill
+  did not need to be reused as a session for this read-only shared-link view.
+  `ReceiptImage` replaces failed loads with an announced fallback; the image
+  remained available after reopening. No reconfirmation/provider call was made.
+- **First fixture cleanup confirmed** at **Oct 24 00:38:43 GMT+7**: exact-bill
+  lifecycle deletion removed bill/participants/three expenses/one settlement/
+  failed draft/two reservations/QR metadata. Immediate scoped file work:
+  processed=3, failed=0, waiting=3; all three bucket folders verified empty.
+  Three final sweep deadlines remain, latest **Oct 25 00:38:43 GMT+7**.
+- **Second fixture cleanup confirmed** at **Oct 24 00:48:02 GMT+7**: exact-bill
+  lifecycle deletion removed its confirmed scan/expense/participants/reservation.
+  Immediate scoped file work processed=3, failed=0, waiting=3. Verified all related
+  row counts zero and all three bucket folders empty. Its three final sweep
+  deadlines remain, latest **Oct 25 00:48:02 GMT+7**. No unrelated jobs claimed.
+- **Final aggregate verification** at **Oct 24 00:48:17 GMT+7**: 19 existing bills,
+  eight existing confirmed receipts (baseline preserved), both synthetic bills
+  absent, application extraction used=2. Pending file jobs=19, due=0: original
+  13 plus six fixture final sweeps. Deadlines were not moved forward/bypassed.
+- **HTTP access checks passed:** root 200; malformed and unknown capability URLs
+  404; unauthenticated cleanup GET 401 and HEAD 405, no-store. No authorized cron
+  invocation ran during Stage 6. Final Sentry aggregate still showed only the
+  original receipt_extract event, not a second failure or a rate-denial error.
+- **Local changes:** documentation only (README/HANDOFF/CURRENT_WORK). Prior 293
+  offline tests, eight hosted/provider skips, lint and source-map-disabled build
+  remain the Stage 5 baseline; no application code changed to repeat them.
+  Formatting and diff checks passed. No commit/push, migration or deployment in
+  this Stage 6 session. Native Chrome/SDK checks above are actual hosted evidence,
+  separate from the earlier offline suite.
+
+### Remaining findings and next actions
+
+- **Unverified cause / open incident:** first receipt attempt received an upstream
+  non-2xx response; exact status/reason were not retained. Both the local diagnostic
+  and approved new Production attempt succeeded afterward. Do not assert a model
+  mismatch, broken credentials or a proven transient cause. Keep
+  [BILL-SPLITTER-WEBAPP-7](https://nathan-d2.sentry.io/issues/BILL-SPLITTER-WEBAPP-7)
+  unresolved; no fix was made or deployed. Owner/operator: monitor recurrence;
+  if it recurs, collect allowlisted HTTP status/provider error classification
+  without keys, response bodies or receipt contents before proposing a fix.
+- **Stage 6 functional scope complete with this incident recorded:** normal flows,
+  real receipt review/confirmation/retained viewing, failure fallback, scoped
+  quota denial and retry passed; both fixtures and their immediate files are gone.
+  This is not a declaration that Phase 4/reliability closeout is complete.
+- **Stage 4 still pending:** at these checks it was before Oct 24 02:30 GMT+7.
+  Verify first time-triggered invocation and original 13 final sweeps after that
+  deadline; separately cover the six new fixture sweeps after their Oct 25
+  deadlines. Queue/file absence and an existing active confirmed receipt opening
+  remain to be checked after the relevant sweep. Do not manually delete/accelerate
+  future jobs or treat queue growth from test deletion as a cleanup failure.
+- Mobile/accessibility follow-up is limited to the unverified checks below;
+  Stage 7 closeout also remains. Preview configuration stays deferred by the
+  user; it was not changed or tested. No
+  app/API/schema, credentials, shared policies, expiry or hosting settings changed.
+
+### Mobile/accessibility clarification — 2026-10-24
+
+- **Confirmed:** mobile/accessibility fixes are implemented and included in the
+  deployed `eec047e` checkout. Earlier automated checks covered axe, keyboard/focus
+  behavior and narrow-screen reflow; the Stage 3 lifecycle suite recorded 10 passes
+  across Chromium/WebKit desktop, 320px Chromium and Android/iPhone emulation.
+  Stage 6 also completed the deployed functional journeys recorded above. Do not
+  describe all mobile/accessibility work as unfinished or repeat completed checks
+  merely because the manual evidence is incomplete.
+- **Unverified:** actual iPhone/Safari and Android/Chrome behavior with device
+  keyboards/file pickers, orientation and large text; VoiceOver/TalkBack journeys;
+  the full manual keyboard journey; and Firefox (local launch failures). Emulation
+  and focused automated keyboard checks do not establish these results. The user
+  asked whether this was already done; no new specific manual result was supplied.
+  Next agent/operator: first reconcile any existing user results, recording device,
+  browser, assistive technology and outcome; perform only the remaining checks.
+- **Evidence:** repository review on 2026-10-24 of the Stage 3 validation and dated
+  mobile section below, README's mobile checklist and Stage 6 results. This update
+  adds no browser/device test or hosted operation. Remaining cleanup verification
+  and the open provider incident above are separate from mobile/accessibility.
+
+## Stage 5 credential readiness — completed
 
 Status refreshed **2026-10-23, 03:26 GMT+7 (Asia/Phnom_Penh)** on existing
 `main`. Stage 5 contains documentation and offline tests only; no runtime/API,
-schema, credential, hosted-setting or deployment changes. No commit/push.
+schema, credential, hosted-setting or deployment changes. Later saved on the
+existing branch in commit `eec047e`; Stage 6 verifies its deployed release above.
 Stage 2 remains explicitly skipped. **User previously reported applying the
 Stage 3 lifecycle migration**; this stage adds no migration.
 
@@ -568,12 +733,13 @@ never calls Gemini, never consumes scan quota, creates no storage files and
 never initiates bank payments. Normal UI write quotas still apply. Install
 Chromium/Firefox/WebKit with `npx playwright install chromium firefox webkit`.
 The matrix covers desktop engines, 320px Chromium, Android and iPhone emulation.
-See CURRENT_WORK for verified results and README for the remaining manual
-real-device/VoiceOver/TalkBack pass. Firefox headless could not launch on this
+See the current clarification above for verified results and README for the
+remaining manual checks. Firefox headless could not launch on this
 Mac (sandbox/compositor failures), so that engine remains unverified.
 For local build checks, `SENTRY_AUTH_TOKEN='' npm run build -- --webpack` skips
 external source-map uploads; the configured deployment workflow is unchanged.
-These local changes are not deployed.
+At this section's original 2026-10-22 observation, these changes were not deployed;
+Stage 6 subsequently verified Production at `eec047e`, which includes them.
 
 ## Rate limiting (2026-10-21)
 

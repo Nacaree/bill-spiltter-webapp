@@ -113,7 +113,12 @@ visible, and reduced-motion preferences disable animations. Copying the private
 link announces success and offers a selected text field if clipboard access fails.
 No migration is required for these changes.
 
-Automated checks and device emulation do not replace the remaining manual pass:
+Mobile/accessibility fixes and earlier automated axe, keyboard/focus and reflow
+checks are complete; Stage 3 recorded 10 lifecycle browser passes across
+Chromium/WebKit desktop and Android/iPhone emulation. Firefox is configured but
+remains unverified because it could not launch locally. Stage 6 also completed
+the deployed functional checks below. The following manual evidence is still
+unverified in the handoff; record any existing user results before repeating it:
 
 - On a real iPhone/Safari and Android/Chrome, check portrait/landscape, file
   pickers, the on-screen keyboard, focus visibility, zoom and large text.
@@ -666,6 +671,39 @@ synthetic scan. It checks concurrent admission and extraction claims without
 calling Gemini or uploading an image. It cleans its bill and private test
 subjects. Its single winning claim consumes one app-wide daily attempt; it never
 resets or decrements the shared global counter. Run it when scan quota remains.
+
+## Deployed verification — Stage 6
+
+Verified 2026-10-24 on the Production alias, release `eec047e`, with the initial
+provider incident recorded below. The owner deferred
+Preview limiter configuration; it remains a prerequisite only for Preview write
+checks. Do not change it to start Production verification.
+
+Use labelled synthetic bills and separate creator/guest sessions. Check sharing,
+claiming, expenses/balances, one generated receipt, QR/payment records and a
+bill/participant-scoped quota denial with retained input and natural-expiry retry.
+Never change shared policies or exhaust IP/global quota to create a denial.
+Remove only the generated fixtures afterward through the lifecycle flow; final
+file sweeps keep their 24-hour deadline. Record provider requests separately from
+application scan counters and leave credentials/hosting settings unchanged.
+
+Current evidence is in HANDOFF: access/expense/QR/payment and scoped rate-limit
+checks passed. The first deployed receipt attempt failed and manual entry worked;
+its safe, source-mapped Sentry incident remains open because the exact upstream
+reason was not retained. A separately approved local diagnostic and then one
+approved fresh Production attempt succeeded. The deployed draft had zero expenses
+before confirmation; confirmation created one correct expense, and the retained
+image reopened in creator and separate sessions without reconfirmation controls.
+
+Stage 6 functional checks are complete with the initial incident recorded as an
+unresolved finding. Both synthetic bills/related rows and immediate files were
+removed; six mandatory final sweeps remain queued until their Oct 25 deadlines.
+Three provider requests were made in total (two deployed scans and one approved
+local diagnostic); application extraction quota used=2 was preserved. No silent
+retries, credential changes, deployment or shared quota/policy resets occurred.
+Stage 4 final verification and the unverified manual/device/Firefox checks remain before
+Phase 4 closeout. Do not mark the Sentry incident fixed merely because a retest
+passed; collect safe HTTP status/provider classification if it recurs.
 
 ## Credential readiness — Stage 5
 
@@ -1546,10 +1584,10 @@ Sentry monitoring and rate limiting are implemented and deployed. The user has
 removed the Privacy & Help page and privacy/support content from the remaining
 work. Two workstreams remain:
 
-- **Mobile and accessibility:** responsive/focus/error fixes and an automated
-  axe/browser matrix are implemented locally. Finish real-device,
-  VoiceOver/TalkBack and manual keyboard reviews; verify Firefox on a working
-  browser host. See the mobile/accessibility checks above and CURRENT_WORK.
+- **Mobile and accessibility:** responsive/focus/error fixes are deployed and
+  earlier automated axe/keyboard/reflow/emulation checks passed. Reconcile existing
+  manual results, then finish only unverified real-device, VoiceOver/TalkBack,
+  full keyboard and Firefox checks. See the checklist above and HANDOFF.
 - **Operational checks:** Stage 2 backup/restore was skipped by the user. Verify migrations and key rotation,
   expiration, upload cleanup and permanent deletion. Include a controlled
   deployed rate-limit denial and final checks of the main app flows.
