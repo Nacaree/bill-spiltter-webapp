@@ -5,45 +5,45 @@
 
 ## Task
 
-Stage 6 functional checks completed on Production, Oct 24 00:23–00:48 GMT+7,
-with one upstream provider incident recorded as open, on the existing main branch.
-User deferred Preview configuration; leave RATE_LIMIT_SECRET missing there.
-Stage 5 committed at eec047e; Stage 2 skipped; Stage 3 migration user-reported applied.
+Next chat: UI polish and feature cleanup. Stage 6 is complete; UI work may proceed.
+Oct 25 sweeps/image preservation passed; direct scheduled-run log not captured.
+User owns remaining real-device/screen-reader/full keyboard/Firefox checks.
+Stage 2 skipped; Stage 3 migration user-reported applied; Stage 5 readiness done.
+Preview RATE_LIMIT_SECRET configuration remains explicitly deferred.
 
-## Hosted verification
+## Latest hosted evidence
 
-- Ready Production EBRMBcGuW / eec047e verified in Chrome. No deployment/settings edit.
-- Passed create/share/claim, guest persistence and access separation, manual expenses,
-  shared balances, synthetic QR inspect/save/view, payment record and correction.
-- Guest-only write denial showed a 45s wait, retained values and succeeded once
-  after natural expiry. No policy, IP/global or other-bill quota manipulation.
-- Initial receipt upload completed but extraction failed: provider_failed. Manual
-  fallback worked. Sentry BILL-SPLITTER-WEBAPP-7 captured readable source lines.
-- User approved one local diagnostic: HTTP 200, gemini-3.5-flash-lite, 2 items/$12.
-  Owner completed Vercel verification; saved Production model matches local.
-- User then approved ONE fresh Production attempt: succeeded, reviewed $5 + $7,
-  confirmed exactly one $12 expense/$6 shares. Draft had zero expenses beforehand.
-- Confirmed receipt reopened with image from ledger and separate incognito session;
-  no reconfirmation controls or missing-image fallback. No extra provider calls.
-- Both labelled synthetic bills and related rows deleted; all 6 target bucket
-  folders empty. Six mandatory final sweeps remain; latest Oct 25 00:48:02 GMT+7.
-- Final aggregates: 19 existing bills, 8 confirmed receipts, no synthetic bills;
-  app extraction used=2. Total provider requests=3 (2 deployed + 1 approved local).
-- Root/invalid links and unauthenticated cron GET/HEAD gates passed. Sentry still
-  shows only the original handled error. Exact upstream cause remains unknown.
+- Last verified Ready Production HYZYcPFFE / 876c22f; runtime matches eec047e.
+- Original 13 jobs previously verified gone. Now all six Stage 6 jobs also gone;
+  their six exact bucket prefixes empty. No manual cleanup or deadline edits.
+- Three later jobs remain: due since Oct 25 15:42, attempts=1, unleased.
+  First scheduled opportunity is Oct 26 03:00–03:59 GMT+7, not today's run.
+- Retained synthetic bill/receipt active, confirmed, attempt_count=1, same one $12
+  expense ID. Stored image 59,685 bytes; SHA-256 EXACT match to Oct 24 baseline.
+- Fresh incognito page visibly showed Receipt confirmed + actual Uploaded receipt;
+  no missing-image fallback or reconfirmation controls. No join/provider call.
+  Normal-session content was blank; its owner-session recheck is not claimed passed.
+- Totals unchanged: 20 bills / 9 confirmed receipts / 11 expenses including fixture
+  Stage 4 retained image synthetic 2026-10-24. Original baseline minus fixture 19/8/10.
+- KEEP fixture active for Oct 26 follow-up. IDs/hash/evidence in HANDOFF;
+  local report /private/tmp/stage4-followup-2026-10-25.json.
+- Exact cron time/aggregate log not recovered: prior Vercel log window only 1h;
+  later browser-control timeout blocked fresh dashboard check. Source not proven
+  by queue outcome alone. No new automation/reminder scheduled.
+- Sentry last rechecked Oct 24: BILL-SPLITTER-WEBAPP-7 one event, unresolved;
+  no recurrence/cleanup issue then. Not rechecked Oct 25; incident stays open.
 
-## Remaining
+## Remaining / closeout
 
-- Keep BILL-SPLITTER-WEBAPP-7 open; monitor recurrence and obtain safe HTTP status/
-  provider error classification before proposing a fix. No proven root cause/fix.
-- Stage 4: verify first scheduled invocation and original 13 final sweeps after
-  Oct 24 02:30 GMT+7; six new fixture sweeps after Oct 25 deadlines. Queue=19,
-  due=0 at final check. Verify file absence and an existing confirmed receipt view.
-- Mobile fixes and automated axe/keyboard/reflow/emulation checks already passed.
-- Only real-device/screen-reader/full manual keyboard/Firefox evidence is pending;
-  reconcile existing user results before repeating checks, then Stage 7 closeout.
-- Documentation only; no push, runtime/credential change or new migration.
-- Stage 5 baseline: 293 offline tests pass, 8 hosted/provider skipped; lint/format/
-  build pass with source-map uploads disabled. Stage 6 doc formatting/diff pass.
+- Verify three later sweeps after Oct 26 daily run; retain/reopen fixture again,
+  then delete only it via lifecycle and record its normal future final sweeps.
+- Direct scheduled invocation/result remains separate missing evidence. Daytime
+  queue/hash/UI verification is valid even when the detailed log window is missed.
+- User records manual/device outcomes before Stage 7 signoff; Phase 4 remains open.
+- Collect safe provider HTTP status/classification on recurrence; no proven fix.
+- No runtime edit, hosted write, provider call, migration, deployment, commit/push,
+  credential/settings/policy change in Oct 25 follow-up. Own edits are Markdown.
+- Last runtime baseline: 293 offline tests pass, 8 hosted/provider skipped;
+  lint/format/build pass. No runtime tests rerun; Markdown format/diff checks pass.
 - Preview shares Production; no isolated backend. QR-orphan retry limit remains.
-- Privacy/support content and Privacy & Help page remain off the to-do list.
+  Privacy/Help content stays off to-do list.

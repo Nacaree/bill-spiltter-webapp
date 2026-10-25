@@ -230,9 +230,31 @@ Ready with `LIFECYCLE_CLEANUP_ENABLED=true`, the matching project ref, and a
 Production-only `CRON_SECRET` entered by the user. Disabled-first 401/405/503 checks
 passed before activation. One approved enabled dashboard probe completed at
 03:02 GMT+7 with no failures or removals, leaving all 13 future final sweeps queued.
-First time-triggered execution and final-sweep/retained-receipt verification remain
-pending; HANDOFF records deployment IDs, times and aggregate evidence. No new SQL
-migration is needed. Documentation-only commits may deploy identical worker code.
+Oct 24 read-only follow-up verified the original 13 queue entries gone, their
+cleanup targets absent and baseline totals unchanged (19 bills, 8 confirmed
+receipts, 10 expenses). Nine future file jobs remain: six Stage 6 jobs due by
+Oct 25 00:48 GMT+7 and three later jobs due Oct 25 15:42 GMT+7. No jobs were
+manually processed during that follow-up. Cron remains enabled, but the first
+scheduled invocation/result could not be retrieved within Vercel's available log
+range. Capture a future scheduled run while logs remain available. Existing
+confirmed images at that audit all predated retention and were absent. At 18:37
+GMT+7, a new labelled synthetic bill with one $12 confirmed receipt was left
+active for preservation testing. Its image reopened successfully; byte/hash
+baseline and fixture IDs are in HANDOFF. Keep it through scheduled cleanup and
+verify it afterward before removing that fixture. The new aggregates including
+it are 20 bills, 9 confirmed receipts and 11 expenses; pending file jobs remain
+nine. Preparing it used one additional Gemini request, no retry. HANDOFF records
+the evidence and limits. No new SQL migration is needed. Documentation-only
+commits may deploy identical worker code.
+
+**Oct 25 follow-up, 18:55 GMT+7:** all six Stage 6 jobs are gone and their exact
+prefixes empty. The retained confirmed image matches its original 59,685-byte
+SHA-256 baseline and reopened visibly in a fresh private browser session; its
+same single $12 expense and aggregate totals are unchanged. Three later jobs
+became due at 15:42, after today's morning schedule, and await Oct 26's run.
+No manual cleanup ran. Exact scheduled-run time/result is still not captured;
+verified queue/image outcomes do not establish the invocation source. Keep the
+retained test bill for the remaining follow-up. See HANDOFF for evidence/limits.
 
 `vercel.json` schedules `GET /api/cron/lifecycle-cleanup` at `0 20 * * *` UTC:
 **3–4 a.m. Phnom Penh time daily**. Hobby execution can happen anywhere in the
@@ -701,9 +723,14 @@ removed; six mandatory final sweeps remain queued until their Oct 25 deadlines.
 Three provider requests were made in total (two deployed scans and one approved
 local diagnostic); application extraction quota used=2 was preserved. No silent
 retries, credential changes, deployment or shared quota/policy resets occurred.
-Stage 4 final verification and the unverified manual/device/Firefox checks remain before
-Phase 4 closeout. Do not mark the Sentry incident fixed merely because a retest
-passed; collect safe HTTP status/provider classification if it recurs.
+Oct 24 follow-up verified original cleanup targets absent and no recurrence of
+the single BILL-SPLITTER-WEBAPP-7 event. Oct 25 follow-up passed Stage 6 final
+sweeps and retained-image preservation. Stage 4 still needs scheduled-run evidence
+and three later final sweeps. The user will
+perform the remaining manual/device/Firefox checks. Stage 7's evidence register
+is in HANDOFF; Phase 4 remains open. Do not mark the Sentry incident fixed merely
+because a retest passed; collect safe HTTP status/provider classification if it
+recurs.
 
 ## Credential readiness — Stage 5
 

@@ -9,7 +9,194 @@ computer.
 The user wants migration SQL saved in `supabase/migrations/` and will apply
 hosted migrations themselves. Tell them when a new migration is required.
 
-## Resume here — Stage 6 functional checks complete; one provider incident open
+## Next chat — UI polish and feature cleanup
+
+The user requested a local commit of the current changes before moving to a new
+chat for UI polish and cleanup of features they will identify there. Stage 6 is
+complete. Remaining Stage 4/manual evidence and Stage 7 closeout do not block UI
+work. Keep the labelled retention test bill intact for the remaining follow-up;
+recheck affected critical journeys if UI changes alter forms, receipt confirmation
+or payment flows. No UI/feature changes have been started in this handoff.
+
+## Resume here — Oct 25 sweep and image-preservation checks passed
+
+Read-only follow-up **2026-10-25, approximately 18:55–18:57 GMT+7**, after the
+user returned later than the scheduled cleanup window:
+
+- **Six Stage 6 final sweeps passed:** compared the original target IDs against
+  the current queue; **0 of 6 remain**, and all six exact bucket prefixes are
+  empty. No manual cleanup, queue claim, deadline change or deletion ran here.
+  The original earlier cohort of 13 was already verified absent on Oct 24.
+- **Confirmed-image preservation passed across the cleanup interval:** retained
+  bill/scan still exist, confirmed at the same timestamp, attempt_count=1, exactly
+  the same single $12 expense ID. Image is **59,685 bytes**, SHA-256 exactly
+  `22436e187cf8ffa053336b943d06a8a98e9a22123dbd88e5d09f4d02f9db982e`,
+  matching the Oct 24 baseline. Aggregate totals remain **20 bills, 9 confirmed
+  receipts, 11 expenses**, including the retained fixture (original baseline
+  19/8/10 after subtracting it).
+- **Fresh hosted UI passed in a separate incognito session:** opened the known
+  receipt URL after the old image URL would have expired. AX and screenshot
+  showed **Receipt confirmed**, **Uploaded receipt**, the actual synthetic image,
+  no missing-image fallback or reconfirmation form. No join or mutation occurred.
+  Normal-session reload/direct navigation showed a blank content area, so this
+  session is not claimed as a passed owner-session recheck; cause unestablished.
+  The separate private session and stored byte comparison supply actual evidence.
+- **Three later jobs remain, now due:** final deadlines **Oct 25 15:42:50 GMT+7**;
+  attempts=1, unleased. These became eligible after today's morning schedule,
+  so the **Oct 26 03:00–03:59 GMT+7** run is their first scheduled opportunity.
+  They were not accelerated or processed manually. Keep the retained fixture
+  active for that remaining follow-up, then remove only it through lifecycle.
+- **Scheduled-log evidence still missing:** no exact execution time/aggregate
+  response was recovered. Prior verified Vercel access allowed only the last
+  hour; today's scheduled window was about 15 hours before this check. Later
+  native-browser control timed out before a fresh dashboard inspection, so no
+  new claim about today's dashboard contents is made. Queue transitions are
+  consistent with scheduled processing but do not independently identify the
+  invocation source. Do not invent a cron result from the successful outcome.
+- Report `/private/tmp/stage4-followup-2026-10-25.json` contains safe aggregate
+  results and the synthetic image hash. No provider request, scan, quota reset,
+  hosted write, credentials/settings change, migration, runtime edit, commit,
+  push or deployment. Sentry was not rechecked in this follow-up; prior incident
+  remains open. Local changes are Markdown only; formatting/diff checks passed.
+
+The cleanup outcome and retained-image checks can be verified during the day;
+missing the log window does not erase that evidence. Direct scheduled-run log
+capture remains a separate incomplete evidence item, as do the three later
+sweeps and the user's manual/device checks. No new reminder/automation was set.
+
+### Retained-image fixture prepared — Oct 24, 18:33–18:38 GMT+7
+
+The user asked to continue after discussion of the missing preservation check.
+Created **one labelled synthetic Production bill** through the current app and
+left it active so its confirmed image can be tested across scheduled cleanup.
+Do not delete it before that check. The earlier read-only audit below is a
+separate observation; this continuation deliberately adds the following fixture.
+
+- Bill name: `Stage 4 retained image synthetic 2026-10-24`; creator
+  `Retention Test Owner`, USD. Bill ID `136dbff2-d8e9-44b6-ba66-bbefce658a58`.
+- Generated noncustomer PNG `stage4-retained-receipt-2026-10-24.png`: Noodles
+  1 x $5, Drinks 2 x $3.50, total $12, zero tax/tip/discount. Uploaded once through
+  Production; **one new Gemini request / one application extraction attempt**,
+  no retry or local provider diagnostic. Fixture extract_bill counter used=1.
+  Including Stage 6, recorded tests now total four provider requests and three
+  application attempts across the two sessions; this is historical accounting,
+  not a claim that expired/current rate-limit windows share one counter.
+- Draft metadata before confirmation: processing, attempt_count=1, zero expenses.
+  UI then displayed the correct two-item review and low-confidence warnings.
+  Reviewed every amount and submitted confirmation exactly once.
+- Scan ID `61e573a9-2292-4168-ba8c-9e5c8baeec85`, confirmed at **18:36:46 GMT+7**;
+  exactly one $12 expense named `Stage 4 synthetic retained receipt - USD 12`,
+  with the single synthetic owner assigned $12. No payment was recorded.
+- Metadata at **18:37:28 GMT+7**: **20 bills, 9 confirmed receipts, 11 expenses**
+  including this one fixture; previous baseline remains 19/8/10 after subtracting
+  it. Pending file jobs remain **9**, all previously future; no cleanup invoked.
+- Image downloaded only for this generated fixture to establish a byte baseline:
+  **59,685 bytes**, SHA-256
+  `22436e187cf8ffa053336b943d06a8a98e9a22123dbd88e5d09f4d02f9db982e`.
+  It reopened from the ledger's **View receipt** link; screenshot and AX showed
+  **Receipt confirmed** and the actual uploaded image, no reconfirmation form or
+  missing-image fallback. This is pre-cleanup evidence only.
+- Leave the Chrome receipt tab available: its private bill capability is not
+  copied into tracked documentation. If necessary, find its labelled page in
+  browser history. Local generated image and metadata are in
+  `/private/tmp/stage4-retained-receipt-2026-10-24.png` and
+  `/private/tmp/stage4-retention-fixture.json`; do not commit private fixture data.
+- **Next:** after the Oct 25 scheduled run, reopen/refresh this same receipt to
+  obtain a fresh image URL, compare its stored bytes/hash and verify unchanged
+  confirmed status and single expense. Capture scheduled-run logs promptly and
+  verify the six due Stage 6 sweeps. Keep the fixture through any additional
+  preservation check needed for the Oct 26 run, then clean up only this labelled
+  fixture through the lifecycle flow and record normal future final sweeps.
+- No runtime code, credentials, hosting settings, migration, deployment, quota
+  deadlines or shared policies changed. The pre-existing local edit to
+  `src/server/bills.js` was left untouched; it was not part of this task or deployed.
+  The native file chooser initially stalled; no upload/provider request happened
+  until the correct generated file was selected and Upload receipt pressed once.
+
+Read-only checks on **2026-10-24, approximately 17:42–17:46 GMT+7** continued
+the Stage 4/6 follow-up. The user will do the remaining real-device,
+VoiceOver/TalkBack, full keyboard and Firefox checks themselves; no result is
+implied by assigning that work. Preview configuration remains deferred.
+
+### Current deployment, cleanup and monitoring evidence
+
+- Chrome verified current **Ready / Production / Current** deployment
+  [HYZYcPFFEy2ba7uueMnftaYM6k6p](https://vercel.com/nacarees-projects/bill-spiltter-webapp/HYZYcPFFEy2ba7uueMnftaYM6k6p),
+  source `876c22f845824eaf1bf039382cab8b6dfc894832`, built Oct 24 12:30:42 GMT+7,
+  with the normal Production alias and immutable host
+  `bill-spiltter-webapp-pfz7vxp7t-nacarees-projects.vercel.app`.
+  Local Git comparison confirms only README/HANDOFF/CURRENT_WORK changed since
+  Stage 6's tested `eec047e`; runtime source is unchanged. No deployment was made.
+- Supabase metadata audit at **17:42:39 GMT+7**, exact expected project
+  `uvznqgkbodejvksmtafh`: **19 bills, 8 confirmed receipts, 10 expenses**;
+  **0 expired bills, expired drafts, stale upload reservations or counter windows
+  older than the worker's 24-hour cutoff**. These totals match the recorded
+  baseline; they are not an individual financial-record integrity comparison.
+- **Original 13 jobs no longer queued.** All nine current jobs were created
+  after the original cohort. All are unleased, attempt count 1, not yet due:
+  six correspond to Stage 6 fixtures, with final deadlines **Oct 25 00:38:43
+  and 00:48:02 GMT+7**; three belong to a later deletion, created **Oct 24
+  15:42:50 GMT+7**, due **Oct 25 15:42:50 GMT+7**. This follow-up created/deleted
+  nothing and did not investigate the later bill's contents or who deleted it.
+- Storage metadata inventory at **17:43 GMT+7** found **0 receipt images,
+  0 staging objects, 1 payment QR under an existing bill**. No object in any of
+  the three buckets belongs to an absent bill. All nine queued prefix targets
+  are empty and their parents absent. Combined with the empty receipt/staging
+  buckets, this verifies original cleanup targets are absent; original job IDs
+  and per-job completion times are no longer available from the queue.
+- **Retained-image evidence gap:** all eight existing confirmed scan references
+  lack images. Individual Storage `exists` checks returned false with HTTP 400;
+  bucket listing separately succeeded and was empty. Their confirmations range
+  from Aug 16 through Oct 21 GMT+7, before the Oct 22 retention rollout. The
+  historical release deliberately deleted images after confirmation (see the
+  coordinated-rollout runbook). This is consistent with historical missing
+  images, but does not prove when or why each file disappeared. Do not call it
+  a newly demonstrated cron defect or claim retained-image preservation passed.
+  Stage 6 did verify a fresh confirmed image before its fixture was deleted.
+  No surviving post-rollout confirmed image exists for the post-sweep UI check.
+- Vercel **Cron Jobs enabled**, route `/api/cron/lifecycle-cleanup`, displayed
+  **20:00 UTC daily**, reverified in Chrome. Runtime logs offered the last
+  30 minutes/hour; older ranges required an upgrade, and the date picker marked
+  today's 03:00 start **Outside of allowed range**. No plan/settings change or
+  dashboard Run action was made. Thus queue progress is independently observed,
+  while the first time-triggered invocation and its aggregate log remain
+  **unverified**, not failed. Absence of old logs is not proof of a missed run.
+- Sentry session restored through existing GitHub sign-in. At the recheck,
+  [BILL-SPLITTER-WEBAPP-7](https://nathan-d2.sentry.io/issues/7809205412/)
+  remained unresolved, **1 event**, first/last seen about 17 hours earlier,
+  release `eec047e`; no recurrence or new upstream classification. The all-status
+  14-day project inventory showed seven historical issues and no lifecycle
+  cleanup issue. No issue was resolved/commented on; no provider request made.
+- All hosted work was read-only: no queue claim/finish, SQL mutation, cleanup
+  invocation, uploads, generated fixtures, provider calls, quota reset, secret
+  reveal, settings edit, migration, deployment, commit or push. Local Markdown
+  edits record evidence and ownership only. Markdown formatting and diff checks
+  passed; runtime tests were not rerun for documentation-only changes.
+
+### Stage 7 evidence register — prepared, not signed off
+
+| Check                              | Latest outcome                                                                       | Remaining action / owner                                                                    |
+| ---------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Stage 1 baseline / Stage 3 rollout | Recorded; migration and smoke checks user-reported applied/passed                    | No migration rerun.                                                                         |
+| Stage 2 recovery                   | Explicitly skipped by user                                                           | Retain the exception; do not claim a restore rehearsal.                                     |
+| Stage 4 original final sweeps      | Original 13 jobs gone; cleanup targets absent; aggregate baseline unchanged          | Scheduled invocation/result still needs direct evidence.                                    |
+| Stage 4 later sweeps               | Six Stage 6 jobs gone/targets empty on Oct 25; three later jobs now due              | Verify three after their first scheduled opportunity on Oct 26.                             |
+| Confirmed image preservation       | Passed Oct 25: exact image hash retained, same single expense, fresh private UI view | Keep fixture for Oct 26 follow-up, then lifecycle cleanup.                                  |
+| Stage 5 credentials                | Runbooks/offline readiness complete; rotations separate; Preview deferred            | Keep existing authorization/configuration boundaries.                                       |
+| Stage 6 deployed functional flows  | Passed with upstream incident recorded                                               | Monitor BILL-SPLITTER-WEBAPP-7; safe status/classification on recurrence.                   |
+| Manual/device accessibility        | Automated checks passed; remaining manual evidence unverified                        | User: real devices, VoiceOver/TalkBack, full keyboard, Firefox; record environment/outcome. |
+| Phase 4 / Stage 7 signoff          | **Open**                                                                             | Complete outstanding evidence above; retain accepted exceptions and incident status.        |
+
+Next daily run **Oct 26 03:00–03:59 GMT+7** can cover the three later jobs.
+The six Stage 6 sweeps and image-preservation outcome are verified above. Inspect
+runtime/request logs during or within the available hour after execution, record
+actual time/status/counts and whether it was scheduled, then recheck queue and
+Storage metadata. Do not accelerate deadlines, create another manual run merely
+to obtain a successful log, or call a manual invocation scheduled evidence.
+No future automation/reminder was created in this session. A resumed check is
+needed; the worker itself remains enabled.
+
+## Stage 6 functional checks complete; one provider incident open
 
 Stage 6 functional verification completed **2026-10-24, 00:23–00:48 GMT+7
 (Asia/Phnom_Penh)** on `main`, with the first upstream receipt incident recorded
@@ -447,10 +634,12 @@ The user removed privacy/support content and the Privacy & Help page from the
 to-do list. Only mobile/accessibility reviews and operational checks remain.
 Stage 2 backup/restore was skipped at the user’s request. Stage 3 is implemented
 and committed on `main`; its migration and live smoke checks are user-reported
-complete. Stage 4 scheduled/final-sweep verification and broader deployed flows
-remain pending. Stage 5 readiness is implemented above; actual rotations remain
-separate future actions. Last independently verified worker source was `b0ba0ac`;
-this readiness review did not re-audit the current deployment identity.
+complete. Stage 4 original/Stage 6 cleanup targets are absent and retained-image
+preservation passed Oct 25; scheduled-run evidence and three later sweeps remain.
+Stage 5 readiness and Stage 6 functional checks are complete with the provider incident open.
+Actual rotations remain separate future actions. Current Production `876c22f`
+has the same runtime source as tested `eec047e`. The user owns remaining manual
+accessibility checks; see the current Stage 7 evidence register above.
 
 ## Stage 3 implementation (2026-10-22)
 
@@ -655,10 +844,12 @@ application tests were not rerun for these documentation-only edits.
 
 This is the execution order: Stage 1 complete, Stage 2 skipped by user,
 Stage 3 committed on `main` with migration and live smoke checks user-reported
-complete; Stage 4 daily automation is enabled with a successful manual probe and
-scheduled/final-sweep verification pending; Stages 5–7 remain pending. Work proceeds one stage at a time, with observed
-results and unresolved decisions recorded here
-and a concise status in CURRENT_WORK. Hosted migrations remain user-applied.
+complete; Stage 4 daily automation is enabled, original/Stage 6 cleanup targets
+absent and retained-image preservation passed; scheduled-run evidence and three later sweeps remain. Stage 5
+readiness and Stage 6 functional checks are complete with one provider incident
+open; Stage 7 remains open. The current evidence register above supersedes older
+dated observations. Work proceeds one stage at a time, with a concise snapshot
+in CURRENT_WORK. Hosted migrations remain user-applied.
 
 1. **Read-only baseline.** Record the deployed release, local pending changes,
    Preview/Production database targets, migration/schema compatibility, private
