@@ -8,6 +8,7 @@ import { BalancesSection } from "@/components/balances-section";
 import { ClaimParticipantForm } from "@/components/claim-participant-form";
 import { ExpenseEditor } from "@/components/expense-editor";
 import { ExpenseForm } from "@/components/expense-form";
+import { ExpenseHistoryFilters } from "@/components/expense-history-filters";
 import { JoinBillForm } from "@/components/join-bill-form";
 import { RemoveExpenseForm } from "@/components/remove-expense-form";
 import { ShareBillButton } from "@/components/share-bill-button";
@@ -144,15 +145,15 @@ export default async function BillPage({ params, searchParams }) {
     <div className="mx-auto max-w-5xl px-5 py-10 sm:px-8 sm:py-16">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-bold tracking-widest text-teal-700 uppercase">
+          <p className="text-brand text-sm font-bold tracking-widest uppercase">
             Shared bill
           </p>
-          <h1 className="mt-2 text-4xl font-bold tracking-tight text-slate-950">
+          <h1 className="text-foreground mt-2 text-4xl font-bold tracking-tight">
             {bill.name}
           </h1>
-          <p className="mt-2 text-slate-600">Currency: {bill.currency}</p>
+          <p className="text-muted mt-2">Currency: {bill.currency}</p>
           {bill.expires_at ? (
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="text-muted mt-2 text-sm">
               Expires{" "}
               <time dateTime={bill.expires_at}>
                 {new Intl.DateTimeFormat("en-US", {
@@ -167,7 +168,7 @@ export default async function BillPage({ params, searchParams }) {
           {bill.expiresSoon ? (
             <p
               role="status"
-              className="mt-3 rounded-xl bg-amber-50 p-4 text-sm text-amber-950"
+              className="rounded-control mt-3 bg-amber-50 p-4 text-sm text-amber-950"
             >
               This bill expires within 30 days and will become eligible for
               permanent deletion. A successful bill change extends its life by
@@ -179,19 +180,19 @@ export default async function BillPage({ params, searchParams }) {
       </div>
 
       <div className="mt-10 grid gap-6 md:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)]">
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <h2 className="text-xl font-bold text-slate-950">People</h2>
-          <ul className="mt-5 divide-y divide-slate-100">
+        <section className="app-panel">
+          <h2 className="text-foreground text-xl font-bold">People</h2>
+          <ul className="divide-line mt-5 divide-y">
             {bill.participants.map((person) => (
               <li
                 key={person.id}
-                className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
+                className="flex items-center justify-between gap-4 py-[var(--ds-row-padding)] first:pt-0 last:pb-0"
               >
-                <span className="font-medium text-slate-800">
+                <span className="text-foreground font-medium">
                   {person.display_name}
                 </span>
                 {person.is_creator ? (
-                  <span className="rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800">
+                  <span className="bg-tint text-brand rounded-full px-2.5 py-1 text-xs font-semibold">
                     Creator
                   </span>
                 ) : person.canClaim ? (
@@ -204,29 +205,29 @@ export default async function BillPage({ params, searchParams }) {
           </ul>
         </section>
 
-        <aside className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <aside className="app-panel">
           {participant ? (
             <>
-              <p className="text-sm text-slate-500">You’re joining as</p>
-              <p className="mt-1 text-lg font-bold text-slate-950">
+              <p className="text-muted text-sm">You’re joining as</p>
+              <p className="text-foreground mt-1 text-lg font-bold">
                 {participant.display_name}
               </p>
-              <p className="mt-4 text-sm leading-6 text-slate-600">
+              <p className="text-muted mt-4 text-sm leading-6">
                 This device can add, edit, and remove bill expenses.
               </p>
               <AddParticipantForm shareToken={shareToken} />
             </>
           ) : (
             <>
-              <h2 className="text-xl font-bold text-slate-950">
+              <h2 className="text-foreground text-xl font-bold">
                 Join this bill
               </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <p className="text-muted mt-2 text-sm leading-6">
                 Joining remembers you on this device and lets you make changes.
               </p>
               {claimableParticipants.length ? (
-                <div className="mt-5 rounded-2xl bg-teal-50 p-4">
-                  <h3 className="font-semibold text-slate-950">
+                <div className="rounded-control bg-tint mt-5 p-4">
+                  <h3 className="text-foreground font-semibold">
                     Already listed?
                   </h3>
                   <ClaimParticipantForm
@@ -236,7 +237,7 @@ export default async function BillPage({ params, searchParams }) {
                 </div>
               ) : null}
               {claimableParticipants.length ? (
-                <p className="mt-5 text-sm font-semibold text-slate-700">
+                <p className="text-foreground mt-5 text-sm font-semibold">
                   Not listed? Add yourself instead.
                 </p>
               ) : null}
@@ -252,30 +253,32 @@ export default async function BillPage({ params, searchParams }) {
         shareToken={shareToken}
       />
 
-      <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      <section className="app-panel mt-8">
         <div className="grid gap-8 md:grid-cols-2">
           <div>
-            <p className="text-sm font-bold tracking-widest text-teal-700 uppercase">
+            <p className="text-brand text-sm font-bold tracking-widest uppercase">
               Receipt upload
             </p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-950">
+            <h2 className="text-foreground mt-2 text-2xl font-bold">
               Import a receipt
             </h2>
-            <p className="mt-2 mb-6 text-sm leading-6 text-slate-600">
+            <p className="text-muted mt-2 mb-6 text-sm leading-6">
               Upload an image, review every extracted item, then confirm it.
               Drafts never affect balances.
             </p>
             {participant ? (
               <UploadReceiptForm shareToken={shareToken} />
             ) : (
-              <div className="rounded-2xl bg-amber-50 p-5 text-sm text-amber-950">
+              <div className="rounded-control bg-amber-50 p-5 text-sm text-amber-950">
                 Join this bill first to upload a receipt.
               </div>
             )}
           </div>
           <div>
-            <h3 className="text-lg font-bold text-slate-950">Recent uploads</h3>
-            <p className="mt-3 text-sm leading-6 text-slate-500">
+            <h3 className="text-foreground text-lg font-bold">
+              Recent uploads
+            </h3>
+            <p className="text-muted mt-3 text-sm leading-6">
               Unconfirmed receipts expire after 24 hours. Confirmed receipt
               images stay until the bill is deleted.
             </p>
@@ -284,24 +287,27 @@ export default async function BillPage({ params, searchParams }) {
                 We couldn’t load recent receipt uploads.
               </p>
             ) : receiptScans.length ? (
-              <ul className="mt-4 divide-y divide-slate-100">
+              <ul className="divide-line mt-4 divide-y">
                 {receiptScans.map((scan) => (
-                  <li key={scan.id} className="py-3 first:pt-0 last:pb-0">
+                  <li
+                    key={scan.id}
+                    className="py-[var(--ds-row-padding)] first:pt-0 last:pb-0"
+                  >
                     <Link
                       href={`/b/${shareToken}/receipts/${scan.id}`}
-                      className="flex items-center justify-between gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-teal-700"
+                      className="focus-visible:outline-brand flex items-center justify-between gap-3 rounded-lg focus-visible:outline-2"
                     >
                       <span className="min-w-0">
-                        <span className="block truncate text-sm font-semibold text-slate-800">
+                        <span className="text-foreground block truncate text-sm font-semibold">
                           {scan.merchant_name || scan.original_filename}
                         </span>
-                        <span className="mt-0.5 block text-xs text-slate-500">
+                        <span className="text-muted mt-0.5 block text-xs">
                           {new Intl.DateTimeFormat("en-US", {
                             dateStyle: "medium",
                           }).format(new Date(scan.created_at))}
                         </span>
                       </span>
-                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 capitalize">
+                      <span className="bg-tint text-foreground rounded-full px-2.5 py-1 text-xs font-semibold capitalize">
                         {scan.status.replace("_", " ")}
                       </span>
                     </Link>
@@ -309,7 +315,7 @@ export default async function BillPage({ params, searchParams }) {
                 ))}
               </ul>
             ) : (
-              <div className="mt-4 rounded-2xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-600">
+              <div className="rounded-control border-line text-muted mt-4 border border-dashed p-6 text-center text-sm">
                 No receipt uploads yet.
               </div>
             )}
@@ -317,15 +323,15 @@ export default async function BillPage({ params, searchParams }) {
         </div>
       </section>
 
-      <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      <section className="app-panel mt-8">
         <div>
-          <p className="text-sm font-bold tracking-widest text-teal-700 uppercase">
+          <p className="text-brand text-sm font-bold tracking-widest uppercase">
             Expense ledger
           </p>
-          <h2 className="mt-2 text-2xl font-bold text-slate-950">
+          <h2 className="text-foreground mt-2 text-2xl font-bold">
             Add an expense
           </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
+          <p className="text-muted mt-2 text-sm leading-6">
             Split the total equally or enter each person’s exact amount.
           </p>
         </div>
@@ -333,7 +339,7 @@ export default async function BillPage({ params, searchParams }) {
           {participant ? (
             <ExpenseForm bill={formBill} />
           ) : (
-            <div className="rounded-2xl bg-amber-50 p-5 text-sm leading-6 text-amber-950">
+            <div className="rounded-control bg-amber-50 p-5 text-sm leading-6 text-amber-950">
               Join this bill first to add or change expenses.
             </div>
           )}
@@ -343,79 +349,36 @@ export default async function BillPage({ params, searchParams }) {
       <section className="mt-8">
         <div className="flex flex-col flex-wrap gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-slate-950">
+            <h2 className="text-foreground text-2xl font-bold">
               Expense history
             </h2>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="text-muted mt-1 text-sm">
               Newest expenses appear first.
             </p>
           </div>
-          <form
-            method="get"
-            className="flex flex-col flex-wrap gap-3 sm:flex-row"
-          >
-            <label className="grid gap-1 text-xs font-semibold text-slate-700">
-              Category
-              <select
-                name="category"
-                defaultValue={category ?? ""}
-                className="min-h-10 rounded-xl border border-slate-300 bg-white px-3 text-sm"
-              >
-                <option value="">All categories</option>
-                {EXPENSE_CATEGORIES.map((item) => (
-                  <option key={item} value={item}>
-                    {EXPENSE_CATEGORY_LABELS[item]}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="grid gap-1 text-xs font-semibold text-slate-700">
-              Person
-              <select
-                name="participant"
-                defaultValue={participantId ?? ""}
-                className="min-h-10 rounded-xl border border-slate-300 bg-white px-3 text-sm"
-              >
-                <option value="">Everyone</option>
-                {bill.participants.map((person) => (
-                  <option key={person.id} value={person.id}>
-                    {person.display_name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              type="submit"
-              className="min-h-10 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-800"
-            >
-              Filter
-            </button>
-            {category || participantId ? (
-              <Link
-                href={`/b/${shareToken}`}
-                className="inline-flex min-h-10 items-center justify-center px-2 text-sm font-semibold text-teal-700"
-              >
-                Clear
-              </Link>
-            ) : null}
-          </form>
+          <ExpenseHistoryFilters
+            category={category ?? ""}
+            participantId={participantId ?? ""}
+            participants={formBill.participants}
+            shareToken={shareToken}
+          />
         </div>
 
         {ledgerError ? (
           <div
             role="alert"
-            className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-5 text-sm leading-6 text-red-900"
+            className="rounded-control mt-6 border border-red-200 bg-red-50 p-5 text-sm leading-6 text-red-900"
           >
             We couldn’t load the expenses. Refresh the page and try again.
           </div>
         ) : expenses.length === 0 ? (
-          <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
-            <h3 className="font-bold text-slate-950">
+          <div className="rounded-control border-line mt-6 border border-dashed bg-white p-8 text-center">
+            <h3 className="text-foreground font-bold">
               {category || participantId
                 ? "No expenses match these filters"
                 : "No expenses yet"}
             </h3>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="text-muted mt-2 text-sm">
               {category || participantId
                 ? "Clear the filters or try a different selection."
                 : "Add the first expense above to start the ledger."}
@@ -426,22 +389,22 @@ export default async function BillPage({ params, searchParams }) {
             {expenses.map((expense) => (
               <article
                 key={expense.id}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+                className="rounded-card border-line border bg-white p-5 shadow-sm sm:p-6"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <h3
                         id={`expense-${expense.id}-heading`}
-                        className="text-lg font-bold text-slate-950"
+                        className="text-foreground text-lg font-bold"
                       >
                         {expense.description}
                       </h3>
-                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                      <span className="bg-tint text-foreground rounded-full px-2.5 py-1 text-xs font-semibold">
                         {EXPENSE_CATEGORY_LABELS[expense.category]}
                       </span>
                     </div>
-                    <p className="mt-2 text-sm text-slate-600">
+                    <p className="text-muted mt-2 text-sm">
                       {displayDate(expense.expense_date)} · Paid by{" "}
                       {participantNames.get(expense.paid_by_participant_id)} ·{" "}
                       {expense.split_method === "equal"
@@ -449,7 +412,7 @@ export default async function BillPage({ params, searchParams }) {
                         : "Exact split"}
                     </p>
                   </div>
-                  <p className="text-xl font-bold text-slate-950">
+                  <p className="text-foreground text-xl font-bold">
                     {formatMoney(expense.amount_minor, bill.currency)}
                   </p>
                 </div>
@@ -458,12 +421,12 @@ export default async function BillPage({ params, searchParams }) {
                   {expense.shares.map((share) => (
                     <li
                       key={share.participantId}
-                      className="flex justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2 text-sm"
+                      className="rounded-control bg-canvas flex justify-between gap-3 px-3 py-2 text-sm"
                     >
-                      <span className="text-slate-700">
+                      <span className="text-foreground">
                         {participantNames.get(share.participantId)}
                       </span>
-                      <span className="font-semibold text-slate-900">
+                      <span className="text-foreground font-semibold">
                         {formatMoney(share.amountMinor, bill.currency)}
                       </span>
                     </li>
@@ -473,19 +436,19 @@ export default async function BillPage({ params, searchParams }) {
                   <Link
                     href={`/b/${shareToken}/receipts/${expense.receipt_scan_id}`}
                     aria-describedby={`expense-${expense.id}-heading`}
-                    className="mt-3 inline-flex min-h-11 items-center font-semibold text-teal-700 underline underline-offset-4"
+                    className="text-brand mt-3 inline-flex min-h-11 items-center font-semibold underline underline-offset-4"
                   >
                     View receipt
                   </Link>
                 ) : null}
                 {expense.notes ? (
-                  <p className="mt-4 text-sm leading-6 whitespace-pre-wrap text-slate-600">
+                  <p className="text-muted mt-4 text-sm leading-6 whitespace-pre-wrap">
                     {expense.notes}
                   </p>
                 ) : null}
 
                 {participant ? (
-                  <div className="mt-5 grid gap-4 border-t border-slate-100 pt-4">
+                  <div className="border-line mt-5 grid gap-4 border-t pt-4">
                     <ExpenseEditor bill={formBill} expense={expense} />
                     <RemoveExpenseForm
                       expenseId={expense.id}
@@ -500,15 +463,15 @@ export default async function BillPage({ params, searchParams }) {
       </section>
 
       {!ledgerError && activity.length ? (
-        <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <h2 className="text-xl font-bold text-slate-950">Recent changes</h2>
-          <ul className="mt-4 divide-y divide-slate-100">
+        <section className="app-panel mt-8">
+          <h2 className="text-foreground text-xl font-bold">Recent changes</h2>
+          <ul className="divide-line mt-4 divide-y">
             {activity.map((item) => (
               <li key={item.id} className="py-3 text-sm first:pt-0 last:pb-0">
-                <p className="font-medium text-slate-800">
+                <p className="text-foreground font-medium">
                   {activityDescription(item, participantNames)}
                 </p>
-                <time className="mt-1 block text-xs text-slate-500">
+                <time className="text-muted mt-1 block text-xs">
                   {new Intl.DateTimeFormat("en-US", {
                     dateStyle: "medium",
                     timeStyle: "short",

@@ -79,22 +79,22 @@ export default async function ReceiptPage({ params }) {
     <div className="mx-auto max-w-5xl px-5 py-10 sm:px-8 sm:py-14">
       <Link
         href={`/b/${shareToken}`}
-        className="inline-flex min-h-11 items-center text-sm font-semibold text-teal-700"
+        className="text-brand inline-flex min-h-11 items-center text-sm font-semibold"
       >
         ← Back to {bill.name}
       </Link>
       <div className="mt-6">
-        <p className="text-sm font-bold tracking-widest text-teal-700 uppercase">
+        <p className="text-brand text-sm font-bold tracking-widest uppercase">
           Receipt import
         </p>
-        <h1 className="mt-2 text-3xl font-bold text-slate-950">
+        <h1 className="text-foreground mt-2 text-3xl font-bold">
           Review receipt
         </h1>
-        <p className="mt-2 text-slate-600">{scan.original_filename}</p>
+        <p className="text-muted mt-2">{scan.original_filename}</p>
       </div>
 
       {!participant ? (
-        <div className="mt-8 rounded-2xl bg-amber-50 p-6 text-amber-950">
+        <div className="rounded-control mt-8 bg-amber-50 p-6 text-amber-950">
           Join the bill on this device before reviewing or confirming this
           receipt.
         </div>
@@ -102,13 +102,13 @@ export default async function ReceiptPage({ params }) {
 
       {(scan.status === "uploaded" || scan.status === "processing") &&
       !scan.canRetry ? (
-        <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <div className="rounded-card border-line mt-8 border bg-white p-8 text-center shadow-sm">
           <ReceiptStatusRefresh />
-          <div className="mx-auto size-8 animate-spin rounded-full border-4 border-teal-100 border-t-teal-700" />
-          <h2 className="mt-5 text-xl font-bold text-slate-950">
+          <div className="border-tint border-t-brand mx-auto size-8 animate-spin rounded-full border-4" />
+          <h2 className="text-foreground mt-5 text-xl font-bold">
             Reading your receipt…
           </h2>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="text-muted mt-2 text-sm">
             This page refreshes automatically. You can safely return to the bill
             and come back later.
           </p>
@@ -117,7 +117,7 @@ export default async function ReceiptPage({ params }) {
 
       {scan.status === "failed" || scan.canRetry ? (
         <div className="mt-8 grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
-          <div className="rounded-3xl border border-red-200 bg-red-50 p-6">
+          <div className="rounded-card border border-red-200 bg-red-50 p-6">
             <h2 className="text-xl font-bold text-red-950">
               {scan.error_code === "app_rate_limited"
                 ? "Scanning temporarily unavailable"
@@ -142,11 +142,11 @@ export default async function ReceiptPage({ params }) {
             ) : null}
           </div>
           {participant ? (
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-slate-950">
+            <div className="app-panel">
+              <h2 className="text-foreground text-xl font-bold">
                 Enter it manually instead
               </h2>
-              <p className="mt-2 mb-6 text-sm text-slate-600">
+              <p className="text-muted mt-2 mb-6 text-sm">
                 Any available merchant, date, and total are prefilled below.
               </p>
               <ExpenseForm
@@ -164,19 +164,19 @@ export default async function ReceiptPage({ params }) {
 
       {scan.status === "needs_review" && participant ? (
         <div className="mt-8 grid gap-6 lg:grid-cols-[0.75fr_1.25fr] lg:items-start">
-          <aside className="min-w-0 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-6">
+          <aside className="rounded-card border-line min-w-0 border bg-white p-4 shadow-sm lg:sticky lg:top-6">
             <ReceiptImage src={scan.imageUrl} />
             {scan.currency !== bill.currency ? (
-              <div className="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-900">
+              <div className="rounded-control mt-4 bg-red-50 p-4 text-sm text-red-900">
                 Extracted currency {scan.currency} does not match this bill’s{" "}
                 {bill.currency}. Values will be confirmed in {bill.currency};
                 check every amount carefully.
               </div>
             ) : null}
           </aside>
-          <section className="min-w-0 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <section className="app-panel min-w-0">
             {scan.items.some((item) => item.needs_review) ? (
-              <div className="mb-6 rounded-xl bg-amber-50 p-4 text-sm text-amber-950">
+              <div className="rounded-control mb-6 bg-amber-50 p-4 text-sm text-amber-950">
                 Some extracted lines are low confidence. Check the highlighted
                 items before confirming.
               </div>
@@ -191,9 +191,9 @@ export default async function ReceiptPage({ params }) {
       ) : null}
 
       {scan.status === "confirmed" ? (
-        <div className="mt-8 rounded-3xl border border-teal-200 bg-teal-50 p-8 text-center">
-          <h2 className="text-xl font-bold text-teal-950">Receipt confirmed</h2>
-          <p className="mt-2 text-sm text-teal-900">
+        <div className="rounded-card border-line bg-tint mt-8 border p-8 text-center">
+          <h2 className="text-brand text-xl font-bold">Receipt confirmed</h2>
+          <p className="text-brand mt-2 text-sm">
             Its expense is now part of the bill ledger. The receipt image stays
             until the bill is deleted.
           </p>
@@ -202,7 +202,7 @@ export default async function ReceiptPage({ params }) {
           </div>
           <Link
             href={`/b/${shareToken}`}
-            className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white"
+            className="rounded-control bg-brand mt-5 inline-flex min-h-11 items-center px-5 text-sm font-semibold text-white"
           >
             View bill
           </Link>

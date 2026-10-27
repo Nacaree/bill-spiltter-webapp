@@ -14,7 +14,7 @@ export function ExpenseEditor({ bill, expense }) {
         ref={trigger}
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="min-h-11 min-w-11 text-sm font-semibold text-teal-700 underline-offset-4 hover:underline"
+        className="text-brand min-h-11 min-w-11 text-sm font-semibold underline-offset-4 hover:underline"
         aria-describedby={`expense-${expense.id}-heading`}
         aria-expanded={open}
         aria-controls={open ? editorId : undefined}
@@ -22,7 +22,10 @@ export function ExpenseEditor({ bill, expense }) {
         {open ? "Close editor" : "Edit"}
       </button>
       {open ? (
-        <div id={editorId} className="mt-5 border-t border-slate-200 pt-5">
+        <div
+          id={editorId}
+          className="reveal-content border-line mt-5 border-t pt-5"
+        >
           <ExpenseForm
             bill={bill}
             expense={expense}

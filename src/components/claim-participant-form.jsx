@@ -1,5 +1,7 @@
 "use client";
 
+import { SelectControl } from "@/components/ui/select";
+
 import { RetainedForm } from "@/components/retained-form";
 
 import { useActionState, useEffect } from "react";
@@ -24,11 +26,13 @@ export function ClaimParticipantForm({ participants, shareToken }) {
     <RetainedForm state={state} action={action} className="mt-4 grid gap-4">
       <input type="hidden" name="shareToken" value={shareToken} />
       <label
-        className="grid gap-2 text-sm font-semibold text-slate-800"
+        className="text-foreground grid gap-2 text-sm font-semibold"
         htmlFor="claim-participant"
       >
         Choose your name
-        <select
+        <SelectControl
+          person
+          aria-label="Choose your name"
           id="claim-participant"
           name="participantId"
           defaultValue=""
@@ -37,7 +41,6 @@ export function ClaimParticipantForm({ participants, shareToken }) {
           aria-describedby={
             state.errors?.participantId ? "claim-participant-error" : undefined
           }
-          className="min-h-12 rounded-xl border border-slate-300 bg-white px-4 text-base font-normal shadow-sm outline-none focus:border-teal-700 focus:ring-3 focus:ring-teal-100"
         >
           <option value="" disabled>
             Select a person
@@ -47,7 +50,7 @@ export function ClaimParticipantForm({ participants, shareToken }) {
               {participant.display_name}
             </option>
           ))}
-        </select>
+        </SelectControl>
         {state.errors?.participantId ? (
           <span
             id="claim-participant-error"

@@ -12,13 +12,16 @@ export function useDirectImageUpload({ shareToken, purpose }) {
   const [result, setResult] = useState(null);
   const pending = ["preparing", "uploading", "processing"].includes(stage);
   function selectFile(event) {
-    file.current = event.target.files?.[0] ?? null;
+    const selected = event.target.files?.[0];
+    if (!selected || running.current) return false;
+    file.current = selected;
     reservation.current = null;
     setError(null);
     setResult(null);
+    setStage("idle");
+    return true;
   }
-  async function submit(event) {
-    event.preventDefault();
+  async function start() {
     if (running.current) return null;
     running.current = true;
     setError(null);
@@ -46,5 +49,9 @@ export function useDirectImageUpload({ shareToken, purpose }) {
       running.current = false;
     }
   }
-  return { selectFile, submit, stage, pending, error, result };
+  async function submit(event) {
+    event.preventDefault();
+    return start();
+  }
+  return { selectFile, start, submit, stage, pending, error, result };
 }

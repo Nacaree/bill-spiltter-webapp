@@ -27,6 +27,11 @@ export function RetainedForm({ state, children, onSubmit, ...props }) {
           for (const option of element.options)
             option.selected = values.includes(option.value);
         } else element.value = values[0] ?? "";
+        if (
+          element.tagName === "SELECT" ||
+          ["checkbox", "radio"].includes(element.type)
+        )
+          element.dispatchEvent(new Event("change", { bubbles: true }));
       }
       // Move to the first invalid field, or the form error if there is no
       // field-level error. Only do this in response to a submitted action.

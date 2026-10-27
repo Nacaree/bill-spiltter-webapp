@@ -1,5 +1,7 @@
 "use client";
 
+import { SelectControl } from "@/components/ui/select";
+
 import { RetainedForm } from "@/components/retained-form";
 
 import { useActionState, useEffect } from "react";
@@ -46,11 +48,12 @@ export function CreateBillForm() {
         error={state.errors?.participantName}
       />
       <label
-        className="grid gap-2 text-sm font-semibold text-slate-800"
+        className="text-foreground grid gap-2 text-sm font-semibold"
         htmlFor="currency"
       >
         Currency
-        <select
+        <SelectControl
+          aria-label="Currency"
           id="currency"
           name="currency"
           aria-invalid={Boolean(state.errors?.currency)}
@@ -58,14 +61,13 @@ export function CreateBillForm() {
             state.errors?.currency ? "currency-error" : undefined
           }
           defaultValue="USD"
-          className="min-h-12 rounded-xl border border-slate-300 bg-white px-4 text-base font-normal shadow-sm outline-none focus:border-teal-700 focus:ring-3 focus:ring-teal-100"
         >
           {BILL_CURRENCIES.map((currency) => (
             <option key={currency} value={currency}>
               {currency}
             </option>
           ))}
-        </select>
+        </SelectControl>
         {state.errors?.currency ? (
           <span id="currency-error" className="font-normal text-red-700">
             {state.errors.currency}

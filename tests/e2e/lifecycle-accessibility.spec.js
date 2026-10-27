@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { build } from "esbuild";
 import AxeBuilder from "@axe-core/playwright";
@@ -6,6 +7,7 @@ import { expect, test } from "@playwright/test";
 // Exercise the real client components in a browser with a fake action boundary.
 // No Supabase client, cookies, server actions or production bill data are used.
 let bundle;
+let componentCss;
 test.beforeAll(async () => {
   const result = await build({
     stdin: {
@@ -14,6 +16,7 @@ test.beforeAll(async () => {
       loader: "jsx",
     },
     bundle: true,
+    outdir: "/private/tmp/bill-splitter-lifecycle-bundle",
     write: false,
     jsx: "automatic",
     define: { "process.env.NODE_ENV": '"production"' },
@@ -28,16 +31,19 @@ test.beforeAll(async () => {
           builder.onLoad({ filter: /.*/, namespace: "offline" }, () => ({
             contents: `export async function deleteBillAction(previous,form){await new Promise(r=>setTimeout(r,200));return form.get('confirmation')==='DELETE'?{errors:{form:'Use the device that created this bill.'}}:{errors:{confirmation:'Type DELETE to confirm permanent deletion.'}};}`,
           }));
-          builder.onResolve({ filter: /^@\// }, (args) => ({
-            path:
-              resolve("src", args.path.slice(2)) +
-              (args.path.includes("/components/") ? ".jsx" : ".js"),
-          }));
+          builder.onResolve({ filter: /^@\// }, (args) => {
+            const base = resolve("src", args.path.slice(2));
+            return {
+              path: [base, `${base}.jsx`, `${base}.js`].find(existsSync),
+            };
+          });
         },
       },
     ],
   });
-  bundle = result.outputFiles[0].text;
+  bundle = result.outputFiles.find((file) => file.path.endsWith(".js")).text;
+  componentCss =
+    result.outputFiles.find((file) => file.path.endsWith(".css"))?.text ?? "";
 });
 async function axe(page) {
   expect(
@@ -68,7 +74,7 @@ test("delete confirmation supports keyboard errors, pending state, mobile reflow
   await page.setContent(
     '<!doctype html><html lang="en"><head><title>Lifecycle component checks</title></head><body><div id="root"></div></body></html>',
   );
-  await page.addStyleTag({ content: css });
+  await page.addStyleTag({ content: css + "\n" + componentCss });
   await page.addScriptTag({ content: bundle });
   const input = page.getByLabel("Type DELETE to confirm"),
     submit = page.getByRole("button", {
@@ -100,7 +106,11 @@ test("delete confirmation supports keyboard errors, pending state, mobile reflow
   );
   await input.fill("DELETE");
   await submit.click();
-  await expect(page.getByRole("alert")).toBeFocused();
+  await expect(
+    page
+      .getByRole("alert")
+      .filter({ hasText: "Use the device that created this bill." }),
+  ).toBeFocused();
   await axe(page);
   for (const width of [320, 375, 768, 1280]) {
     await page.setViewportSize({ width, height: 850 });

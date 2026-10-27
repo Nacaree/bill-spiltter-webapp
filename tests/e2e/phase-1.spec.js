@@ -20,7 +20,8 @@ test.describe("Phase 1 bill access", () => {
     await creatorPage.goto("/");
     await creatorPage.getByLabel("Bill name").fill(billName);
     await creatorPage.getByLabel("Your name").fill(creatorName);
-    await creatorPage.getByLabel("Currency").selectOption("USD");
+    await creatorPage.getByLabel("Currency").click();
+    await creatorPage.getByRole("option", { name: "USD", exact: true }).click();
     await creatorPage.getByRole("button", { name: "Create bill" }).click();
 
     await expect(creatorPage).toHaveURL(/\/b\/[A-Za-z0-9_-]{43}$/);
@@ -47,9 +48,10 @@ test.describe("Phase 1 bill access", () => {
     await expect(
       guestPage.getByRole("heading", { name: "Join this bill" }),
     ).toBeVisible();
-    await guestPage.getByLabel("Choose your name").selectOption({
-      label: participantName,
-    });
+    await guestPage.getByLabel("Choose your name").click();
+    await guestPage
+      .getByRole("option", { name: participantName, exact: true })
+      .click();
     await guestPage
       .getByRole("button", { name: "Continue as this person" })
       .click();

@@ -25,7 +25,7 @@ export function AddParticipantForm({ shareToken }) {
     <RetainedForm
       state={state}
       action={action}
-      className="mt-5 grid gap-4 border-t border-slate-100 pt-5"
+      className="border-line mt-5 grid gap-4 border-t pt-5"
     >
       <input type="hidden" name="shareToken" value={shareToken} />
       <Field
@@ -45,7 +45,7 @@ export function AddParticipantForm({ shareToken }) {
         </p>
       ) : null}
       {state.success ? (
-        <p role="status" className="text-sm text-teal-700">
+        <p role="status" className="text-brand text-sm">
           Person added.
         </p>
       ) : null}

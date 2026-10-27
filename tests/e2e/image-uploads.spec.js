@@ -45,9 +45,6 @@ test("a >4.5 MB receipt goes directly to storage and creates only one scan", asy
       mimeType: "image/png",
       buffer: image,
     });
-    await page
-      .getByRole("button", { name: "Upload receipt", exact: true })
-      .click();
     await expect(page).toHaveURL(/\/receipts\/[a-f0-9-]+$/);
     expect(storageSizes.some((size) => size >= image.length)).toBe(true);
     expect(actionSizes.every((size) => size < 4 * 1024 * 1024)).toBe(true);

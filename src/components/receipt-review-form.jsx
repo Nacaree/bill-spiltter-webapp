@@ -1,5 +1,8 @@
 "use client";
 
+import { DesignCheckbox } from "@/components/design-system/primitives";
+import { SelectControl } from "@/components/ui/select";
+
 import { RetainedForm } from "@/components/retained-form";
 
 import {
@@ -210,26 +213,26 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
       <input type="hidden" name="itemCount" value={items.length} />
 
       <div className="grid min-w-0 gap-5 sm:grid-cols-2">
-        <label className="grid min-w-0 gap-2 text-sm font-semibold text-slate-800">
+        <label className="text-foreground grid min-w-0 gap-2 text-sm font-semibold">
           Expense description
           <input
             name="description"
             defaultValue={scan.merchant_name || "Receipt"}
             maxLength={120}
             required
-            className="min-h-12 w-full min-w-0 rounded-xl border border-slate-300 px-4 font-normal"
+            className="rounded-control border-line min-h-12 w-full min-w-0 border px-4 font-normal"
           />
         </label>
-        <label className="grid min-w-0 gap-2 text-sm font-semibold text-slate-800">
+        <label className="text-foreground grid min-w-0 gap-2 text-sm font-semibold">
           Merchant
           <input
             name="merchantName"
             defaultValue={scan.merchant_name ?? ""}
             maxLength={120}
-            className="min-h-12 w-full min-w-0 rounded-xl border border-slate-300 px-4 font-normal"
+            className="rounded-control border-line min-h-12 w-full min-w-0 border px-4 font-normal"
           />
         </label>
-        <label className="grid min-w-0 gap-2 text-sm font-semibold text-slate-800">
+        <label className="text-foreground grid min-w-0 gap-2 text-sm font-semibold">
           Date
           <input
             type="date"
@@ -238,36 +241,37 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
               scan.receipt_date ?? new Date().toISOString().slice(0, 10)
             }
             required
-            className="min-h-12 w-full min-w-0 rounded-xl border border-slate-300 px-4 font-normal"
+            className="rounded-control border-line min-h-12 w-full min-w-0 border px-4 font-normal"
           />
         </label>
-        <label className="grid min-w-0 gap-2 text-sm font-semibold text-slate-800">
+        <label className="text-foreground grid min-w-0 gap-2 text-sm font-semibold">
           Paid by
-          <select
+          <SelectControl
+            person
+            aria-label="Paid by"
             name="paidByParticipantId"
             defaultValue={bill.currentParticipantId}
-            className="min-h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-4 font-normal"
           >
             {bill.participants.map((person) => (
               <option key={person.id} value={person.id}>
                 {person.display_name}
               </option>
             ))}
-          </select>
+          </SelectControl>
         </label>
-        <label className="grid min-w-0 gap-2 text-sm font-semibold text-slate-800">
+        <label className="text-foreground grid min-w-0 gap-2 text-sm font-semibold">
           Category
-          <select
+          <SelectControl
+            aria-label="Category"
             name="category"
             defaultValue="general"
-            className="min-h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-4 font-normal"
           >
             {EXPENSE_CATEGORIES.map((category) => (
               <option key={category} value={category}>
                 {EXPENSE_CATEGORY_LABELS[category]}
               </option>
             ))}
-          </select>
+          </SelectControl>
         </label>
       </div>
 
@@ -279,12 +283,12 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
         }
         tabIndex={state.errors?.items ? -1 : undefined}
       >
-        <legend className="text-lg font-bold text-slate-950">
+        <legend className="text-foreground text-lg font-bold">
           Receipt items
         </legend>
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="text-muted mt-1 text-sm">
               Fix each line and choose everyone who shared it.
             </p>
           </div>
@@ -292,7 +296,7 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
             type="button"
             ref={addButton}
             onClick={addItem}
-            className="min-h-11 px-2 text-sm font-semibold text-teal-700"
+            className="text-brand min-h-11 px-2 text-sm font-semibold"
           >
             + Add item
           </button>
@@ -301,11 +305,11 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
         {items.map((item, index) => (
           <fieldset
             key={item.clientKey}
-            className="@container min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4"
+            className="rounded-control border-line bg-canvas @container min-w-0 border p-4"
           >
             <legend className="sr-only">Item {index + 1}</legend>
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <p className="text-sm font-bold text-slate-800">
+              <p className="text-foreground text-sm font-bold">
                 Item {index + 1}
               </p>
               <div className="flex flex-wrap items-center gap-3">
@@ -330,7 +334,7 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
                 name={`item-${index}-quantity`}
                 value={item.quantity ?? 1}
               />
-              <label className="col-span-2 grid min-w-0 gap-1 text-xs font-semibold text-slate-700 @md:col-span-1">
+              <label className="text-foreground col-span-2 grid min-w-0 gap-1 text-xs font-semibold @md:col-span-1">
                 Description
                 <input
                   ref={(node) => {
@@ -346,10 +350,10 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
                   }
                   maxLength={160}
                   required
-                  className="min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-sm font-normal"
+                  className="rounded-control border-line min-h-11 w-full min-w-0 border bg-white px-3 text-sm font-normal"
                 />
               </label>
-              <label className="grid min-w-0 gap-1 text-xs font-semibold text-slate-700">
+              <label className="text-foreground grid min-w-0 gap-1 text-xs font-semibold">
                 Unit price ({bill.currency})
                 <input
                   name={`item-${index}-unit-price`}
@@ -365,15 +369,15 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
                   }
                   inputMode="decimal"
                   placeholder="Not read"
-                  className="min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-sm font-normal"
+                  className="rounded-control border-line min-h-11 w-full min-w-0 border bg-white px-3 text-sm font-normal"
                 />
                 {item.quantity !== null && item.quantity !== undefined ? (
-                  <span className="font-normal text-slate-500">
+                  <span className="text-muted font-normal">
                     Quantity: {item.quantity}
                   </span>
                 ) : null}
               </label>
-              <label className="grid min-w-0 gap-1 text-xs font-semibold text-slate-700">
+              <label className="text-foreground grid min-w-0 gap-1 text-xs font-semibold">
                 Line total ({bill.currency})
                 <input
                   name={`item-${index}-total`}
@@ -385,36 +389,31 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
                   }
                   inputMode="decimal"
                   required
-                  className="min-h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-sm font-normal"
+                  className="rounded-control border-line min-h-11 w-full min-w-0 border bg-white px-3 text-sm font-normal"
                 />
               </label>
             </div>
             <fieldset className="mt-4">
-              <legend className="text-xs font-semibold text-slate-700">
+              <legend className="text-foreground text-xs font-semibold">
                 Shared by
               </legend>
               <div className="mt-2 flex flex-wrap gap-3">
                 {bill.participants.map((person) => (
-                  <label
+                  <DesignCheckbox
                     key={person.id}
-                    className="flex min-h-11 items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm"
+                    name={`item-${index}-participant`}
+                    value={person.id}
+                    checked={item.assignments.includes(person.id)}
+                    onChange={(event) =>
+                      toggleAssignment(
+                        item.clientKey,
+                        person.id,
+                        event.target.checked,
+                      )
+                    }
                   >
-                    <input
-                      type="checkbox"
-                      name={`item-${index}-participant`}
-                      value={person.id}
-                      checked={item.assignments.includes(person.id)}
-                      onChange={(event) =>
-                        toggleAssignment(
-                          item.clientKey,
-                          person.id,
-                          event.target.checked,
-                        )
-                      }
-                      className="size-4 accent-teal-700"
-                    />
                     {person.display_name}
-                  </label>
+                  </DesignCheckbox>
                 ))}
               </div>
             </fieldset>
@@ -432,14 +431,14 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
       </fieldset>
 
       <fieldset
-        className="grid min-w-0 gap-4 rounded-2xl border border-slate-200 p-5"
+        className="rounded-control border-line grid min-w-0 gap-4 border p-5"
         aria-invalid={Boolean(state.errors?.totals)}
         aria-describedby={
           state.errors?.totals ? `${prefix}-totals-error` : undefined
         }
         tabIndex={state.errors?.totals ? -1 : undefined}
       >
-        <legend className="px-1 text-lg font-bold text-slate-950">
+        <legend className="text-foreground px-1 text-lg font-bold">
           Receipt totals
         </legend>
         <div className="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,8rem),1fr))] gap-4">
@@ -451,7 +450,7 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
           ].map(([name, label]) => (
             <label
               key={name}
-              className="grid min-w-0 gap-1 text-xs font-semibold text-slate-700"
+              className="text-foreground grid min-w-0 gap-1 text-xs font-semibold"
             >
               {label}
               <input
@@ -465,11 +464,11 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
                 }
                 inputMode="decimal"
                 required
-                className="min-h-11 w-full min-w-0 rounded-xl border border-slate-300 px-3 text-sm font-normal"
+                className="rounded-control border-line min-h-11 w-full min-w-0 border px-3 text-sm font-normal"
               />
             </label>
           ))}
-          <label className="grid min-w-0 gap-1 text-xs font-semibold text-slate-700">
+          <label className="text-foreground grid min-w-0 gap-1 text-xs font-semibold">
             Printed total
             <input
               name="total"
@@ -477,12 +476,12 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
               onChange={(event) => setTotalInput(event.target.value)}
               inputMode="decimal"
               required
-              className="min-h-11 w-full min-w-0 rounded-xl border border-slate-300 px-3 text-sm font-normal"
+              className="rounded-control border-line min-h-11 w-full min-w-0 border px-3 text-sm font-normal"
             />
           </label>
         </div>
         {totalsValid ? (
-          <p className="text-sm text-slate-600">
+          <p className="text-muted text-sm">
             {formatMoney(itemTotal, bill.currency)} items
             {summary.tax > 0
               ? ` + ${formatMoney(summary.tax, bill.currency)} tax`
@@ -497,12 +496,12 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
           </p>
         ) : null}
         {totalsMatch ? (
-          <p className="text-sm font-medium text-teal-700" role="status">
+          <p className="text-brand text-sm font-medium" role="status">
             Items and adjustments match the printed total.
           </p>
         ) : totalsValid ? (
           <div
-            className="grid min-w-0 gap-2 rounded-xl bg-amber-50 p-4 text-sm text-amber-950"
+            className="rounded-control grid min-w-0 gap-2 bg-amber-50 p-4 text-sm text-amber-950"
             role="status"
           >
             {subtotalDifference !== 0 ? (
@@ -536,7 +535,7 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
             ) : null}
           </div>
         ) : (
-          <p className="text-sm text-slate-600" role="status">
+          <p className="text-muted text-sm" role="status">
             Enter valid item amounts and receipt totals to check the
             calculation.
           </p>
@@ -552,9 +551,10 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
         ) : null}
       </fieldset>
 
-      <label className="grid min-w-0 gap-2 text-sm font-semibold text-slate-800">
+      <label className="text-foreground grid min-w-0 gap-2 text-sm font-semibold">
         Allocate tax, tip, discount, and rounding difference
-        <select
+        <SelectControl
+          aria-label="Allocate tax, tip, discount, and rounding difference"
           name="adjustmentMethod"
           aria-invalid={Boolean(state.errors?.allocation)}
           aria-describedby={
@@ -562,19 +562,18 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
           }
           value={adjustmentMethod}
           onChange={(event) => setAdjustmentMethod(event.target.value)}
-          className="min-h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-4 font-normal"
         >
           <option value="proportional">Proportionally to assigned items</option>
           <option value="equal">Equally between included people</option>
           <option value="custom">Custom amounts</option>
-        </select>
+        </SelectControl>
       </label>
       {adjustmentMethod === "custom" ? (
         <div className="grid min-w-0 gap-3 sm:grid-cols-2">
           {bill.participants.map((person) => (
             <label
               key={person.id}
-              className="grid min-w-0 gap-1 text-xs font-semibold text-slate-700"
+              className="text-foreground grid min-w-0 gap-1 text-xs font-semibold"
             >
               {person.display_name} adjustment ({bill.currency})
               <input
@@ -582,7 +581,7 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
                 defaultValue={inputMoney(0, bill.currency)}
                 placeholder="Use - for a discount"
                 required
-                className="min-h-11 w-full min-w-0 rounded-xl border border-slate-300 px-3 text-sm font-normal"
+                className="rounded-control border-line min-h-11 w-full min-w-0 border px-3 text-sm font-normal"
               />
             </label>
           ))}
@@ -603,10 +602,14 @@ export function ReceiptReviewForm({ bill, confirmationKey, scan }) {
         </p>
       ) : null}
 
-      <Button type="submit" disabled={pending || items.length === 0}>
+      <Button
+        icon="check"
+        type="submit"
+        disabled={pending || items.length === 0}
+      >
         {pending ? "Confirming…" : "Confirm and add expense"}
       </Button>
-      <p className="text-xs leading-5 text-slate-500">
+      <p className="text-muted text-xs leading-5">
         Nothing affects balances until this confirmation succeeds.
       </p>
     </RetainedForm>

@@ -76,6 +76,68 @@ skipped in the normal test suite.
 The normal checks do not use hosted Supabase or Gemini. Opt-in browser and
 integration checks create synthetic test bills in the configured project.
 
+## Local design reference
+
+With `npm run dev` running, open [the design studio](http://localhost:3000/design-system).
+The reference route is development-only and returns not-found in production.
+
+The approved system is applied across the app and shared with this reference:
+
+- **#663399** brand and **Helvetica** throughout, with **Bold (700)** headings.
+- **Round** corners: 22px controls, 32px cards; circular checks inside split pills.
+- **Relaxed** spacing: 48px controls, 28px panel padding and 18px ledger rows.
+- Selective glass at frost 45 for navigation, balance summaries and picker menus;
+  forms, ledger entries, receipt review and QR details retain solid surfaces.
+- One inner focus stroke on fields, accessible keyboard menus, visible validation
+  messages and preserved entries after rejected submissions.
+- **Animate UI** is the production animated icon library. Lucide Animated remains
+  in the side-by-side reference comparison. Original sources and licenses remain
+  under `src/components/design-system/icons/`.
+
+The **Approved foundations** panel is read-only. **Copy theme** exports the locked
+settings. Interactive reference examples use sample data and never scan receipts
+or change bills. The [person-picker gallery](http://localhost:3000/design-system#person-picker)
+retains closed, open and selected states plus a working keyboard-accessible picker.
+Shared controls live in `src/components/ui/` and `src/components/design-system/`;
+canonical CSS tokens are in `src/components/design-system/tokens.css`.
+Dropdown menus can grow wider than their trigger (240px minimum when space
+allows), stay within the viewport, and keep labels on one line with a reserved
+checkmark column. Unusually long labels use an ellipsis with full-text titles.
+Helvetica uses the system installation with Helvetica Neue/Arial fallbacks.
+No custom heading font is downloaded.
+
+The [calendar preview](http://localhost:3000/design-system#date-picker) combines
+DayPicker with Animate UI: a rounded glass panel, bold Helvetica month headings,
+purple selected dates, an outlined today, and Today / Yesterday shortcuts.
+Opening takes 240ms, month transitions 300ms, and selection feedback 150ms.
+The calendar stays anchored when it fits, and centers on narrow/short screens or
+when neither side of the field has enough room. Reduced motion makes changes
+immediate. This is a local design preview; live expense, receipt and payment date
+fields still use the native picker pending visual review.
+
+The [motion playground](http://localhost:3000/design-system#motion-playground)
+shows short press, selection, reveal, success and dialog transitions. A soft white
+shimmer makes one 1.8-second pass on interaction. Reduced motion keeps controls
+functional and uses a still highlight. The icon comparison remains replayable.
+
+The four-piece purple mark in `src/app/icon.svg` is the canonical logo and browser
+icon. Header, favicon ICO (16/32/48px) and Apple touch icon use that artwork.
+Regenerate raster icons with `npm run icons:generate` after changing the vector.
+Next.js supplies icon metadata through its file conventions.
+
+**Upload receipt** opens the picker and starts validation/upload/scanning when an
+image is selected. Cancellation does nothing. Failed uploads offer explicit retry
+with the retained file/reservation and a way to choose another image. Review and
+confirmation remain separate. Owner QR inspection and saving remain explicit.
+Expense-history category and person filters apply immediately, without a Filter
+button.
+
+Run `npm run test:e2e:design` for offline Chromium, WebKit and iPhone-emulation
+checks. The suite uses real form components with mocked action/upload boundaries
+and excludes hosted-write journeys. If a dev server is already running, use
+`PLAYWRIGHT_BASE_URL=http://localhost:3000 npm run test:e2e:design`.
+These checks do not replace real-device or screen-reader signoff.
+
 ## Mobile and accessibility checks
 
 Install the browser engines once after `npm ci`:

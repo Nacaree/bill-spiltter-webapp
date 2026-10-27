@@ -5,8 +5,8 @@
 
 ## Task
 
-Next chat: UI polish and feature cleanup. Stage 6 is complete; UI work may proceed.
-Oct 25 sweeps/image preservation passed; direct scheduled-run log not captured.
+Approved design applied: #663399, bold Helvetica, Round/Relaxed; animated
+calendar preview at /design-system#date-picker.
 User owns remaining real-device/screen-reader/full keyboard/Firefox checks.
 Stage 2 skipped; Stage 3 migration user-reported applied; Stage 5 readiness done.
 Preview RATE_LIMIT_SECRET configuration remains explicitly deferred.
@@ -43,7 +43,7 @@ Preview RATE_LIMIT_SECRET configuration remains explicitly deferred.
 - Collect safe provider HTTP status/classification on recurrence; no proven fix.
 - No runtime edit, hosted write, provider call, migration, deployment, commit/push,
   credential/settings/policy change in Oct 25 follow-up. Own edits are Markdown.
-- Last runtime baseline: 293 offline tests pass, 8 hosted/provider skipped;
-  lint/format/build pass. No runtime tests rerun; Markdown format/diff checks pass.
+- Validation: 298 offline pass, 8 hosted skipped; lint/format/build pass. Oct 27:
+  17 calendar/reference checks pass on Chromium, WebKit and iPhone; preview-only.
 - Preview shares Production; no isolated backend. QR-orphan retry limit remains.
   Privacy/Help content stays off to-do list.

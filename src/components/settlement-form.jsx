@@ -1,5 +1,7 @@
 "use client";
 
+import { SelectControl } from "@/components/ui/select";
+
 import { RetainedForm } from "@/components/retained-form";
 
 import { useActionState, useEffect } from "react";
@@ -58,10 +60,12 @@ export function SettlementForm({ bill, settlementId, settlement, transfer }) {
         ].map(([name, label, value]) => (
           <label
             key={name}
-            className="grid gap-2 text-sm font-semibold text-slate-800"
+            className="text-foreground grid gap-2 text-sm font-semibold"
           >
             {label}
-            <select
+            <SelectControl
+              person
+              aria-label={label}
               name={name}
               aria-invalid={Boolean(state.errors?.[name])}
               aria-describedby={
@@ -69,7 +73,6 @@ export function SettlementForm({ bill, settlementId, settlement, transfer }) {
               }
               defaultValue={value ?? ""}
               required
-              className="min-h-12 min-w-0 rounded-xl border border-slate-300 bg-white px-3 font-normal"
             >
               <option value="" disabled>
                 Choose a person
@@ -80,7 +83,7 @@ export function SettlementForm({ bill, settlementId, settlement, transfer }) {
                   {p.deactivated_at ? " (inactive)" : ""}
                 </option>
               ))}
-            </select>
+            </SelectControl>
             {state.errors?.[name] ? (
               <span
                 id={`${prefix}-${name}-error`}
@@ -127,7 +130,7 @@ export function SettlementForm({ bill, settlementId, settlement, transfer }) {
         maxLength={1000}
         defaultValue={settlement?.notes ?? ""}
       />
-      <label className="flex min-h-11 items-start gap-3 text-sm leading-6 text-slate-700">
+      <label className="text-foreground flex min-h-11 items-start gap-3 text-sm leading-6">
         <input
           type="checkbox"
           name="confirmed"
@@ -137,7 +140,7 @@ export function SettlementForm({ bill, settlementId, settlement, transfer }) {
           }
           value="yes"
           required
-          className="mt-1 size-4 accent-teal-700"
+          className="accent-brand mt-1 size-4"
         />
         I confirm this payment already happened outside the app.
       </label>
@@ -156,11 +159,11 @@ export function SettlementForm({ bill, settlementId, settlement, transfer }) {
         </p>
       ) : null}
       {state.success ? (
-        <p role="status" className="text-sm font-semibold text-teal-800">
+        <p role="status" className="text-brand text-sm font-semibold">
           Payment saved.
         </p>
       ) : null}
-      <Button type="submit" disabled={pending}>
+      <Button icon="check" type="submit" disabled={pending}>
         {pending
           ? "Saving…"
           : settlement

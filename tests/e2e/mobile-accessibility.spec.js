@@ -10,9 +10,9 @@ async function accessible(page) {
     .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
     .analyze();
   expect(result.violations).toEqual([]);
-  // macOS/iOS native select styling can ignore min-height unless normalized.
+  // Measure interactive menu triggers, excluding hidden native form bridges.
   const heights = await page
-    .locator("select:visible")
+    .getByRole("combobox")
     .evaluateAll((selects) =>
       selects.map((select) => select.getBoundingClientRect().height),
     );
@@ -160,9 +160,10 @@ test("bill, expense, settlement and receipt controls remain accessible on small 
     });
     await expect(expense).toBeVisible();
     await expense.getByRole("button", { name: "Edit", exact: true }).click();
-    await expense
-      .getByRole("combobox", { name: "Split", exact: true })
-      .selectOption("exact");
+    await expense.getByRole("combobox", { name: "Split", exact: true }).click();
+    await page
+      .getByRole("option", { name: "Exact amounts", exact: true })
+      .click();
     await page.getByText("Owner ABA QR settings", { exact: true }).click();
     await page.getByText("Record this payment", { exact: true }).click();
     await accessible(page);
@@ -175,9 +176,8 @@ test("bill, expense, settlement and receipt controls remain accessible on small 
           fullPage: true,
         });
     }
-    await expense
-      .getByRole("combobox", { name: "Split", exact: true })
-      .selectOption("equal");
+    await expense.getByRole("combobox", { name: "Split", exact: true }).click();
+    await page.getByRole("option", { name: "Equally", exact: true }).click();
     await expense.getByRole("button", { name: "Save changes" }).click();
     await expect(
       expense.getByRole("button", { name: "Edit", exact: true }),
@@ -232,7 +232,10 @@ test("bill, expense, settlement and receipt controls remain accessible on small 
     ).toBeFocused();
     await page
       .getByLabel("Allocate tax, tip, discount, and rounding difference")
-      .selectOption("custom");
+      .click();
+    await page
+      .getByRole("option", { name: "Custom amounts", exact: true })
+      .click();
     await accessible(page);
     for (const width of [320, 375, 768, 1280]) {
       await page.setViewportSize({ width, height: 850 });

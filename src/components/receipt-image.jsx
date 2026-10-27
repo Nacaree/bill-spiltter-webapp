@@ -7,7 +7,7 @@ export function ReceiptImage({ src }) {
   const [failedSource, setFailedSource] = useState(null);
   if (!src || failedSource === src)
     return (
-      <p role="status" className="p-4 text-sm text-slate-600">
+      <p role="status" className="text-muted p-4 text-sm">
         Receipt image unavailable.
       </p>
     );
@@ -17,7 +17,7 @@ export function ReceiptImage({ src }) {
       src={src}
       onError={() => setFailedSource(src)}
       alt="Uploaded receipt"
-      className="max-h-[70vh] w-full rounded-2xl object-contain"
+      className="rounded-control max-h-[70vh] w-full object-contain"
     />
   );
 }

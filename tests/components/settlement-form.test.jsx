@@ -21,7 +21,7 @@ vi.mock("@/app/settlement-actions", () => ({
 afterEach(cleanup);
 
 it("links a payment validation error to its selector, retains the entries and focuses it", async () => {
-  render(
+  const { container } = render(
     <SettlementForm
       settlementId="test-payment"
       bill={{
@@ -35,7 +35,7 @@ it("links a payment validation error to its selector, retains the entries and fo
       }}
     />,
   );
-  fireEvent.change(screen.getByLabelText("Received by"), {
+  fireEvent.change(container.querySelector('select[name="toParticipantId"]'), {
     target: { value: "owner" },
   });
   fireEvent.change(screen.getByLabelText("Payment amount (USD)"), {
@@ -54,6 +54,9 @@ it("links a payment validation error to its selector, retains the entries and fo
   expect(receiver).toHaveAccessibleDescription(
     "Sender and recipient must be different people.",
   );
-  expect(receiver).toHaveValue("owner");
+  expect(receiver).toHaveTextContent("Owner");
+  expect(
+    new FormData(container.querySelector("form")).get("toParticipantId"),
+  ).toBe("owner");
   expect(screen.getByLabelText("Payment amount (USD)")).toHaveValue("4.00");
 });

@@ -10,7 +10,7 @@ export function DeleteBillForm({ shareToken }) {
   const [state, action, pending] = useActionState(deleteBillAction, {});
   return (
     <section
-      className="mt-10 rounded-3xl border border-red-200 bg-white p-6 sm:p-8"
+      className="rounded-card mt-10 border border-red-200 bg-white p-6 sm:p-8"
       aria-labelledby="delete-bill-heading"
     >
       <h2 id="delete-bill-heading" className="text-xl font-bold text-red-900">
@@ -18,7 +18,7 @@ export function DeleteBillForm({ shareToken }) {
       </h2>
       <p
         id="delete-bill-warning"
-        className="mt-3 text-sm leading-6 text-slate-700"
+        className="text-foreground mt-3 text-sm leading-6"
       >
         This removes the bill for everyone, including expenses, payment records,
         receipts and the owner’s QR. There is no undo. Image removal may take
@@ -40,11 +40,7 @@ export function DeleteBillForm({ shareToken }) {
           required
           error={state.errors?.confirmation}
         />
-        <Button
-          type="submit"
-          disabled={pending}
-          className="bg-red-700 hover:bg-red-800 focus-visible:outline-red-700"
-        >
+        <Button type="submit" disabled={pending} variant="destructive">
           {pending ? "Deleting bill…" : "Delete bill permanently"}
         </Button>
         {state.errors?.form ? (

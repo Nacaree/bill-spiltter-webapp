@@ -1,0 +1,27 @@
+/* Approved Bill Splitter foundations. Shared by the app and reference. */
+:root {
+  --ds-brand: #663399;
+  --ds-brand-text: #fff;
+  --ds-brand-ink: #663399;
+  --ds-canvas: #f7f6fa;
+  --ds-surface: #fff;
+  --ds-text: #272231;
+  --ds-muted: #716a7c;
+  --ds-line: #e8e3ee;
+  --ds-tint: color-mix(in srgb, var(--ds-brand) 8%, white);
+  --ds-control-radius: 22px;
+  --ds-card-radius: 32px;
+  --ds-control-height: 48px;
+  --ds-panel-padding: 28px;
+  --ds-row-padding: 18px;
+  --ds-glass-opacity: 0.731;
+  --ds-glass-blur: 20.6px;
+  --ds-font-heading: var(--ds-font-body);
+  --ds-weight-heading: 700;
+  --ds-font-body: Helvetica, "Helvetica Neue", Arial, sans-serif;
+  --ds-motion-fast: 120ms;
+  --ds-motion-standard: 200ms;
+  --ds-motion-reveal: 240ms;
+  --ds-motion-exit: 140ms;
+  --ds-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}

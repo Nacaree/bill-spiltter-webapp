@@ -1,0 +1,53 @@
+.showcase {
+  margin-top: 16px;
+  scroll-margin-top: 100px;
+}
+.heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.eyebrow {
+  color: var(--ds-brand);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+}
+.heading h3 {
+  margin-top: 9px;
+  font-size: 25px;
+  letter-spacing: -0.5px;
+}
+.heading div > p:last-child {
+  margin-top: 6px;
+  color: var(--ds-muted);
+  font-size: 12px;
+}
+.preview {
+  padding: 6px 9px;
+  border: 1px solid var(--ds-line);
+  border-radius: 99px;
+  color: var(--ds-muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.example {
+  display: grid;
+  gap: 14px;
+  margin-top: 26px;
+  max-width: 340px;
+}
+.example > p {
+  color: var(--ds-muted);
+  font-size: 12px;
+}
+.note {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid var(--ds-line);
+  color: var(--ds-muted);
+  font-size: 11px;
+  line-height: 1.7;
+}

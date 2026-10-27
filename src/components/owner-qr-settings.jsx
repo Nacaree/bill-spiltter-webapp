@@ -46,16 +46,16 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
   }, [router, saved, removed]);
   const draft = upload.result?.preview;
   return (
-    <details className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-5">
-      <summary className="cursor-pointer font-semibold text-slate-900">
+    <details className="rounded-control border-line bg-canvas mt-6 border p-5">
+      <summary className="text-foreground cursor-pointer font-semibold">
         Owner ABA QR settings
       </summary>
-      <p className="mt-4 text-sm leading-6 text-slate-600">
+      <p className="text-muted mt-4 text-sm leading-6">
         Upload an ABA QR that accepts {currency}, including a QR offering both
         KHR and USD. Check the recipient and currency options before saving.
       </p>
       {method ? (
-        <p className="mt-3 text-sm text-slate-700">
+        <p className="text-foreground mt-3 text-sm">
           Current recipient: <strong>{method.recipient_label}</strong> ·{" "}
           {method.supported_currencies.join(", ")}
           {method.fixed_amount_minor !== null
@@ -68,7 +68,7 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
       ) : null}
       <form className="mt-4 grid gap-4" onSubmit={upload.submit}>
         <input type="hidden" name="shareToken" value={shareToken} />
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="text-foreground grid gap-2 text-sm font-semibold">
           QR image
           <input
             ref={imageInput}
@@ -78,7 +78,7 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
             type="file"
             accept="image/jpeg,image/png"
             required
-            className="min-w-0 rounded-xl border border-slate-300 bg-white p-3 font-normal"
+            className="rounded-control border-line min-w-0 border bg-white p-3 font-normal"
             disabled={inspecting || saving}
             onChange={upload.selectFile}
           />
@@ -104,7 +104,7 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
         </p>
       ) : null}
       {inspecting ? (
-        <p role="status" className="mt-3 text-sm text-slate-600">
+        <p role="status" className="text-muted mt-3 text-sm">
           {labels[upload.stage]}
         </p>
       ) : null}
@@ -113,9 +113,9 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
           state={saved}
           key={draft.token}
           action={save}
-          className="mt-5 grid gap-4 rounded-xl border border-teal-200 bg-white p-4"
+          className="rounded-control border-line mt-5 grid gap-4 border bg-white p-4"
         >
-          <p role="status" className="text-sm text-teal-800">
+          <p role="status" className="text-brand text-sm">
             QR image inspected. Review the recipient and currencies below.
           </p>
           <MethodIdentity method={method} shareToken={shareToken} />
@@ -130,7 +130,7 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
             height={260}
             className="mx-auto h-auto max-w-full"
           />
-          <p className="text-sm text-slate-700">
+          <p className="text-foreground text-sm">
             Decoded recipient: <strong>{draft.recipientLabel}</strong>
             <br />
             Encoded currency: <strong>{draft.currency}</strong>
@@ -140,8 +140,8 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
               : "Amount-free QR: enter the settlement amount in your banking app."}
           </p>
           {draft.fixedAmountMinor === null ? (
-            <fieldset className="grid gap-3 text-sm text-slate-700">
-              <legend className="mb-2 font-semibold text-slate-900">
+            <fieldset className="text-foreground grid gap-3 text-sm">
+              <legend className="text-foreground mb-2 font-semibold">
                 Currencies this QR accepts
               </legend>
               <label className="flex min-h-11 items-start gap-3">
@@ -151,7 +151,7 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
                   value="single"
                   defaultChecked
                   required
-                  className="mt-1 size-4 accent-teal-700"
+                  className="accent-brand mt-1 size-4"
                 />
                 {draft.currency} only
               </label>
@@ -161,12 +161,12 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
                   name="currencyMode"
                   value="dual"
                   required
-                  className="mt-1 size-4 accent-teal-700"
+                  className="accent-brand mt-1 size-4"
                 />
                 KHR + USD — I checked that my banking app lets the payer choose
                 either currency for this QR.
               </label>
-              <p className="text-xs leading-5 text-slate-600">
+              <p className="text-muted text-xs leading-5">
                 The encoded currency may be the default. Select both only after
                 checking the currency choices in your banking app.
               </p>
@@ -185,7 +185,7 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
               name="confirmed"
               value="yes"
               required
-              className="mt-1 size-4 accent-teal-700"
+              className="accent-brand mt-1 size-4"
             />
             I confirm this is my recipient name and the correct currency.
           </label>
@@ -227,7 +227,7 @@ export function OwnerQrSettings({ method, shareToken, currency }) {
         </RetainedForm>
       ) : null}
       {saved.success || removed.success ? (
-        <p role="status" className="mt-3 text-sm text-teal-800">
+        <p role="status" className="text-brand mt-3 text-sm">
           Owner QR updated.
         </p>
       ) : null}

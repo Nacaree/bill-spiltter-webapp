@@ -16,7 +16,75 @@ chat for UI polish and cleanup of features they will identify there. Stage 6 is
 complete. Remaining Stage 4/manual evidence and Stage 7 closeout do not block UI
 work. Keep the labelled retention test bill intact for the remaining follow-up;
 recheck affected critical journeys if UI changes alter forms, receipt confirmation
-or payment flows. No UI/feature changes have been started in this handoff.
+or payment flows. First local UI cleanup on Oct 26 removes the expense-history
+Filter button; category/person selections now apply automatically without
+scrolling to the top. This UI change has not been committed or deployed.
+
+### Approved design rollout — Oct 26
+
+- User approved applying the system **across the app**, **Animate UI** as the
+  default icon library, and **one-button receipt scanning**. Round corners and
+  Relaxed spacing are locked, along with all previous reference refinements.
+- Canonical tokens: `src/components/design-system/tokens.css`: #663399, 22px/32px
+  corners, 48px controls, 28px panels, 18px rows, frost 45. User changed typography
+  to Helvetica throughout, with Bold (700) headings and global errors, with system
+  fallbacks. Removed the serif loader/assets; reference and app use one font.
+  App surfaces and semantic utilities use those tokens.
+  Typography follow-up: five focused browser checks pass across Chromium,
+  WebKit and iPhone emulation; lint, formatting and production build pass.
+- `/design-system` remains development-only. Approved foundations are read-only;
+  copy tokens, sample interactions, motion replay, both icon libraries and the
+  closed/open/selected picker gallery remain. The main app and reference share
+  button, field, checkbox and picker implementations.
+- Four-piece tilted purple SVG is the canonical mark (`src/app/icon.svg`), used
+  in both headers and Next icon metadata. `npm run icons:generate` derives the
+  16/32/48px ICO and 180px Apple icon. Reviewed small mark on light/dark surfaces.
+- App rollout covers create/join/claim, bill/participants/ledger/filters, expense
+  editing, receipt review/status, balances/payments/QR, deletion and error states.
+  Split checks are circles inside clickable pills; fields have one inner focus
+  stroke; menus use Radix and person options include avatars/checks. Business
+  actions, currencies, allocations, confirmation and stale-write checks remain.
+- `SelectControl` uses a native form bridge preserving real IDs, empty filter
+  values, disabled/required semantics and FormData. `RetainedForm` dispatches
+  native changes when restoring values; selected people/exact shares survive a
+  rejected action and successful forms reset. Controlled split checks reset only
+  after a successful save. Do not replace the native bridge with display labels.
+- Oct 27 dropdown fix: menus grow to at least 240px (or trigger width) within
+  viewport bounds. Option labels use an explicit `data-option-text` hook with
+  no wrapping and ellipsis for unusually long names; titles retain the full text.
+  A grid reserves the checkmark column on every row, including unselected rows.
+  Eight focused picker/form/layout browser checks pass across Chromium, WebKit
+  and iPhone emulation, including 120px triggers and 320/375/1280px viewports.
+- Oct 27 calendar preview: `/design-system#date-picker` uses the reusable
+  controlled ISO-date `DatePicker` in `src/components/ui/`, DayPicker 10.0.2 and
+  Animate UI Popover/Dialog (Radix peer 1.8.1). Includes purple date circles,
+  outlined today, bold Helvetica, Today/Yesterday, six stable weeks, 240ms entry,
+  300ms month navigation and 150ms selection. Narrow/short viewports or anchors
+  with insufficient vertical room use a centered panel, keeping shortcuts visible.
+  The trigger waits for responsive hydration so WebKit cannot lose its first click.
+  Keyboard arrows/Enter/Escape, focus restoration, local date-only behavior in a
+  negative UTC offset, reduced motion, mobile bounds and axe are browser-tested.
+  Final focused verification passed all 17 calendar/reference checks across
+  Chromium, WebKit and iPhone emulation; lint, formatting, 298 offline tests and
+  the Next production build also pass (8 hosted/provider tests remain skipped).
+  Live form date fields remain native; user accepted a design-page preview first.
+- Receipt selection starts `useDirectImageUpload.start()` directly. Existing
+  `submit(event)` remains for QR inspection. Cancellation is a no-op; the running
+  guard prevents duplicates. Retry reuses file/reservation; changing images clears
+  it. Receipt confirmation still creates the expense; QR still requires saving.
+- Premium motion: short press/selection/reveal transitions; Animate UI action
+  icons; one soft white 1.8s shimmer. Reduced motion stays functional and still.
+- Final verification: 298 offline tests pass (8 hosted/provider tests skipped),
+  lint/format/build pass, and 30 offline browser checks pass across Chromium,
+  WebKit and iPhone emulation. Axe, keyboard menus/focus, errors/reset, exact
+  shares, one-button upload retry, icon metadata, 320/375/768/1280 reflow and
+  reduced motion are covered. Main/reference/phone screenshots were reviewed.
+  Browser forms use mocked actions/uploads; no hosted write/provider call,
+  migration, commit, push or deployment. Retention fixture remains intact.
+- Repeat offline browser checks with `npm run test:e2e:design`, or set
+  `PLAYWRIGHT_BASE_URL=http://localhost:3000` for an existing dev server. This
+  config excludes hosted-write tests even if a live opt-in flag is present.
+- Real-device/screen-reader/full keyboard/Firefox signoff remains user-owned.
 
 ## Resume here — Oct 25 sweep and image-preservation checks passed
 

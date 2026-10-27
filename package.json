@@ -22,15 +22,22 @@
     "test:e2e:a11y": "playwright test --config=playwright.accessibility.config.mjs",
     "test:e2e:a11y:live": "RUN_SUPABASE_E2E=1 node --env-file=.env.local ./node_modules/@playwright/test/cli.js test --config=playwright.accessibility.config.mjs",
     "lifecycle:cleanup": "node --env-file=.env.local scripts/cleanup-bill-lifecycle.mjs",
-    "test:e2e:lifecycle": "playwright test --config=playwright.lifecycle.config.mjs"
+    "test:e2e:lifecycle": "playwright test --config=playwright.lifecycle.config.mjs",
+    "icons:generate": "node scripts/generate-brand-icons.mjs",
+    "test:e2e:design": "playwright test --config=playwright.design.config.mjs"
   },
   "dependencies": {
+    "@animate-ui/react": "^2.3.0",
+    "@daypicker/react": "^10.0.2",
+    "@radix-ui/react-select": "^2.4.1",
     "@sentry/nextjs": "^11.8.0",
     "@supabase/supabase-js": "^2.57.0",
     "@t3-oss/env-nextjs": "^0.13.8",
     "clsx": "^2.1.1",
     "jsqr": "^1.4.0",
+    "motion": "^14.6.0",
     "next": "^16.3.1",
+    "radix-ui": "^1.8.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "sharp": "^0.35.3",

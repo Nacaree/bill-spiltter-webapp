@@ -1,11 +1,14 @@
 "use client";
 
+import { SelectControl } from "@/components/ui/select";
+
 import { RetainedForm } from "@/components/retained-form";
 
 import { useActionState, useEffect, useId, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createExpenseAction, updateExpenseAction } from "@/app/actions";
 import { Button } from "@/components/ui/button";
+import { DesignCheckbox } from "@/components/design-system/primitives";
 import { Field } from "@/components/ui/field";
 import {
   EXPENSE_CATEGORIES,
@@ -42,7 +45,12 @@ export function ExpenseForm({
   );
   const [selectedIds, setSelectedIds] = useState(defaultParticipantIds);
   const [state, action, pending] = useActionState(
-    editing ? updateExpenseAction : createExpenseAction,
+    async (previous, formData) => {
+      const save = editing ? updateExpenseAction : createExpenseAction;
+      const result = await save(previous, formData);
+      if (result?.success) setSelectedIds(defaultParticipantIds);
+      return result;
+    },
     initialState,
   );
 
@@ -61,7 +69,7 @@ export function ExpenseForm({
   }
 
   return (
-    <RetainedForm state={state} action={action} className="grid gap-5">
+    <RetainedForm state={state} action={action} className="grid gap-3">
       <input type="hidden" name="shareToken" value={bill.shareToken} />
       {editing ? (
         <input type="hidden" name="expenseId" value={expense.id} />
@@ -98,9 +106,11 @@ export function ExpenseForm({
           required
           error={state.errors?.amount}
         />
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="text-foreground grid gap-2 text-sm font-semibold">
           Paid by
-          <select
+          <SelectControl
+            person
+            aria-label="Paid by"
             name="paidByParticipantId"
             aria-invalid={Boolean(state.errors?.paidByParticipantId)}
             aria-describedby={
@@ -111,14 +121,13 @@ export function ExpenseForm({
             defaultValue={
               expense?.paid_by_participant_id ?? bill.currentParticipantId
             }
-            className="min-h-12 rounded-xl border border-slate-300 bg-white px-4 text-base font-normal shadow-sm outline-none focus:border-teal-700 focus:ring-3 focus:ring-teal-100"
           >
             {bill.participants.map((participant) => (
               <option key={participant.id} value={participant.id}>
                 {participant.display_name}
               </option>
             ))}
-          </select>
+          </SelectControl>
           {state.errors?.paidByParticipantId ? (
             <span
               id={`${prefix}-paidByParticipantId-error`}
@@ -128,7 +137,7 @@ export function ExpenseForm({
             </span>
           ) : null}
         </label>
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="text-foreground grid gap-2 text-sm font-semibold">
           Date
           <input
             type="date"
@@ -143,7 +152,7 @@ export function ExpenseForm({
               expense?.expense_date ?? defaults?.expenseDate ?? today()
             }
             required
-            className="min-h-12 rounded-xl border border-slate-300 bg-white px-4 text-base font-normal shadow-sm outline-none focus:border-teal-700 focus:ring-3 focus:ring-teal-100"
+            className="rounded-control border-line focus:border-brand min-h-12 border bg-white px-4 text-base font-normal shadow-sm outline-none"
           />
           {state.errors?.expenseDate ? (
             <span
@@ -154,31 +163,31 @@ export function ExpenseForm({
             </span>
           ) : null}
         </label>
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="text-foreground grid gap-2 text-sm font-semibold">
           Category
-          <select
+          <SelectControl
+            aria-label="Category"
             name="category"
             defaultValue={expense?.category ?? "general"}
-            className="min-h-12 rounded-xl border border-slate-300 bg-white px-4 text-base font-normal shadow-sm outline-none focus:border-teal-700 focus:ring-3 focus:ring-teal-100"
           >
             {EXPENSE_CATEGORIES.map((category) => (
               <option key={category} value={category}>
                 {EXPENSE_CATEGORY_LABELS[category]}
               </option>
             ))}
-          </select>
+          </SelectControl>
         </label>
-        <label className="grid gap-2 text-sm font-semibold text-slate-800">
+        <label className="text-foreground grid gap-2 text-sm font-semibold">
           Split
-          <select
+          <SelectControl
+            aria-label="Split"
             name="splitMethod"
             value={splitMethod}
             onChange={(event) => setSplitMethod(event.target.value)}
-            className="min-h-12 rounded-xl border border-slate-300 bg-white px-4 text-base font-normal shadow-sm outline-none focus:border-teal-700 focus:ring-3 focus:ring-teal-100"
           >
             <option value="equal">Equally</option>
             <option value="exact">Exact amounts</option>
-          </select>
+          </SelectControl>
         </label>
       </div>
 
@@ -196,10 +205,10 @@ export function ExpenseForm({
             : undefined
         }
       >
-        <legend className="text-sm font-semibold text-slate-800">
+        <legend className="text-foreground mb-3 text-sm font-semibold">
           Split between
         </legend>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="flex flex-wrap gap-3">
           {bill.participants.map((participant) => {
             const selected = selectedIds.includes(participant.id);
             const existingShare = expense?.shares.find(
@@ -208,23 +217,24 @@ export function ExpenseForm({
             return (
               <div
                 key={participant.id}
-                className="rounded-xl border border-slate-200 bg-slate-50 p-3"
+                className={
+                  splitMethod === "exact"
+                    ? "rounded-control border-line bg-canvas grid min-w-0 flex-1 basis-full gap-2 border p-4 sm:basis-[calc(50%-0.75rem)]"
+                    : "contents"
+                }
               >
-                <label className="flex min-h-11 items-center gap-3 text-sm font-medium text-slate-800">
-                  <input
-                    type="checkbox"
-                    name="participantId"
-                    value={participant.id}
-                    defaultChecked={selected}
-                    onChange={(event) =>
-                      toggleParticipant(participant.id, event.target.checked)
-                    }
-                    className="size-4 accent-teal-700"
-                  />
+                <DesignCheckbox
+                  name="participantId"
+                  value={participant.id}
+                  checked={selected}
+                  onChange={(event) =>
+                    toggleParticipant(participant.id, event.target.checked)
+                  }
+                >
                   {participant.display_name}
-                </label>
+                </DesignCheckbox>
                 {splitMethod === "exact" && selected ? (
-                  <label className="mt-2 grid gap-1 text-xs font-semibold text-slate-600">
+                  <label className="text-muted mt-2 grid gap-1 text-xs font-semibold">
                     {participant.display_name}’s amount ({bill.currency})
                     <input
                       name={`share-${participant.id}`}
@@ -239,7 +249,7 @@ export function ExpenseForm({
                       }
                       placeholder={bill.currency === "KHR" ? "0" : "0.00"}
                       required
-                      className="min-h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal outline-none focus:border-teal-700 focus:ring-3 focus:ring-teal-100"
+                      className="border-line focus:border-brand rounded-control min-h-10 border bg-white px-3 text-sm font-normal outline-none"
                     />
                   </label>
                 ) : null}
@@ -258,8 +268,8 @@ export function ExpenseForm({
         ) : null}
       </fieldset>
 
-      <label className="grid gap-2 text-sm font-semibold text-slate-800">
-        Notes <span className="font-normal text-slate-500">(optional)</span>
+      <label className="text-foreground grid gap-2 text-sm font-semibold">
+        Notes <span className="text-muted font-normal">(optional)</span>
         <textarea
           name="notes"
           aria-invalid={Boolean(state.errors?.notes)}
@@ -269,7 +279,7 @@ export function ExpenseForm({
           defaultValue={expense?.notes ?? ""}
           maxLength={1000}
           rows={3}
-          className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-base font-normal shadow-sm outline-none focus:border-teal-700 focus:ring-3 focus:ring-teal-100"
+          className="rounded-control border-line focus:border-brand border bg-white px-4 py-3 text-base font-normal shadow-sm outline-none"
         />
         {state.errors?.notes ? (
           <span
@@ -287,11 +297,11 @@ export function ExpenseForm({
         </p>
       ) : null}
       {state.success ? (
-        <p role="status" className="text-sm font-medium text-teal-700">
+        <p role="status" className="text-brand text-sm font-medium">
           Expense {editing ? "updated" : "added"}.
         </p>
       ) : null}
-      <Button type="submit" disabled={pending}>
+      <Button icon="check" type="submit" disabled={pending}>
         {pending
           ? editing
             ? "Saving…"

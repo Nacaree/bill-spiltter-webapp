@@ -36,11 +36,11 @@ export function PayOwnerQr({ shareToken, transfer }) {
         ) : null}
       </RetainedForm>
       {visible ? (
-        <div className="mt-4 rounded-xl border border-teal-200 bg-white p-4">
-          <p role="status" className="text-lg font-bold text-slate-950">
+        <div className="rounded-control border-line mt-4 border bg-white p-4">
+          <p role="status" className="text-foreground text-lg font-bold">
             Send {formatMoney(state.qr.amountMinor, state.qr.currency)}
           </p>
-          <p className="mt-2 text-sm text-slate-700">
+          <p className="text-foreground mt-2 text-sm">
             Bank recipient: <strong>{state.qr.recipientLabel}</strong> ·{" "}
             {state.qr.currency}
           </p>
@@ -55,7 +55,7 @@ export function PayOwnerQr({ shareToken, transfer }) {
           />
           <a
             href={state.qr.downloadUrl}
-            className="mt-3 inline-block font-semibold text-teal-700 underline"
+            className="text-brand mt-3 inline-block font-semibold underline"
           >
             Download QR image
           </a>
@@ -67,7 +67,7 @@ export function PayOwnerQr({ shareToken, transfer }) {
           </p>
         </div>
       ) : state.qr ? (
-        <p role="status" className="mt-3 text-sm text-slate-600">
+        <p role="status" className="text-muted mt-3 text-sm">
           QR access expired. Open it again for a fresh image.
         </p>
       ) : null}

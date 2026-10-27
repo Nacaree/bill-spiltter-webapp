@@ -7,6 +7,6 @@ test("shows the bill creation form", async ({ page }) => {
   ).toBeVisible();
   await expect(page.getByLabel("Bill name")).toBeVisible();
   await expect(page.getByLabel("Your name")).toBeVisible();
-  await expect(page.getByLabel("Currency")).toHaveValue("USD");
+  await expect(page.getByLabel("Currency")).toContainText("USD");
   await expect(page.getByRole("button", { name: "Create bill" })).toBeEnabled();
 });

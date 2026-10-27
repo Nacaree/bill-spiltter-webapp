@@ -24,9 +24,9 @@ export async function BalancesSection({ bill, participant, shareToken }) {
     return (
       <section
         id="balances"
-        className="mt-8 rounded-3xl border border-amber-200 bg-amber-50 p-6"
+        className="rounded-card mt-8 border border-amber-200 bg-amber-50 p-6"
       >
-        <h2 className="text-2xl font-bold text-slate-950">
+        <h2 className="text-foreground text-2xl font-bold">
           Balances & settle up
         </h2>
         <p role="alert" className="mt-3 text-sm text-amber-950">
@@ -47,17 +47,14 @@ export async function BalancesSection({ bill, participant, shareToken }) {
   const settled = ledger.transfers.length === 0;
   const manualId = randomUUID();
   return (
-    <section
-      id="balances"
-      className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
-    >
-      <p className="text-sm font-bold tracking-widest text-teal-700 uppercase">
+    <section id="balances" className="app-panel mt-8">
+      <p className="text-brand text-sm font-bold tracking-widest uppercase">
         Settle up
       </p>
-      <h2 className="mt-2 text-2xl font-bold text-slate-950">
+      <h2 className="text-foreground mt-2 text-2xl font-bold">
         Balances & payments
       </h2>
-      <p className="mt-2 text-sm leading-6 text-slate-600">
+      <p className="text-muted mt-2 text-sm leading-6">
         Includes all confirmed expenses and recorded payments. Expense filters
         do not change these balances.
       </p>
@@ -65,17 +62,17 @@ export async function BalancesSection({ bill, participant, shareToken }) {
         {ledger.balances.map((person) => (
           <article
             key={person.id}
-            className="min-w-0 rounded-2xl bg-slate-50 p-4"
+            className="glass-summary min-w-0 p-[var(--ds-panel-padding)]"
           >
             <p
               id={`balance-${person.id}-name`}
-              className="font-semibold break-words text-slate-900"
+              className="text-foreground font-semibold break-words"
             >
               {person.display_name}
               {person.deactivated_at ? " (inactive)" : ""}
             </p>
             <p
-              className={`mt-1 text-lg font-bold break-words ${person.netMinor < 0 ? "text-amber-800" : "text-teal-800"}`}
+              className={`mt-1 text-lg font-bold break-words ${person.netMinor < 0 ? "text-amber-800" : "text-brand"}`}
             >
               {person.netMinor === 0
                 ? "Settled"
@@ -84,11 +81,11 @@ export async function BalancesSection({ bill, participant, shareToken }) {
             <details className="mt-3 text-sm">
               <summary
                 aria-describedby={`balance-${person.id}-name`}
-                className="cursor-pointer font-semibold text-slate-700"
+                className="text-foreground cursor-pointer font-semibold"
               >
                 How this balance is calculated
               </summary>
-              <dl className="mt-3 grid grid-cols-2 gap-2 text-slate-600 [&_dd]:text-right [&_dd]:break-all">
+              <dl className="text-muted mt-3 grid grid-cols-2 gap-2 [&_dd]:text-right [&_dd]:break-all">
                 <dt>Paid for expenses</dt>
                 <dd>{formatMoney(person.paidMinor, bill.currency)}</dd>
                 <dt>Assigned shares</dt>
@@ -99,13 +96,13 @@ export async function BalancesSection({ bill, participant, shareToken }) {
                 <dd>−{formatMoney(person.receivedMinor, bill.currency)}</dd>
               </dl>
               {person.entries.length ? (
-                <ul className="mt-3 space-y-3 border-t border-slate-200 pt-3">
+                <ul className="border-line mt-3 space-y-3 border-t pt-3">
                   {person.entries.map((entry) => (
                     <li key={entry.expenseId}>
-                      <p className="font-medium break-words text-slate-800">
+                      <p className="text-foreground font-medium break-words">
                         {entry.description}
                       </p>
-                      <p className="mt-1 text-xs text-slate-600">
+                      <p className="text-muted mt-1 text-xs">
                         Paid {formatMoney(entry.paidMinor, bill.currency)} ·
                         Share {formatMoney(entry.shareMinor, bill.currency)}
                       </p>
@@ -113,7 +110,7 @@ export async function BalancesSection({ bill, participant, shareToken }) {
                   ))}
                 </ul>
               ) : (
-                <p className="mt-3 text-slate-500">No expense contributions.</p>
+                <p className="text-muted mt-3">No expense contributions.</p>
               )}
             </details>
           </article>
@@ -122,7 +119,7 @@ export async function BalancesSection({ bill, participant, shareToken }) {
       {settled ? (
         <div
           role="status"
-          className="mt-6 rounded-2xl bg-teal-50 p-5 font-semibold text-teal-900"
+          className="rounded-control bg-tint text-brand mt-6 p-5 font-semibold"
         >
           {ledger.expenses.length || ledger.settlements.length
             ? "All settled! Everyone’s balance is zero."
@@ -130,10 +127,10 @@ export async function BalancesSection({ bill, participant, shareToken }) {
         </div>
       ) : (
         <>
-          <h3 className="mt-7 text-lg font-bold text-slate-950">
+          <h3 className="text-foreground mt-7 text-lg font-bold">
             Suggested transfers
           </h3>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="text-muted mt-1 text-sm">
             These transfers settle everyone’s balance. Make the payment outside
             the app, then record it.
           </p>
@@ -143,16 +140,16 @@ export async function BalancesSection({ bill, participant, shareToken }) {
               return (
                 <article
                   key={`${transfer.fromParticipantId}-${transfer.toParticipantId}`}
-                  className="min-w-0 rounded-2xl border border-slate-200 p-4 sm:p-5"
+                  className="rounded-card border-line min-w-0 border p-4 sm:p-5"
                 >
                   <p
                     id={`transfer-${requestId}`}
-                    className="font-semibold break-words text-slate-900"
+                    className="text-foreground font-semibold break-words"
                   >
                     {names.get(transfer.fromParticipantId)} →{" "}
                     {names.get(transfer.toParticipantId)}
                   </p>
-                  <p className="mt-1 text-xl font-bold text-teal-800">
+                  <p className="text-brand mt-1 text-xl font-bold">
                     {formatMoney(transfer.amountMinor, bill.currency)}
                   </p>
                   {paymentQrEligible(method, {
@@ -169,7 +166,7 @@ export async function BalancesSection({ bill, participant, shareToken }) {
                     <details className="mt-4">
                       <summary
                         aria-describedby={`transfer-${requestId}`}
-                        className="cursor-pointer text-sm font-semibold text-teal-700"
+                        className="text-brand cursor-pointer text-sm font-semibold"
                       >
                         Record this payment
                       </summary>
@@ -190,11 +187,11 @@ export async function BalancesSection({ bill, participant, shareToken }) {
         </>
       )}
       {participant && ledger.participants.length > 1 ? (
-        <details className="mt-6 border-t border-slate-100 pt-5">
-          <summary className="cursor-pointer font-semibold text-teal-700">
+        <details className="border-line mt-6 border-t pt-5">
+          <summary className="text-brand cursor-pointer font-semibold">
             Record another payment
           </summary>
-          <p className="mt-3 text-sm text-slate-600">
+          <p className="text-muted mt-3 text-sm">
             Record the actual amount transferred, including partial payments.
             This updates the remaining balances.
           </p>
@@ -207,29 +204,31 @@ export async function BalancesSection({ bill, participant, shareToken }) {
           </div>
         </details>
       ) : !participant ? (
-        <p className="mt-5 text-sm text-slate-600">
+        <p className="text-muted mt-5 text-sm">
           Join this bill to record or correct payments.
         </p>
       ) : null}
-      <h3 className="mt-7 text-lg font-bold text-slate-950">Payment history</h3>
+      <h3 className="text-foreground mt-7 text-lg font-bold">
+        Payment history
+      </h3>
       {ledger.settlements.length ? (
-        <ul className="mt-4 divide-y divide-slate-100">
+        <ul className="divide-line mt-4 divide-y">
           {ledger.settlements.map((payment) => (
             <li key={payment.id} className="py-4 first:pt-0">
               <p
                 id={`payment-${payment.id}`}
-                className="font-semibold break-words text-slate-900"
+                className="text-foreground font-semibold break-words"
               >
                 {names.get(payment.from_participant_id)} paid{" "}
                 {names.get(payment.to_participant_id)}{" "}
                 {formatMoney(payment.amount_minor, bill.currency)}
               </p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="text-muted mt-1 text-xs">
                 {payment.settled_at.slice(0, 10)} · Recorded by{" "}
                 {names.get(payment.created_by_participant_id)}
               </p>
               {payment.notes ? (
-                <p className="mt-2 text-sm break-words whitespace-pre-wrap text-slate-600">
+                <p className="text-muted mt-2 text-sm break-words whitespace-pre-wrap">
                   {payment.notes}
                 </p>
               ) : null}
@@ -237,7 +236,7 @@ export async function BalancesSection({ bill, participant, shareToken }) {
                 <details className="mt-3">
                   <summary
                     aria-describedby={`payment-${payment.id}`}
-                    className="cursor-pointer text-sm font-semibold text-teal-700"
+                    className="text-brand cursor-pointer text-sm font-semibold"
                   >
                     Correct payment record
                   </summary>
@@ -258,7 +257,7 @@ export async function BalancesSection({ bill, participant, shareToken }) {
           ))}
         </ul>
       ) : (
-        <p className="mt-3 text-sm text-slate-500">No payments recorded yet.</p>
+        <p className="text-muted mt-3 text-sm">No payments recorded yet.</p>
       )}
       {participant?.is_creator ? (
         <OwnerQrSettings

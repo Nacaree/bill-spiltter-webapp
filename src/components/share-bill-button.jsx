@@ -21,16 +21,16 @@ export function ShareBillButton() {
 
   return (
     <div className="grid min-w-0 gap-2 sm:max-w-xs">
-      <Button type="button" variant="secondary" onClick={copyLink}>
+      <Button icon="copy" type="button" variant="secondary" onClick={copyLink}>
         Copy private link
       </Button>
-      <p role="status" className="text-sm text-slate-600">
+      <p role="status" className="text-muted text-sm">
         {message}
       </p>
       {manualLink ? (
         <label
           htmlFor={linkId}
-          className="grid gap-2 text-sm font-semibold text-slate-800"
+          className="text-foreground grid gap-2 text-sm font-semibold"
         >
           Private bill link
           <input
@@ -43,7 +43,7 @@ export function ShareBillButton() {
             readOnly
             value={manualLink}
             onFocus={(event) => event.target.select()}
-            className="min-h-12 rounded-xl border border-slate-300 bg-white px-3 font-normal"
+            className="rounded-control border-line min-h-12 border bg-white px-3 font-normal"
           />
         </label>
       ) : null}
