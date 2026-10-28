@@ -48,6 +48,10 @@ import {
   processReceiptScan,
   ReceiptNotFoundError,
   retryReceiptScan,
+  getReceiptForEditing,
+  updateReceiptExpense,
+  ReceiptConflictError,
+  ReceiptEditSetupError,
 } from "@/server/receipts";
 
 export async function createBillAction(_previousState, formData) {
@@ -166,11 +170,18 @@ export async function addParticipantAction(_previousState, formData) {
         ...parsed.data,
         cookieValue: cookieStore.get(PARTICIPANT_COOKIE_NAME)?.value,
       });
-      await addParticipant({
+      const added = await addParticipant({
         ...parsed.data,
         cookieValue: cookieStore.get(PARTICIPANT_COOKIE_NAME)?.value,
       });
-      return { success: true };
+      revalidatePath(`/b/${parsed.data.shareToken}`);
+      return {
+        success: true,
+        participant: {
+          id: added.participantId,
+          display_name: parsed.data.participantName,
+        },
+      };
     } catch (error) {
       const limited = rateLimitFailure(error);
       if (limited) return limited;
@@ -362,6 +373,55 @@ export async function confirmReceiptAction(_previousState, formData) {
     } catch (error) {
       const limited = rateLimitFailure(error);
       if (limited) return limited;
+      return receiptErrorState(error);
+    }
+  });
+}
+
+export async function updateReceiptAction(_previousState, formData) {
+  return protectedAction("updateReceiptAction", async () => {
+    const identity = parseReceiptIdentity(formData);
+    if (!identity.data) return { errors: identity.errors };
+    const { shareToken, receiptScanId } = identity.data;
+    try {
+      const store = await cookies();
+      const cookieValue = store.get(PARTICIPANT_COOKIE_NAME)?.value;
+      await guardBillOperation("write", { shareToken, cookieValue });
+      const bill = await getBillByShareToken(shareToken);
+      const savedReceipt = await getReceiptForEditing(bill.id, receiptScanId);
+      if (!savedReceipt.expense) throw new ReceiptNotFoundError();
+      if (formData.get("expectedUpdatedAt") !== savedReceipt.expense.updated_at)
+        throw new ReceiptConflictError();
+      const parsed = parseReceiptConfirmation(formData, bill.currency, {
+        editing: true,
+        savedReceipt,
+      });
+      if (!parsed.data) return { errors: parsed.errors };
+      if (parsed.data.expenseId !== savedReceipt.expense.id)
+        throw new ReceiptNotFoundError();
+      const updated = await updateReceiptExpense({
+        ...parsed.data,
+        cookieValue,
+      });
+      revalidatePath(`/b/${shareToken}`);
+      revalidatePath(`/b/${shareToken}/receipts/${receiptScanId}`);
+      return { ...updated, success: true };
+    } catch (error) {
+      const limited = rateLimitFailure(error);
+      if (limited) return limited;
+      if (error instanceof ReceiptConflictError)
+        return {
+          code: "receipt_conflict",
+          errors: {
+            form: "Someone changed this receipt while you were editing. Your changes have not been saved. Reload the latest receipt before trying again.",
+          },
+        };
+      if (error instanceof ReceiptEditSetupError)
+        return {
+          errors: {
+            form: "Receipt editing is not configured on this server yet.",
+          },
+        };
       return receiptErrorState(error);
     }
   });

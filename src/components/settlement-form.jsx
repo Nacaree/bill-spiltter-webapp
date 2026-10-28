@@ -12,6 +12,7 @@ import {
   updateSettlementAction,
 } from "@/app/settlement-actions";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Field } from "@/components/ui/field";
 import { moneyInputValue } from "@/lib/money";
 
@@ -110,13 +111,11 @@ export function SettlementForm({ bill, settlementId, settlement, transfer }) {
                 : undefined
           }
         />
-        <Field
+        <DatePicker
           id={`${prefix}-payment-date`}
-          className="w-full min-w-0"
           label="Payment date"
           name="settledDate"
           error={state.errors?.settledDate}
-          type="date"
           required
           defaultValue={settlement?.settled_at.slice(0, 10) ?? localDate()}
         />

@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { DayPicker } from "@daypicker/react";
 import { Popover } from "@animate-ui/react/primitives/radix-ui/popover";
 import { Dialog } from "@animate-ui/react/primitives/radix-ui/dialog";
@@ -66,12 +72,39 @@ function CalendarIcon() {
 }
 
 export function DatePicker({
-  id,
+  id: suppliedId,
+  name,
   label,
   value,
+  defaultValue = "",
   onValueChange,
   disabled = false,
+  required = false,
+  error,
 }) {
+  const generatedId = useId();
+  const id = suppliedId ?? generatedId;
+  const [localValue, setLocalValue] = useState(defaultValue);
+  const current = value ?? localValue;
+  const initialValue = useRef(value ?? defaultValue);
+  const native = useRef(null);
+  const [invalid, setInvalid] = useState(false);
+  const message = error || (invalid ? "Choose a date." : null);
+
+  function change(next) {
+    setLocalValue(next);
+    setInvalid(false);
+    onValueChange?.(next);
+  }
+  // Keep the visible calendar in sync with successful action/form resets.
+  useEffect(() => {
+    const form = native.current?.form;
+    function reset() {
+      change(initialValue.current);
+    }
+    form?.addEventListener("reset", reset);
+    return () => form?.removeEventListener("reset", reset);
+  });
   const compact = useSyncExternalStore(
     subscribeCompact,
     compactSnapshot,
@@ -82,12 +115,12 @@ export function DatePicker({
   const Primitive = modal ? Dialog : Popover;
   const trigger = useRef(null);
   const [open, setOpen] = useState(false);
-  const [month, setMonth] = useState(() => calendarDate(value));
+  const [month, setMonth] = useState(() => calendarDate(current));
   const [today, setToday] = useState(null);
   const reducedMotion = useDesignReducedMotion();
   const closeTimer = useRef(null);
   useEffect(() => () => clearTimeout(closeTimer.current), []);
-  const selected = calendarDate(value);
+  const selected = calendarDate(current);
   function changeOpen(next) {
     clearTimeout(closeTimer.current);
     if (next) {
@@ -110,7 +143,7 @@ export function DatePicker({
   function select(date) {
     if (!date) return;
     clearTimeout(closeTimer.current);
-    onValueChange(dateValue(date));
+    change(dateValue(date));
     if (reducedMotion !== false) setOpen(false);
     else closeTimer.current = setTimeout(() => setOpen(false), 150);
   }
@@ -123,6 +156,7 @@ export function DatePicker({
   const content = (
     <Primitive.Content
       aria-label={`${label} calendar`}
+      aria-modal={modal || undefined}
       aria-describedby={undefined}
       {...(!modal && {
         align: "start",
@@ -195,7 +229,11 @@ export function DatePicker({
         {label}
       </label>
       <Primitive.Root open={open} onOpenChange={changeOpen}>
-        <Primitive.Trigger asChild>
+        <Primitive.Trigger
+          asChild
+          aria-invalid={Boolean(message)}
+          aria-describedby={message ? `${id}-error` : undefined}
+        >
           <button
             ref={trigger}
             id={id}
@@ -204,7 +242,7 @@ export function DatePicker({
             className={styles.trigger}
             aria-labelledby={`${id}-label ${id}-value`}
           >
-            <span id={`${id}-value`}>{formatPickerDate(value)}</span>
+            <span id={`${id}-value`}>{formatPickerDate(current)}</span>
             <CalendarIcon />
           </button>
         </Primitive.Trigger>
@@ -225,6 +263,30 @@ export function DatePicker({
           )}
         </Primitive.Portal>
       </Primitive.Root>
+      {name && (
+        <input
+          ref={native}
+          type="date"
+          name={name}
+          value={current}
+          required={required}
+          disabled={disabled}
+          aria-hidden="true"
+          tabIndex={-1}
+          className={`sr-only ${styles.nativeBridge}`}
+          onChange={(event) => change(event.target.value)}
+          onInvalid={(event) => {
+            event.preventDefault();
+            setInvalid(true);
+            trigger.current?.focus();
+          }}
+        />
+      )}
+      {message && (
+        <span id={`${id}-error`} role="alert" className={system.fieldError}>
+          {message}
+        </span>
+      )}
     </div>
   );
 }

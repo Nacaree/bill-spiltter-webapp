@@ -2,7 +2,7 @@
 
 import { RetainedForm } from "@/components/retained-form";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useId } from "react";
 import { useRouter } from "next/navigation";
 import { addParticipantAction } from "@/app/actions";
 import { Button } from "@/components/ui/button";
@@ -10,16 +10,20 @@ import { Field } from "@/components/ui/field";
 
 const initialState = { errors: null };
 
-export function AddParticipantForm({ shareToken }) {
+export function AddParticipantForm({ shareToken, onAdded }) {
   const router = useRouter();
+  const id = useId();
   const [state, action, pending] = useActionState(
-    addParticipantAction,
+    async (previous, formData) => {
+      const result = await addParticipantAction(previous, formData);
+      if (result.success) {
+        if (onAdded) onAdded(result.participant);
+        else router.refresh();
+      }
+      return result;
+    },
     initialState,
   );
-
-  useEffect(() => {
-    if (state.success) router.refresh();
-  }, [router, state.success]);
 
   return (
     <RetainedForm
@@ -29,7 +33,7 @@ export function AddParticipantForm({ shareToken }) {
     >
       <input type="hidden" name="shareToken" value={shareToken} />
       <Field
-        id="add-participant-name"
+        id={`${id}-participant-name`}
         name="participantName"
         label="Add someone"
         placeholder="Dara"

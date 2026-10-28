@@ -8,6 +8,7 @@ import { useActionState, useEffect, useId, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createExpenseAction, updateExpenseAction } from "@/app/actions";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { DesignCheckbox } from "@/components/design-system/primitives";
 import { Field } from "@/components/ui/field";
 import {
@@ -137,32 +138,16 @@ export function ExpenseForm({
             </span>
           ) : null}
         </label>
-        <label className="text-foreground grid gap-2 text-sm font-semibold">
-          Date
-          <input
-            type="date"
-            name="expenseDate"
-            aria-invalid={Boolean(state.errors?.expenseDate)}
-            aria-describedby={
-              state.errors?.expenseDate
-                ? `${prefix}-expenseDate-error`
-                : undefined
-            }
-            defaultValue={
-              expense?.expense_date ?? defaults?.expenseDate ?? today()
-            }
-            required
-            className="rounded-control border-line focus:border-brand min-h-12 border bg-white px-4 text-base font-normal shadow-sm outline-none"
-          />
-          {state.errors?.expenseDate ? (
-            <span
-              id={`${prefix}-expenseDate-error`}
-              className="font-normal text-red-700"
-            >
-              {state.errors.expenseDate}
-            </span>
-          ) : null}
-        </label>
+        <DatePicker
+          id={`${prefix}-expenseDate`}
+          name="expenseDate"
+          label="Date"
+          defaultValue={
+            expense?.expense_date ?? defaults?.expenseDate ?? today()
+          }
+          required
+          error={state.errors?.expenseDate}
+        />
         <label className="text-foreground grid gap-2 text-sm font-semibold">
           Category
           <SelectControl

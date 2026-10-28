@@ -207,6 +207,7 @@ files are:
 3. `20261020000000_direct_image_uploads.sql`
 4. `20261021000000_rate_limiting.sql`
 5. `20261022000000_bill_lifecycle.sql` — follow the lifecycle rollout below.
+6. `20261028000000_edit_saved_receipts.sql` — apply before deploying saved-receipt editing.
 
 Run each complete file, including its transaction. The direct-upload migration adds
 private upload reservations/staging storage and guarded extraction RPCs. It
@@ -1715,3 +1716,37 @@ Money utilities need table-driven tests for indivisible equal splits, exact tota
 8. How long should confirmed receipt images be retained? **Agreed: retain confirmed images until bill deletion. Unconfirmed drafts expire after 24 hours.**
 
 Confirming these access and retention decisions is the final planning gate before application scaffolding begins.
+
+## Edit confirmed receipts
+
+Joined participants can choose **Edit receipt** on a receipt expense or its saved
+receipt page. The editor restores saved item assignments, prices, quantities,
+receipt totals, payer, category, and custom adjustments. Add someone directly in
+review without losing unsaved changes, then explicitly choose the items they
+shared. The current and proposed shares appear before **Save and recalculate**.
+Cancel discards receipt edits; a person already added remains on the bill.
+
+Apply `supabase/migrations/20261028000000_edit_saved_receipts.sql` manually through
+the Supabase SQL Editor before deploying this code. The migration adds an atomic,
+service-role-only `update_receipt_expense` RPC and prevents generic expense edits
+from changing receipt expenses independently of their item breakdown. It preserves
+existing records and advances receipt expense versions monotonically. No extraction
+or image upload is triggered when editing, and missing historical images do not
+block saved-data editing.
+
+A save replaces the existing receipt allocations and expense shares in one
+transaction while keeping the expense ID, notes, receipt confirmation identity,
+and recorded payments. Existing ledger calculations then update the remaining
+balances. Concurrent edits are rejected with a reload message. Older receipt/ledger
+split discrepancies require explicit acknowledgement before replacement. Previously
+assigned inactive people stay visible and can remain on their original items, but
+cannot be assigned to new items. Edits to deleted expenses or inactive bills are
+rejected. Unexpected edit failures use the existing `receipt_change` monitoring
+operation; expected validation and conflict results remain form errors.
+
+Validate with `npm test`, `npm run lint`, `npm run format:check`, `npm run build`,
+and the design browser suite. Database coverage in `receipt-edit-database.test.js`
+runs against disposable PGlite databases and does not change hosted data. After
+applying the hosted migration, smoke-test with a disposable bill: confirm a receipt,
+record a payment, reopen the receipt, add someone, adjust their item assignments,
+and verify there is still one expense and that the recorded payment is unchanged.

@@ -26,10 +26,18 @@ export function RetainedForm({ state, children, onSubmit, ...props }) {
         else if (element.multiple && element.options) {
           for (const option of element.options)
             option.selected = values.includes(option.value);
+        } else if (element.type === "date") {
+          // Bypass React's value tracker so the change event also restores the
+          // custom date picker's visible state after an action resets the form.
+          const setter = Object.getOwnPropertyDescriptor(
+            HTMLInputElement.prototype,
+            "value",
+          ).set;
+          setter.call(element, values[0] ?? "");
         } else element.value = values[0] ?? "";
         if (
           element.tagName === "SELECT" ||
-          ["checkbox", "radio"].includes(element.type)
+          ["checkbox", "radio", "date"].includes(element.type)
         )
           element.dispatchEvent(new Event("change", { bubbles: true }));
       }

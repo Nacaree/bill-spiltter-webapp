@@ -26,6 +26,8 @@ import { ExpenseValidationError } from "@/server/expenses";
 const RECEIPT_BUCKET = "receipt-images";
 
 export class ReceiptNotFoundError extends Error {}
+export class ReceiptConflictError extends Error {}
+export class ReceiptEditSetupError extends Error {}
 
 function resultRow(data) {
   return Array.isArray(data) ? data[0] : data;
@@ -293,46 +295,53 @@ export async function getRecentReceiptScans(billId) {
   return data;
 }
 
+function receiptParameters(input, access) {
+  return {
+    actor_participant_id: access.actorParticipantId,
+    actor_session_hash: access.actorSessionHash,
+    assignment_rows: input.assignmentRows.map((row) => ({
+      amount_minor: row.amountMinor,
+      client_key: row.clientKey,
+      participant_id: row.participantId,
+    })),
+    chosen_adjustment_method: input.adjustmentMethod,
+    expense_category: input.category,
+    expense_date: input.expenseDate,
+    expense_description: input.description,
+    item_rows: input.itemRows.map((item) => ({
+      client_key: item.clientKey,
+      saved_item_id: item.savedItemId ?? null,
+      confidence_basis_points: item.confidenceBasisPoints,
+      description: item.description,
+      needs_review: false,
+      position: item.position,
+      quantity: item.quantity ?? 1,
+      unit_price_minor: item.unitPriceMinor ?? null,
+      total_minor: item.totalMinor,
+    })),
+    paid_by_participant_id: input.paidByParticipantId,
+    receipt_discount_minor: input.discountMinor,
+    receipt_merchant_name: input.merchantName,
+    receipt_subtotal_minor: input.subtotalMinor,
+    receipt_tax_minor: input.taxMinor,
+    receipt_tip_minor: input.tipMinor,
+    receipt_total_minor: input.totalMinor,
+    share_hash: access.shareHash,
+    share_rows: input.finalShares.map((share) => ({
+      amount_minor: share.amountMinor,
+      participant_id: share.participantId,
+    })),
+    target_scan_id: input.receiptScanId,
+  };
+}
+
 export async function confirmReceiptExpense(input) {
   const access = authenticatedCapability(input.shareToken, input.cookieValue);
   const { data, error } = await getServerSupabase().rpc(
     "confirm_receipt_expense",
     {
-      actor_participant_id: access.actorParticipantId,
-      actor_session_hash: access.actorSessionHash,
-      assignment_rows: input.assignmentRows.map((row) => ({
-        amount_minor: row.amountMinor,
-        client_key: row.clientKey,
-        participant_id: row.participantId,
-      })),
-      chosen_adjustment_method: input.adjustmentMethod,
+      ...receiptParameters(input, access),
       confirmation_key: input.confirmationKey,
-      expense_category: input.category,
-      expense_date: input.expenseDate,
-      expense_description: input.description,
-      item_rows: input.itemRows.map((item) => ({
-        client_key: item.clientKey,
-        confidence_basis_points: item.confidenceBasisPoints,
-        description: item.description,
-        needs_review: false,
-        position: item.position,
-        quantity: item.quantity ?? 1,
-        unit_price_minor: item.unitPriceMinor ?? null,
-        total_minor: item.totalMinor,
-      })),
-      paid_by_participant_id: input.paidByParticipantId,
-      receipt_discount_minor: input.discountMinor,
-      receipt_merchant_name: input.merchantName,
-      receipt_subtotal_minor: input.subtotalMinor,
-      receipt_tax_minor: input.taxMinor,
-      receipt_tip_minor: input.tipMinor,
-      receipt_total_minor: input.totalMinor,
-      share_hash: access.shareHash,
-      share_rows: input.finalShares.map((share) => ({
-        amount_minor: share.amountMinor,
-        participant_id: share.participantId,
-      })),
-      target_scan_id: input.receiptScanId,
     },
   );
   if (error) throw databaseError(error);
@@ -340,4 +349,117 @@ export async function confirmReceiptExpense(input) {
   if (!confirmed?.expense_id)
     throw new Error("Receipt confirmation returned no expense.");
   return { expenseId: confirmed.expense_id };
+}
+
+export async function updateReceiptExpense(input) {
+  const access = authenticatedCapability(input.shareToken, input.cookieValue);
+  const { data, error } = await getServerSupabase().rpc(
+    "update_receipt_expense",
+    {
+      ...receiptParameters(input, access),
+      target_expense_id: input.expenseId,
+      expected_updated_at: input.expectedUpdatedAt,
+    },
+  );
+  if (error?.code === "P0005") throw new ReceiptConflictError();
+  if (["PGRST202", "42883"].includes(error?.code))
+    throw new ReceiptEditSetupError();
+  if (error) throw databaseError(error);
+  const updated = resultRow(data);
+  if (!updated?.expense_id)
+    throw new Error("Receipt update returned no expense.");
+  return { expenseId: updated.expense_id, updatedAt: updated.updated_at };
+}
+
+export async function getReceiptForEditing(billId, receiptScanId, attempt = 0) {
+  const scan = await getReceiptScan(billId, receiptScanId);
+  if (scan.status !== "confirmed") return scan;
+  const supabase = getServerSupabase();
+  const { data: expense, error } = await supabase
+    .from("expenses")
+    .select(
+      "id, description, amount_minor, paid_by_participant_id, category, expense_date, notes, updated_at",
+    )
+    .eq("bill_id", billId)
+    .eq("receipt_scan_id", receiptScanId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (error) throw databaseError(error);
+  if (!expense) return { ...scan, expense: null };
+  const [assignmentsResult, sharesResult, peopleResult] = await Promise.all([
+    scan.items.length
+      ? supabase
+          .from("receipt_item_assignments")
+          .select("receipt_item_id, participant_id, amount_minor")
+          .in(
+            "receipt_item_id",
+            scan.items.map((item) => item.id),
+          )
+      : { data: [] },
+    supabase
+      .from("expense_shares")
+      .select("participant_id, amount_minor")
+      .eq("expense_id", expense.id),
+    supabase
+      .from("bill_participants")
+      .select("id, display_name, deactivated_at, created_at")
+      .eq("bill_id", billId)
+      .order("created_at")
+      .order("id"),
+  ]);
+  for (const result of [assignmentsResult, sharesResult, peopleResult])
+    if (result.error) throw databaseError(result.error);
+  // Multiple REST reads must describe one revision. Retry if a save overlapped
+  // loading, rather than pairing old items with a newer expense version.
+  const [scanVersion, expenseVersion] = await Promise.all([
+    supabase
+      .from("receipt_scans")
+      .select("updated_at")
+      .eq("id", receiptScanId)
+      .maybeSingle(),
+    supabase
+      .from("expenses")
+      .select("updated_at, deleted_at")
+      .eq("id", expense.id)
+      .maybeSingle(),
+  ]);
+  for (const result of [scanVersion, expenseVersion])
+    if (result.error) throw databaseError(result.error);
+  if (
+    scanVersion.data?.updated_at !== scan.updated_at ||
+    expenseVersion.data?.updated_at !== expense.updated_at ||
+    expenseVersion.data?.deleted_at
+  ) {
+    if (attempt < 2)
+      return getReceiptForEditing(billId, receiptScanId, attempt + 1);
+    throw new ReceiptConflictError();
+  }
+  const historical = new Set([
+    expense.paid_by_participant_id,
+    ...assignmentsResult.data.map((row) => row.participant_id),
+    ...sharesResult.data.map((row) => row.participant_id),
+  ]);
+  return {
+    ...scan,
+    items: scan.items.map((item) => ({
+      ...item,
+      assignments: assignmentsResult.data
+        .filter((row) => row.receipt_item_id === item.id)
+        .map((row) => ({
+          participantId: row.participant_id,
+          amountMinor: Number(row.amount_minor),
+        })),
+    })),
+    expense: {
+      ...expense,
+      amount_minor: Number(expense.amount_minor),
+      shares: sharesResult.data.map((row) => ({
+        participantId: row.participant_id,
+        amountMinor: Number(row.amount_minor),
+      })),
+    },
+    reviewParticipants: peopleResult.data.filter(
+      (person) => !person.deactivated_at || historical.has(person.id),
+    ),
+  };
 }

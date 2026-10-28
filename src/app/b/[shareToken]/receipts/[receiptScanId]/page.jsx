@@ -13,7 +13,7 @@ import {
   getBillByShareToken,
   getSessionParticipant,
 } from "@/server/bills";
-import { getReceiptScan, ReceiptNotFoundError } from "@/server/receipts";
+import { getReceiptForEditing, ReceiptNotFoundError } from "@/server/receipts";
 
 const errorMessages = {
   extraction_timed_out:
@@ -44,13 +44,14 @@ export const metadata = { title: "Review receipt" };
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
-export default async function ReceiptPage({ params }) {
+export default async function ReceiptPage({ params, searchParams }) {
   const { receiptScanId, shareToken } = await params;
+  const editing = (await searchParams)?.edit === "1";
   let bill;
   let scan;
   try {
     bill = await getBillByShareToken(shareToken);
-    scan = await getReceiptScan(bill.id, receiptScanId);
+    scan = await getReceiptForEditing(bill.id, receiptScanId);
   } catch (error) {
     if (
       error instanceof BillNotFoundError ||
@@ -68,10 +69,13 @@ export default async function ReceiptPage({ params }) {
   const formBill = {
     currency: bill.currency,
     currentParticipantId: participant?.id,
-    participants: bill.participants.map(({ display_name, id }) => ({
-      display_name,
-      id,
-    })),
+    participants: (scan.reviewParticipants ?? bill.participants).map(
+      ({ display_name, id, deactivated_at }) => ({
+        display_name,
+        id,
+        deactivated_at,
+      }),
+    ),
     shareToken,
   };
 
@@ -88,7 +92,9 @@ export default async function ReceiptPage({ params }) {
           Receipt import
         </p>
         <h1 className="text-foreground mt-2 text-3xl font-bold">
-          Review receipt
+          {editing && scan.status === "confirmed"
+            ? "Edit receipt"
+            : "Review receipt"}
         </h1>
         <p className="text-muted mt-2">{scan.original_filename}</p>
       </div>
@@ -162,15 +168,17 @@ export default async function ReceiptPage({ params }) {
         </div>
       ) : null}
 
-      {scan.status === "needs_review" && participant ? (
+      {(scan.status === "needs_review" ||
+        (scan.status === "confirmed" && editing && scan.expense)) &&
+      participant ? (
         <div className="mt-8 grid gap-6 lg:grid-cols-[0.75fr_1.25fr] lg:items-start">
           <aside className="rounded-card border-line min-w-0 border bg-white p-4 shadow-sm lg:sticky lg:top-6">
             <ReceiptImage src={scan.imageUrl} />
             {scan.currency !== bill.currency ? (
               <div className="rounded-control mt-4 bg-red-50 p-4 text-sm text-red-900">
                 Extracted currency {scan.currency} does not match this bill’s{" "}
-                {bill.currency}. Values will be confirmed in {bill.currency};
-                check every amount carefully.
+                {bill.currency}. Values will be saved in {bill.currency}; check
+                every amount carefully.
               </div>
             ) : null}
           </aside>
@@ -190,13 +198,27 @@ export default async function ReceiptPage({ params }) {
         </div>
       ) : null}
 
-      {scan.status === "confirmed" ? (
+      {scan.status === "confirmed" &&
+      !(editing && participant && scan.expense) ? (
         <div className="rounded-card border-line bg-tint mt-8 border p-8 text-center">
           <h2 className="text-brand text-xl font-bold">Receipt confirmed</h2>
           <p className="text-brand mt-2 text-sm">
-            Its expense is now part of the bill ledger. The receipt image stays
-            until the bill is deleted.
+            {scan.expense ? "Its expense is now part of the bill ledger. " : ""}
+            The receipt image stays until the bill is deleted.
           </p>
+          {!scan.expense && (
+            <p className="text-muted mt-3 text-sm">
+              The linked expense was removed and cannot be edited.
+            </p>
+          )}
+          {participant && scan.expense && (
+            <Link
+              href={`/b/${shareToken}/receipts/${scan.id}?edit=1`}
+              className="text-brand mt-5 inline-flex min-h-11 items-center px-4 font-semibold underline"
+            >
+              Edit receipt
+            </Link>
+          )}
           <div className="mt-5">
             <ReceiptImage src={scan.imageUrl} />
           </div>

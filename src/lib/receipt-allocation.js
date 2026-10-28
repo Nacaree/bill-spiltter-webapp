@@ -32,6 +32,8 @@ export function allocateReceipt({
   customAdjustments = [],
   items,
   totalMinor,
+  savedItems = [],
+  fixedParticipantIds = [],
 }) {
   if (!items.length) throw new TypeError("Add at least one receipt item.");
   const itemAssignments = [];
@@ -39,7 +41,43 @@ export function allocateReceipt({
 
   items.forEach((item) => {
     const participantIds = [...new Set(item.participantIds)];
-    const allocations = splitEqually(item.totalMinor, participantIds);
+    const saved = savedItems.find((row) => row.id === item.savedItemId);
+    const preserved = saved?.assignments ?? [];
+    const canPreserve =
+      saved?.total_minor === item.totalMinor &&
+      preserved.length === participantIds.length &&
+      preserved.every((row) => participantIds.includes(row.participantId)) &&
+      preserved.reduce((sum, row) => sum + row.amountMinor, 0) ===
+        item.totalMinor;
+    let allocations;
+    if (canPreserve) allocations = preserved;
+    else {
+      const fixed = preserved.filter(
+        (row) =>
+          fixedParticipantIds.includes(row.participantId) &&
+          participantIds.includes(row.participantId),
+      );
+      const remainingIds = participantIds.filter(
+        (id) => !fixed.some((row) => row.participantId === id),
+      );
+      const remaining =
+        item.totalMinor - fixed.reduce((sum, row) => sum + row.amountMinor, 0);
+      if (remaining < 0 || (!remainingIds.length && remaining !== 0))
+        throw new TypeError(
+          "Keep the historical inactive allocations, or remove them and assign this item to an active person.",
+        );
+      allocations = [
+        ...fixed,
+        ...(remainingIds.length
+          ? remaining === 0
+            ? remainingIds.map((participantId) => ({
+                participantId,
+                amountMinor: 0,
+              }))
+            : splitEqually(remaining, remainingIds)
+          : []),
+      ];
+    }
     allocations.forEach((allocation) => {
       itemAssignments.push({ clientKey: item.clientKey, ...allocation });
       itemShares.set(

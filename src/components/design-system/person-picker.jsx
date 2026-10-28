@@ -30,7 +30,7 @@ function Check() {
   );
 }
 
-function Chevron({ up = false }) {
+function Chevron() {
   return (
     <svg
       width="16"
@@ -43,7 +43,7 @@ function Chevron({ up = false }) {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <path d={up ? "m6 15 6-6 6 6" : "m6 9 6 6 6-6"} />
+      <path d="m9 6 6 6-6 6" />
     </svg>
   );
 }
@@ -123,7 +123,9 @@ export function PersonPickerShowcase({ themeStyle }) {
         <div>
           <p className={styles.eyebrow}>PERSON PICKER</p>
           <h3>A familiar choice, made clearer.</h3>
-          <p>Avatars, a little glass, and a clear selected state.</p>
+          <p>
+            Avatars, a little glass, and a chevron that turns down when open.
+          </p>
         </div>
         <span className={styles.previewTag}>Interactive preview</span>
       </div>
@@ -146,19 +148,25 @@ export function PersonPickerShowcase({ themeStyle }) {
           </h4>
           <div className={styles.stateStage}>
             <div className={styles.staticLabel}>Paid by</div>
-            <div className={styles.trigger}>
+            <div className={styles.trigger} data-state="closed">
               <span className={styles.triggerContents}>
                 <TriggerContents person={samplePeople[0]} />
               </span>
             </div>
           </div>
-          <p>Initials, selected name, and a chevron.</p>
+          <p>The chevron points right when the picker is closed.</p>
         </div>
         <div className={styles.stateCard}>
           <h4>
             <span>02</span> Open
           </h4>
           <div className={styles.stateStage}>
+            <div className={styles.staticLabel}>Paid by</div>
+            <div className={styles.trigger} data-state="open">
+              <span className={styles.triggerContents}>
+                <TriggerContents person={samplePeople[0]} />
+              </span>
+            </div>
             <ul
               className={`${system.glass} ${styles.staticMenu}`}
               aria-label="Open picker appearance"
@@ -168,7 +176,7 @@ export function PersonPickerShowcase({ themeStyle }) {
               <StaticRow person={samplePeople[2]} />
             </ul>
           </div>
-          <p>A frosted panel with distinct person rows.</p>
+          <p>The chevron points down while the choices are open.</p>
         </div>
         <div className={styles.stateCard}>
           <h4>

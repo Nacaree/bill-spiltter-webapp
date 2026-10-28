@@ -47,7 +47,7 @@ function Chevron() {
       strokeWidth="1.8"
       aria-hidden="true"
     >
-      <path d="m6 9 6 6 6-6" />
+      <path d="m9 6 6 6-6 6" />
     </svg>
   );
 }

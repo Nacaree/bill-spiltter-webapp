@@ -5,11 +5,18 @@ import {
   render,
   screen,
   within,
+  waitFor,
 } from "@testing-library/react";
 import { ReceiptReviewForm } from "@/components/receipt-review-form";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
-vi.mock("@/app/actions", () => ({ confirmReceiptAction: vi.fn() }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+}));
+vi.mock("@/app/actions", () => ({
+  confirmReceiptAction: vi.fn(),
+  updateReceiptAction: vi.fn(),
+  addParticipantAction: vi.fn(),
+}));
 afterEach(cleanup);
 
 const bill = {
@@ -63,11 +70,12 @@ describe("Receipt review totals", () => {
     });
     const unitPrice = screen.getByLabelText(/^Unit price \(USD\)/);
     expect(unitPrice).toHaveValue("3.50");
-    expect(screen.getByText("Quantity: 3")).toBeInTheDocument();
+    expect(screen.getByLabelText("Quantity")).toHaveValue("3");
     const row = unitPrice.closest("div");
     const inputs = row.querySelectorAll('input:not([type="hidden"])');
     expect(Array.from(inputs).map((input) => input.name)).toEqual([
       "item-0-description",
+      "item-0-quantity",
       "item-0-unit-price",
       "item-0-total",
     ]);
@@ -185,4 +193,167 @@ it("keeps keyboard focus on receipt items when adding or removing rows", () => {
   expect(within(first).getByLabelText("Description")).toHaveFocus();
   fireEvent.click(within(first).getByRole("button", { name: "Remove item 1" }));
   expect(screen.getByRole("button", { name: "+ Add item" })).toHaveFocus();
+});
+
+function savedReceipt() {
+  return {
+    ...scan,
+    status: "confirmed",
+    adjustment_method: "proportional",
+    items: [
+      {
+        ...scan.items[0],
+        id: "00000000-0000-4000-8000-000000000004",
+        quantity: 1,
+        unit_price_minor: 14975,
+        needs_review: false,
+        assignments: [
+          { participantId: bill.currentParticipantId, amountMinor: 14975 },
+        ],
+      },
+    ],
+    expense: {
+      id: "00000000-0000-4000-8000-000000000005",
+      description: "Corrected meal",
+      category: "food",
+      expense_date: "2026-08-15",
+      paid_by_participant_id: bill.currentParticipantId,
+      amount_minor: 12575,
+      updated_at: "2026-10-28T00:00:00.000001+00:00",
+      notes: "Preserve me",
+      shares: [
+        { participantId: bill.currentParticipantId, amountMinor: 12575 },
+      ],
+    },
+  };
+}
+
+it("restores saved receipt choices and custom positive and negative adjustments", () => {
+  const saved = savedReceipt();
+  const guest = {
+    id: "00000000-0000-4000-8000-000000000006",
+    display_name: "Guest",
+  };
+  saved.adjustment_method = "custom";
+  saved.items[0].assignments = [
+    { participantId: bill.currentParticipantId, amountMinor: 10000 },
+    { participantId: guest.id, amountMinor: 4975 },
+  ];
+  saved.expense.shares = [
+    { participantId: bill.currentParticipantId, amountMinor: 12000 },
+    { participantId: guest.id, amountMinor: 575 },
+  ];
+  render(
+    <ReceiptReviewForm
+      bill={{ ...bill, participants: [...bill.participants, guest] }}
+      scan={saved}
+    />,
+  );
+  expect(screen.getByLabelText("Expense description")).toHaveValue(
+    "Corrected meal",
+  );
+  expect(screen.getByRole("button", { name: /^Date / })).toHaveTextContent(
+    "15 Aug 2026",
+  );
+  expect(screen.getByRole("combobox", { name: "Category" })).toHaveTextContent(
+    "Food & drinks",
+  );
+  expect(screen.getByLabelText("Test person adjustment (USD)")).toHaveValue(
+    "20.00",
+  );
+  expect(screen.getByLabelText("Guest adjustment (USD)")).toHaveValue("-44.00");
+  const preview = within(
+    screen.getByRole("region", { name: "Receipt share preview" }),
+  );
+  expect(preview.getByRole("row", { name: /Guest/ })).toHaveTextContent(
+    "$5.75",
+  );
+});
+
+it("adds someone without losing edits, keeps them unchecked, and retains a rejected save", async () => {
+  const { addParticipantAction, updateReceiptAction } =
+    await import("@/app/actions");
+  const guest = {
+    id: "00000000-0000-4000-8000-000000000006",
+    display_name: "Dara",
+  };
+  addParticipantAction.mockResolvedValue({ success: true, participant: guest });
+  updateReceiptAction.mockResolvedValue({
+    code: "receipt_conflict",
+    errors: {
+      form: "Someone changed this receipt. Reload the latest receipt.",
+    },
+  });
+  const saved = savedReceipt();
+  const { container } = render(<ReceiptReviewForm bill={bill} scan={saved} />);
+  fireEvent.change(screen.getByLabelText("Expense description"), {
+    target: { value: "Keep my edit" },
+  });
+  fireEvent.change(screen.getByLabelText("Add someone"), {
+    target: { value: "Dara" },
+  });
+  const personForm = screen
+    .getByRole("button", { name: "Add person" })
+    .closest("form");
+  const reviewForm = screen
+    .getByRole("button", { name: "Save and recalculate" })
+    .closest("form");
+  expect(personForm).not.toBe(reviewForm);
+  expect(container.querySelector("form form")).toBeNull();
+  fireEvent.submit(personForm);
+  await waitFor(() =>
+    expect(screen.getByRole("checkbox", { name: "Dara" })).not.toBeChecked(),
+  );
+  expect(screen.getByLabelText("Expense description")).toHaveValue(
+    "Keep my edit",
+  );
+  expect(
+    screen.getByRole("checkbox", { name: "Test person", exact: true }),
+  ).toBeChecked();
+  fireEvent.click(screen.getByRole("checkbox", { name: "Dara" }));
+  fireEvent.submit(reviewForm);
+  await waitFor(() => expect(screen.getByRole("alert")).toHaveFocus());
+  expect(screen.getByLabelText("Expense description")).toHaveValue(
+    "Keep my edit",
+  );
+  expect(screen.getByRole("checkbox", { name: "Dara" })).toBeChecked();
+  const submitted = updateReceiptAction.mock.calls.at(-1)[1];
+  expect(submitted.get("expenseId")).toBe(saved.expense.id);
+  expect(submitted.get("expectedUpdatedAt")).toBe(saved.expense.updated_at);
+  expect(submitted.has("confirmationKey")).toBe(false);
+  expect(submitted.getAll("item-0-participant")).toContain(guest.id);
+  expect(
+    screen.getByRole("link", { name: "Reload latest receipt" }),
+  ).toHaveAttribute("href", `/b/${bill.shareToken}/receipts/${scan.id}?edit=1`);
+});
+
+it("requires acknowledgement before replacing a legacy split and labels inactive people", () => {
+  const saved = savedReceipt();
+  saved.expense.amount_minor = 13000;
+  render(
+    <ReceiptReviewForm
+      bill={{
+        ...bill,
+        participants: bill.participants.map((person) => ({
+          ...person,
+          deactivated_at: "2026-01-01",
+        })),
+      }}
+      scan={saved}
+    />,
+  );
+  expect(
+    screen.getByRole("checkbox", { name: /Test person.*inactive/ }),
+  ).toBeChecked();
+  expect(
+    screen.getByRole("checkbox", { name: /I confirm replacing/ }),
+  ).toBeRequired();
+  fireEvent.click(screen.getByRole("button", { name: "+ Add item" }));
+  const added = within(
+    screen.getByRole("group", { name: "Item 2", exact: true }),
+  );
+  expect(added.getByRole("checkbox", { name: /Test person/ })).toBeDisabled();
+  expect(
+    added.getByRole("checkbox", { name: /Test person/ }),
+  ).not.toBeChecked();
 });

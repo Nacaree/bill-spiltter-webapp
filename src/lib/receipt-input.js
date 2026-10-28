@@ -1,7 +1,10 @@
 import { z } from "zod";
 import { EXPENSE_CATEGORIES } from "@/lib/expense-input";
 import { parseMoneyToMinor } from "@/lib/money";
-import { allocateReceipt } from "@/lib/receipt-allocation";
+import {
+  allocateReceiptReview,
+  receiptAllocationMismatch,
+} from "@/lib/receipt-review";
 import { parseReceiptQuantity } from "@/lib/receipt-item-price";
 
 const shareToken = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
@@ -31,12 +34,20 @@ export function parseReceiptIdentity(formData) {
     : { data: null, errors: { form: "This receipt is invalid." } };
 }
 
-export function parseReceiptConfirmation(formData, currency) {
+export function parseReceiptConfirmation(
+  formData,
+  currency,
+  { editing = false, savedReceipt } = {},
+) {
   const base = z
     .object({
       adjustmentMethod: z.enum(["proportional", "equal", "custom"]),
       category: z.enum(EXPENSE_CATEGORIES),
-      confirmationKey: uuid,
+      confirmationKey: editing ? uuid.optional() : uuid,
+      expenseId: editing ? uuid : uuid.optional(),
+      expectedUpdatedAt: editing
+        ? z.iso.datetime({ offset: true })
+        : z.string().optional(),
       description: z.string().trim().min(1).max(120),
       expenseDate: date,
       itemCount: z.coerce.number().int().min(1).max(250),
@@ -48,7 +59,9 @@ export function parseReceiptConfirmation(formData, currency) {
     .safeParse({
       adjustmentMethod: formData.get("adjustmentMethod"),
       category: formData.get("category"),
-      confirmationKey: formData.get("confirmationKey"),
+      confirmationKey: formData.get("confirmationKey") ?? undefined,
+      expenseId: formData.get("expenseId") ?? undefined,
+      expectedUpdatedAt: formData.get("expectedUpdatedAt") ?? undefined,
       description: formData.get("description"),
       expenseDate: formData.get("expenseDate"),
       itemCount: formData.get("itemCount"),
@@ -61,6 +74,18 @@ export function parseReceiptConfirmation(formData, currency) {
     return {
       data: null,
       errors: { form: "Review the receipt fields and try again." },
+    };
+  }
+  if (
+    editing &&
+    receiptAllocationMismatch(savedReceipt) &&
+    formData.get("acknowledgeRecalculation") !== "yes"
+  ) {
+    return {
+      data: null,
+      errors: {
+        form: "Confirm replacing the current split with the reviewed receipt shares.",
+      },
     };
   }
 
@@ -105,6 +130,10 @@ export function parseReceiptConfirmation(formData, currency) {
       }
       items.push({
         clientKey: String(index),
+        savedItemId:
+          editing && formData.get(`item-${index}-id`)
+            ? uuid.parse(formData.get(`item-${index}-id`))
+            : null,
         confidenceBasisPoints: null,
         description,
         needsReview: false,
@@ -146,12 +175,15 @@ export function parseReceiptConfirmation(formData, currency) {
             }),
           )
         : [];
-    allocation = allocateReceipt({
-      adjustmentMethod: base.data.adjustmentMethod,
-      customAdjustments,
-      items,
-      totalMinor,
-    });
+    allocation = allocateReceiptReview(
+      {
+        adjustmentMethod: base.data.adjustmentMethod,
+        customAdjustments,
+        items,
+        totalMinor,
+      },
+      savedReceipt,
+    );
   } catch (error) {
     return { data: null, errors: { allocation: error.message } };
   }

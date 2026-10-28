@@ -51,7 +51,7 @@
   transition: transform var(--ds-motion-standard) var(--ds-motion-ease);
 }
 .trigger[data-state="open"] .chevron {
-  transform: rotate(180deg);
+  transform: rotate(90deg);
 }
 .avatar {
   display: inline-grid;
