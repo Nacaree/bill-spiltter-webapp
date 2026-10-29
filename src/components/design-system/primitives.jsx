@@ -1,24 +1,7 @@
 import { cn } from "@/lib/cn";
 import styles from "./system.module.css";
 
-export function DesignButton({
-  variant = "primary",
-  className,
-  type = "button",
-  ...props
-}) {
-  return (
-    <button
-      type={type}
-      className={cn(
-        styles.button,
-        styles[variant === "destructive" ? "dangerButton" : variant],
-        className,
-      )}
-      {...props}
-    />
-  );
-}
+export { DesignButton } from "./design-button";
 
 export function DesignSurface({ glass = false, className, ...props }) {
   return (

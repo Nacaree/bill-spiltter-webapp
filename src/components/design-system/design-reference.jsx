@@ -14,6 +14,7 @@ import {
   DesignSurface,
 } from "./primitives";
 import { DatePickerShowcase } from "./date-picker-showcase";
+import { DesignCopyButton } from "./copy-button";
 import { IconComparison } from "./icon-comparison";
 import { AnimatedTabs, AnimatedTabPanels } from "./animated-tabs";
 import { MotionShowcase } from "./motion-showcase";
@@ -32,7 +33,6 @@ const defaults = {
 function Icon({ name, ...props }) {
   const paths = {
     plus: <path d="M12 5v14M5 12h14" />,
-    arrow: <path d="M5 12h14m-6-6 6 6-6 6" />,
     upload: (
       <>
         <path d="M12 16V3m-5 5 5-5 5 5M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5" />
@@ -44,13 +44,6 @@ function Icon({ name, ...props }) {
         <path d="M9 8h6m-6 4h6" />
       </>
     ),
-    check: <path d="m5 12 4 4L19 6" />,
-    copy: (
-      <>
-        <rect x="8" y="8" width="12" height="13" rx="2" />
-        <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" />
-      </>
-    ),
     sliders: (
       <>
         <path d="M4 7h16M4 17h16" />
@@ -58,7 +51,6 @@ function Icon({ name, ...props }) {
         <circle cx="15" cy="17" r="3" fill="currentColor" />
       </>
     ),
-    close: <path d="m6 6 12 12M6 18 18 6" />,
     food: (
       <>
         <path d="M5 3v6a3 3 0 0 0 6 0V3M8 3v18M19 21V3c-4 3-4 10 0 10" />
@@ -177,9 +169,24 @@ export function DesignReference() {
     try {
       await navigator.clipboard.writeText(settings);
       setThemeNotice("Theme settings copied.");
+      return true;
     } catch {
       setShowTokens(true);
       setThemeNotice("Select and copy the settings below.");
+      return false;
+    }
+  }
+
+  async function copyReferenceLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setNotice("Design reference link copied.");
+      return true;
+    } catch {
+      setNotice(
+        "Couldn’t copy automatically. Copy the reference URL from your address bar.",
+      );
+      return false;
     }
   }
 
@@ -331,33 +338,25 @@ export function DesignReference() {
                 <p className={styles.smallLabel}>BUTTONS</p>
                 <div className={styles.buttonRow}>
                   <DesignButton
+                    icon="plus"
                     onClick={() =>
                       setNotice(
                         "Add expense selected. This is a visual preview.",
                       )
                     }
                   >
-                    <Icon name="plus" />
                     Add expense
                   </DesignButton>
                   <DesignButton
+                    icon="upload"
                     variant="secondary"
                     onClick={() => receiptInput.current?.click()}
                   >
-                    <Icon name="upload" />
                     Upload receipt
                   </DesignButton>
-                  <DesignButton
-                    variant="ghost"
-                    onClick={() =>
-                      setNotice(
-                        "Copy link selected. No bill link is used in this preview.",
-                      )
-                    }
-                  >
-                    <Icon name="copy" />
+                  <DesignCopyButton variant="ghost" onCopy={copyReferenceLink}>
                     Copy link
-                  </DesignButton>
+                  </DesignCopyButton>
                 </div>
                 <div className={styles.buttonRow}>
                   <DesignButton disabled>Disabled</DesignButton>
@@ -422,8 +421,7 @@ export function DesignReference() {
                     </div>
                   </fieldset>
                   <div className={styles.formFooter}>
-                    <DesignButton type="submit">
-                      <Icon name="check" />
+                    <DesignButton icon="check" type="submit">
                       Preview save
                     </DesignButton>
                     <p role="status">
@@ -590,9 +588,13 @@ export function DesignReference() {
                   <span className={styles.muted}>
                     Sample data for visual review
                   </span>
-                  <DesignButton variant="secondary" onClick={openDialog}>
+                  <DesignButton
+                    icon="arrow"
+                    iconPosition="end"
+                    variant="secondary"
+                    onClick={openDialog}
+                  >
                     Preview confirmation
-                    <Icon name="arrow" />
                   </DesignButton>
                 </div>
               </DesignSurface>
@@ -607,8 +609,10 @@ export function DesignReference() {
                     JPEG, PNG, or HEIC · up to 10 MB
                   </span>
                 </div>
-                <DesignButton onClick={() => receiptInput.current?.click()}>
-                  <Icon name="plus" />
+                <DesignButton
+                  icon="plus"
+                  onClick={() => receiptInput.current?.click()}
+                >
                   Choose receipt
                 </DesignButton>
                 <input
@@ -682,10 +686,9 @@ export function DesignReference() {
               </div>
             </dl>
             <div className={styles.settingsActions}>
-              <DesignButton variant="secondary" onClick={copyTheme}>
-                <Icon name="copy" />
+              <DesignCopyButton variant="secondary" onCopy={copyTheme}>
                 Copy theme
-              </DesignButton>
+              </DesignCopyButton>
             </div>
             <p role="status" className={styles.themeNotice}>
               {themeNotice}
@@ -745,14 +748,14 @@ export function DesignReference() {
       >
         <div className={styles.between}>
           <DesignBadge>Confirmation preview</DesignBadge>
-          <button
+          <DesignButton
             type="button"
+            variant="ghost"
+            icon="close"
             className={styles.closeButton}
             onClick={closeDialog}
             aria-label="Close confirmation"
-          >
-            <Icon name="close" />
-          </button>
+          />
         </div>
         <h2 id="confirmation-heading">Remove this expense?</h2>
         <p id="confirmation-description">

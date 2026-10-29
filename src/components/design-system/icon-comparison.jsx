@@ -197,6 +197,7 @@ export function IconComparison() {
             : "Hover, focus, or tap. Play both to compare their default motion."}
         </p>
         <DesignButton
+          icon="replay"
           variant="secondary"
           disabled={playing || Boolean(reducedMotion)}
           onClick={() => {
@@ -205,7 +206,6 @@ export function IconComparison() {
             timer.current = setTimeout(() => setPlaying(false), 1000);
           }}
         >
-          <span aria-hidden="true">↻</span>
           {playing ? "Playing…" : "Play both"}
         </DesignButton>
       </div>

@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation";
 
 export function SiteHeader() {
   const pathname = usePathname();
-  if (pathname === "/design-system") return null;
+  if (["/design-system", "/screens", "/screen2"].includes(pathname))
+    return null;
 
   return (
     <header className="app-header">

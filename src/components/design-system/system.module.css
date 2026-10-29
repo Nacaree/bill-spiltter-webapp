@@ -36,6 +36,8 @@
   cursor: pointer;
   transition:
     background var(--ds-motion-standard) var(--ds-motion-ease),
+    color var(--ds-motion-standard) var(--ds-motion-ease),
+    border-color var(--ds-motion-standard) var(--ds-motion-ease),
     box-shadow var(--ds-motion-standard) var(--ds-motion-ease),
     transform var(--ds-motion-fast) var(--ds-motion-ease);
 }
@@ -88,6 +90,102 @@
   color: #77717e;
   background: #efedf2;
   box-shadow: none;
+}
+
+.copyButton {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.copyButton::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    110deg,
+    transparent 25%,
+    #ffffffb3 50%,
+    transparent 75%
+  );
+  opacity: 0;
+  pointer-events: none;
+  content: "";
+}
+
+.copyButton[data-copy-state="copied"]:not(:disabled) {
+  border-color: color-mix(in srgb, var(--ds-brand) 24%, white);
+  color: var(--ds-brand-ink);
+  background: var(--ds-tint);
+  box-shadow:
+    inset 0 1px 0 #ffffffb3,
+    0 3px 12px #6633990d;
+}
+
+.copyButton[data-copy-state="copied"]::after {
+  animation: copy-sheen 650ms var(--ds-motion-ease) both;
+}
+
+.buttonIcon {
+  display: inline-flex;
+  pointer-events: none;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  align-items: center;
+  justify-content: center;
+}
+
+.copyLabels {
+  display: inline-grid;
+  text-align: center;
+}
+
+.copyLabels > span {
+  grid-area: 1 / 1;
+  transition:
+    opacity 160ms ease,
+    transform 200ms var(--ds-motion-ease);
+}
+
+.copySuccessLabel {
+  opacity: 0;
+  transform: translateY(5px);
+}
+
+.copyButton[data-copy-state="copied"] .copyIdleLabel {
+  opacity: 0;
+  transform: translateY(-5px);
+}
+
+.copyButton[data-copy-state="copied"] .copySuccessLabel {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes copy-sheen {
+  from {
+    opacity: 1;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button,
+  .copyLabels > span {
+    transition: none;
+  }
+  .button:active:not(:disabled) {
+    transform: none;
+  }
+  .copyButton::after {
+    animation: none !important;
+  }
 }
 
 .surface {

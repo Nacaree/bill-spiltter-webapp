@@ -229,8 +229,13 @@ export function MotionShowcase({ onPreviewDialog }) {
           <a href="#patterns">
             Try the sliding tabs <span aria-hidden="true">↗</span>
           </a>
-          <DesignButton variant="ghost" onClick={onPreviewDialog}>
-            Preview dialog <span aria-hidden="true">↗</span>
+          <DesignButton
+            icon="arrow"
+            iconPosition="end"
+            variant="ghost"
+            onClick={onPreviewDialog}
+          >
+            Preview dialog
           </DesignButton>
         </div>
       </div>
