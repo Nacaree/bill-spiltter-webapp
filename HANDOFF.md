@@ -9,16 +9,115 @@ computer.
 The user wants migration SQL saved in `supabase/migrations/` and will apply
 hosted migrations themselves. Tell them when a new migration is required.
 
+## Latest local UI work — Oct 29
+
+- Prior baseline commit `b4d160d` added `/screens` and `/screen2` prototypes plus
+  shared Animate UI button feedback. `795e759` adds saved receipt editing;
+  its `20261028000000_edit_saved_receipts.sql` migration must be applied before
+  deploying that feature. Hosted application has not been verified here.
+- User chose to keep the existing working create-bill form. Polish `/screen2`
+  section-by-section, then integrate existing bill actions and validation.
+- Local follow-up adds the exact design-reference 1.8s shimmer to the purple
+  balance card, extracted into shared `DesignShimmer` with the original styling.
+  The card now repeats every 12s: a 1.8s sweep plus 10.2s rest (15% moving).
+  Replays run only while at least half the card is in view and the tab is visible;
+  returning starts a fresh cycle. Hover/touch/focus do not add extra sweeps.
+  Reduced motion uses a still highlight and stops the timer. Reference replay
+  checks still pass. Purple-card
+  follow-up sets shimmer strength to 14% with 12px beam blur via surface-level
+  CSS variables; the pale-glass reference keeps its original intensity. Visually
+  reviewed at mid-sweep in Chromium/WebKit. Clock-controlled browser checks
+  verify 12s cadence, no interaction replays, offscreen/background pause and
+  resumption, and reduced-motion timer cleanup. Lint/format/build pass.
+- Main overview and shared shell now use Helvetica, Bold 700 headings, semantic
+  colour tokens, 32px cards, 22px controls, 28px panels, 18px rows, 48px minimum
+  controls and the shared blur/motion timing. Phone layouts (up to 600px) use
+  16px gutters and 16px balance-card padding. User supplied a wide card size
+  reference: target proportions are 1.9:1, using container-relative minimum
+  height with a 190px floor so content can grow on narrow/zoomed layouts. At
+  393px the card is 361×190px, with a 48px amount and 48px action. Desktop uses
+  the panel gutter/padding and a 60px amount. Section headings keep roughly 28px above
+  and 12px below; 48px action hit targets use those margins without inflating
+  the heading row. Verified at 320/390/1280px in Chromium and WebKit.
+  Overview copy now uses one direct balance label (owed/owe/settled), no pill
+  or dot; the expense count has no leading zero. Recent activity has one heading;
+  See all uses the shared Animate UI ArrowRight button. Decorative gradients,
+  avatars and individual type sizes remain purpose-specific. Drawers/forms are not fully standardized.
+- User approved a simpler expense-list direction. `/screen2` overview and
+  Expenses now share compact ~74px rows without the rounded outer container or
+  coloured category tiles. Neutral 20px Animate UI coffee/route/shopping-bag/tag
+  icons replace text glyphs; original library animations play on row hover/focus,
+  respecting reduced motion. Quiet separators, 15px names/amounts and readable
+  secondary payer/receipt/share text preserve the information hierarchy. Hover
+  changes the name colour without filling the row. Icon provenance is recorded
+  in the design-system icons README. Existing amounts and navigation remain.
+  Chromium/WebKit checks at 320/393/1280px pass: row layout, axe, focus, opening
+  expenses, search and reduced-motion operation. Lint/format/build also pass.
+- Recent activity uses individual white cards with soft borders, a faint shadow,
+  22px corners and 8px gaps. The user preferred these compact corners over the
+  32px card radius and requested the same 22px rounding on the people summary.
+  Both use `--ds-control-radius` by that explicit choice. Each card has the person's existing 34px avatar,
+  a semibold name, an action underneath and a quiet timestamp in its own right
+  column, vertically centered with the full entry and consistently inset 19px
+  from the card edge (including border).
+  The section stays 16px after the expense list. No timeline dots or extra labels.
+  Local preview events now store actor ID + action separately, avoiding name
+  parsing and duplicate names in the display; payment events preserve the payer
+  as actor. Initial/reset entries live in `example-ledger.js`.
+  Chromium/WebKit at 320/393/1280px pass: layout, new person events, correct actor
+  attribution for name prefixes, long text, axe, reset and console. Lint/format/
+  build pass. No hosted state changed.
+- Activity timestamps are implemented on `/screen2`. Events store UTC ISO
+  `createdAt`; successful local actions capture their actual creation time and
+  preserve actor attribution. Opening/reset seeds synthetic history once from
+  the browser clock (5 minutes ago, 2 hours ago, yesterday at local midnight).
+  History remains session-local; the main app's database activity is unchanged.
+- Reusable `ActivityTime` renders a transparent 48px timestamp trigger with a
+  semantic `time` element. One shared visible-tab clock updates every 60 seconds,
+  stops while hidden/unused and resyncs on return/local writes/resets. SSR and
+  initial hydration render a stable placeholder. Formatting uses the visitor's
+  calendar/timezone: Just now, minutes/hours today, Yesterday, then date/year.
+  Future values clamp to Just now; invalid values are noninteractive placeholders.
+- Tap/click/Enter/Space opens a Radix popover with exact local date/time/timezone;
+  Escape/outside/repeat activation closes it and restores keyboard focus. No
+  hover fill or automatic live announcements. Cards retain 22px corners and
+  vertically centered right-edge alignment. Phone screenshots reviewed.
+- Timestamp validation: 357 offline tests pass, 8 hosted/provider tests skipped;
+  9 browser checks pass across Chromium, WebKit and iPhone emulation. Covers
+  DST/timezones/midnight, shared timer lifecycle, hydration, exact-time disclosure,
+  a between-ticks reset regression, new events, axe and 320px bounds. Lint,
+  repository formatting, diff checks and production build pass. No migration,
+  hosted write, provider call, dependency change or deployment.
+- Share bill is aligned in the title row with a 16px gap. The copied-state icon
+  and label remain functional; the icon is 15px with a 5px label gap. Section and
+  people-card arrows are 14px with a 1.5px stroke; See all has no hover fill.
+- `/design-system#forms` now previews three user-requested formats: an expense
+  form, a quick add-person form and a compact removal confirmation. The first
+  two use bottom drawers on phones and centered panels on desktop; confirmation
+  stays centered. Shared fields/calendar/person picker/checks/buttons, local
+  equal-split previews, validation, retained drafts and scrollable form bodies
+  with visible action footers are included. All data/actions remain local samples;
+  these formats have not yet been applied to `/screen2` drawers.
+- Preview checks pass on desktop/phone Chromium and 320px WebKit: axe, nested
+  picker/calendar interactions, error focus, draft preservation, focus return,
+  sample actions, reduced motion and a short 480px viewport. No backend requests.
+- Local Chromium checks at 320/375/768/1280px and WebKit at 320/390px pass:
+  computed tokens (including responsive phone spacing), live token propagation,
+  no horizontal overflow, control sizes,
+  focus, axe and settler navigation. Screenshots reviewed; lint/format/build pass.
+  No hosted write, migration or deployment in this follow-up.
+
 ## Next chat — UI polish and feature cleanup
 
-The user requested a local commit of the current changes before moving to a new
-chat for UI polish and cleanup of features they will identify there. Stage 6 is
-complete. Remaining Stage 4/manual evidence and Stage 7 closeout do not block UI
-work. Keep the labelled retention test bill intact for the remaining follow-up;
+Continue the requested `/screen2` UI polish, then integrate bill functionality;
+the existing create-bill form stays in place. Stage 6 is complete. Remaining
+Stage 4/manual evidence and Stage 7 closeout do not block UI work. Keep the
+labelled retention test bill intact for the remaining follow-up;
 recheck affected critical journeys if UI changes alter forms, receipt confirmation
 or payment flows. First local UI cleanup on Oct 26 removes the expense-history
 Filter button; category/person selections now apply automatically without
-scrolling to the top. This UI change has not been committed or deployed.
+scrolling to the top. It is included in the local UI follow-up above and has not
+been deployed.
 
 ### Approved design rollout — Oct 26
 
@@ -796,7 +895,7 @@ Statuses describe the evidence, not an assertion that a configuration is ideal.
 | Production is Ready/current on `main`, commit `32355c4ab85630e9ac5a18475a846a849d8bbd0d`; deployed Oct 21, 01:41:43 GMT+7                                                                                                              | Confirmed | V: [deployment details](https://vercel.com/nacarees-projects/bill-spiltter-webapp/BSwrfSxw3pgZvudZ6gsowSs4vGEQ)                                                                                                                                                      | Agent: use this release as the baseline; deployment of local changes is a later step.                                                                                                     |
 | Production URL: `https://bill-spiltter-webapp.vercel.app/`; immutable URL: `https://bill-spiltter-webapp-87e8ovlpj-nacarees-projects.vercel.app/`; branch alias: `https://bill-spiltter-webapp-git-main-nacarees-projects.vercel.app/` | Confirmed | V: deployment Domains panel                                                                                                                                                                                                                                          | Agent: use immutable URL when identifying the audited release.                                                                                                                            |
 | Latest retained Preview URL/commit/status                                                                                                                                                                                              | Missing   | V: [Preview deployment filter](https://vercel.com/nacarees-projects/bill-spiltter-webapp/deployments?environment=preview) returned No Results; overview had No Active Branches. Project retention is 30 days, so this does not establish that Preview never existed. | Agent: record a future Preview's identity when one is explicitly deployed.                                                                                                                |
-| Local checkout is `main` at the same full commit; mobile/accessibility changes are uncommitted and undeployed                                                                                                                          | Confirmed | L: `git log -1`, `git status --short`; mobile section below                                                                                                                                                                                                          | Preserve pending work. Agent: include it only in a later requested deployment.                                                                                                            |
+| At the last recorded operational audit, checkout was `main` at the audited commit; mobile/accessibility changes were uncommitted and undeployed                                                                                           | Historical | L: `git log -1`, `git status --short` at that audit; current local UI state is summarized at the top                                                                                                                                                                  | This audit snapshot predates the Oct 29 UI follow-up. Do not use it as current Git status.                                                                                                 |
 | Vercel framework Next.js; build/install/output overrides off; root default `./`; repository build script `next build`                                                                                                                  | Confirmed | V: [Build and Deployment](https://vercel.com/nacarees-projects/bill-spiltter-webapp/settings/build-and-deployment); L: `package.json`                                                                                                                                | Agent: reconcile README's `npm ci` / webpack override instructions with observed settings in a later documentation task. Historical build internals were not independently reconstructed. |
 | Vercel Node `24.x`; local Node `24.22.0`; CI Node `22`                                                                                                                                                                                 | Confirmed | V: project and deployment runtime settings; L: `node --version`, `.github/workflows/ci.yml`; README recommends Node 22                                                                                                                                               | Agent/user: choose and align a supported version in a later stage; no setting changed.                                                                                                    |
 | Vercel team Hobby; Fluid Compute enabled, function region `sin1`, standard 1 vCPU / 2 GB; Standard deployment protection                                                                                                               | Confirmed | V: project/deployment settings                                                                                                                                                                                                                                       | Agent: retain as operating context.                                                                                                                                                       |

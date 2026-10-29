@@ -2,6 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 import base from "./playwright.config.mjs";
 
 const productionControls = [
+  "activity-time.spec.js",
   "date-picker.spec.js",
   "design-rollout.spec.js",
   "mobile-accessibility.spec.js",

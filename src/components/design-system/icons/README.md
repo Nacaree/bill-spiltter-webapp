@@ -14,6 +14,10 @@ their default animation definitions and a shared interaction wrapper.
 - **Mobile navigation icons:** house, wallet, users, and ellipsis were fetched
   from the same official Animate UI registry on October 29, 2026, with the same
   license and TypeScript-only adaptations.
+- **Expense category icons:** coffee, route, shopping-bag, and tag were fetched
+  from the official Animate UI registry on October 29, 2026. They use the same
+  license and TypeScript-only adaptation; category icons animate on row hover
+  and keyboard focus, with reduced-motion support.
 - **Lucide Animated:** check, copy and upload components were fetched from
   `https://lucide-animated.com/r/{name}.json` on October 26, 2026.
   Original license: [MIT](lucide-animated/LICENSE.txt).

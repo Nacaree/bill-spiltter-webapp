@@ -5,10 +5,19 @@ import QRCode from "qrcode";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/ui/brand-mark";
+import { ActivityTime } from "@/components/ui/activity-time";
+import { DesignShimmer } from "@/components/design-system/shimmer";
+import { useDesignReducedMotion } from "@/components/design-system/use-design-reduced-motion";
 import { DesignCopyButton } from "@/components/design-system/copy-button";
+import { Coffee } from "@/components/design-system/icons/animate-ui/coffee";
+import { Route } from "@/components/design-system/icons/animate-ui/route";
+import { ShoppingBag } from "@/components/design-system/icons/animate-ui/shopping-bag";
+import { Tag } from "@/components/design-system/icons/animate-ui/tag";
 import { calculateBalances, suggestTransfers } from "@/lib/balances";
 import { formatMoney, parseMoneyToMinor, splitEqually } from "@/lib/money";
+import { refreshVisibleClock } from "@/lib/visible-clock";
 import {
+  createExampleActivity,
   exampleExpenses,
   examplePeople,
   exampleReceipt,
@@ -58,6 +67,60 @@ function serverRoute() {
   return "overview";
 }
 
+function BalanceCard({ children }) {
+  const card = useRef(null);
+  const reducedMotion = useDesignReducedMotion();
+  const [shimmerRun, setShimmerRun] = useState(0);
+  const [shimmerActive, setShimmerActive] = useState(false);
+
+  useEffect(() => {
+    if (reducedMotion !== false) return;
+    let inView = false;
+    let playing = false;
+    let timer;
+    function updatePlayback() {
+      const next = inView && !document.hidden;
+      if (next === playing) return;
+      playing = next;
+      clearInterval(timer);
+      setShimmerActive(next);
+      if (next) {
+        setShimmerRun((run) => run + 1);
+        // 1.8s of movement + 10.2s of rest: movement occupies 15% of the cycle.
+        timer = setInterval(() => setShimmerRun((run) => run + 1), 12_000);
+      }
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        inView = entry.isIntersecting && entry.intersectionRatio >= 0.5;
+        updatePlayback();
+      },
+      { threshold: 0.5 },
+    );
+    observer.observe(card.current);
+    document.addEventListener("visibilitychange", updatePlayback);
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", updatePlayback);
+      clearInterval(timer);
+    };
+  }, [reducedMotion]);
+
+  return (
+    <section
+      ref={card}
+      className={styles.balanceCard}
+      aria-label="Your balance"
+    >
+      <DesignShimmer
+        active={reducedMotion === true || shimmerActive}
+        run={shimmerRun}
+      />
+      {children}
+    </section>
+  );
+}
+
 function Avatar({ person, small = false }) {
   return (
     <span
@@ -66,6 +129,23 @@ function Avatar({ person, small = false }) {
     >
       {person?.initials ?? "?"}
     </span>
+  );
+}
+
+function ActivityCard({ entry, people }) {
+  const actor = people.find((person) => person.id === entry.actorId);
+
+  return (
+    <li data-has-actor={actor ? true : undefined}>
+      {actor && <Avatar person={actor} small />}
+      <div className={styles.activityCopy}>
+        {actor && (
+          <strong className={styles.activityActor}>{actor.display_name}</strong>
+        )}
+        <p className={styles.activityMessage}>{entry.message}</p>
+      </div>
+      <ActivityTime createdAt={entry.createdAt} />
+    </li>
   );
 }
 
@@ -122,6 +202,14 @@ function Field({ label, children, className = "", ...props }) {
 }
 
 function ExpenseRow({ expense, people, currentId, onOpen }) {
+  const reducedMotion = useDesignReducedMotion();
+  const [iconActive, setIconActive] = useState(false);
+  const CategoryIcon =
+    {
+      "Food & drinks": Coffee,
+      Transport: Route,
+      Shopping: ShoppingBag,
+    }[expense.category] ?? Tag;
   const payer = people.find(
     (person) => person.id === expense.paid_by_participant_id,
   );
@@ -129,15 +217,31 @@ function ExpenseRow({ expense, people, currentId, onOpen }) {
     expense.shares.find((row) => row.participantId === currentId)
       ?.amountMinor ?? 0;
   return (
-    <button type="button" className={styles.expenseRow} onClick={onOpen}>
+    <button
+      type="button"
+      className={styles.expenseRow}
+      onClick={onOpen}
+      onPointerEnter={(event) => {
+        if (event.pointerType === "mouse") setIconActive(true);
+      }}
+      onPointerLeave={() => setIconActive(false)}
+      onFocus={() => setIconActive(true)}
+      onBlur={() => setIconActive(false)}
+    >
       <span
-        className={`${styles.categoryIcon} ${expense.category === "Transport" ? styles.transport : ""}`}
+        className={styles.categoryIcon}
+        title={expense.category}
+        data-category={expense.category}
         aria-hidden="true"
       >
-        {expense.category === "Transport" ? "↗" : "≋"}
+        <CategoryIcon
+          size={20}
+          strokeWidth={1.6}
+          animate={reducedMotion === false && iconActive}
+        />
       </span>
       <span className={styles.expenseText}>
-        <strong>{expense.description}</strong>
+        <strong title={expense.description}>{expense.description}</strong>
         <small>
           Paid by {payer?.display_name}
           {expense.receipt ? " · Receipt" : ""}
@@ -163,11 +267,9 @@ export function MobileBill() {
   const [people, setPeople] = useState(examplePeople);
   const [expenses, setExpenses] = useState(exampleExpenses);
   const [settlements, setSettlements] = useState([]);
-  const [activity, setActivity] = useState([
-    "Nary added Dinner at Malis",
-    "Sokha added Tuk-tuk home",
-    "Mali joined the bill",
-  ]);
+  const [activity, setActivity] = useState(() =>
+    createExampleActivity(typeof window === "undefined" ? null : Date.now()),
+  );
   const [draft, setDraft] = useState(emptyDraft);
   const [receiptLines, setReceiptLines] = useState(exampleReceipt);
   const [receiptStage, setReceiptStage] = useState("choose");
@@ -304,8 +406,12 @@ export function MobileBill() {
     }
   }
 
-  function addActivity(text) {
-    setActivity((current) => [text, ...current].slice(0, 8));
+  function addActivity(message, actorId = person.id) {
+    const createdAt = new Date().toISOString();
+    setActivity((current) =>
+      [{ actorId, message, createdAt }, ...current].slice(0, 8),
+    );
+    refreshVisibleClock();
   }
 
   function saveExpense(event) {
@@ -343,7 +449,7 @@ export function MobileBill() {
           : [expense, ...current],
       );
       addActivity(
-        `${person.display_name} ${draft.editing ? "updated" : "added"} ${expense.description}`,
+        `${draft.editing ? "Updated" : "Added"} ${expense.description}`,
       );
       setNotice(
         draft.editing
@@ -414,7 +520,7 @@ export function MobileBill() {
         },
         ...current,
       ]);
-      addActivity(`${person.display_name} added Lunch at Malis from a receipt`);
+      addActivity("Added Lunch at Malis from a receipt");
       setReceiptStage("choose");
       setReceiptLines(exampleReceipt);
       setNotice(
@@ -451,7 +557,8 @@ export function MobileBill() {
         ...current,
       ]);
       addActivity(
-        `${findPerson(transfer.fromParticipantId).display_name} paid ${findPerson(transfer.toParticipantId).display_name} ${money(amount)}`,
+        `Paid ${findPerson(transfer.toParticipantId).display_name} ${money(amount)}`,
+        transfer.fromParticipantId,
       );
       setNotice("Payment recorded. Everyone’s balance has been updated.");
       navigate("settle", true);
@@ -488,7 +595,7 @@ export function MobileBill() {
       },
     ]);
     setNewPerson("");
-    addActivity(`${person.display_name} added ${name} to the bill`);
+    addActivity(`Added ${name} to the bill`);
     setNotice(`${name} can claim their name from the shared link.`);
   }
 
@@ -503,11 +610,8 @@ export function MobileBill() {
     setSettlerId("sokha");
     setDeleted(false);
     setQrEnabled(true);
-    setActivity([
-      "Nary added Dinner at Malis",
-      "Sokha added Tuk-tuk home",
-      "Mali joined the bill",
-    ]);
+    setActivity(createExampleActivity(Date.now()));
+    refreshVisibleClock();
     setNotice("");
     setQuery("");
     setFilter("All");
@@ -576,24 +680,24 @@ export function MobileBill() {
             </button>
           ) : null}
           <div className={styles.pageTitle}>
-            <div>
-              <p className={styles.eyebrow}>
-                {view === "overview"
-                  ? "A little shared, a little simpler"
-                  : "Weekend dinner"}
-              </p>
+            <p className={styles.eyebrow}>
+              {view === "overview"
+                ? "A little shared, a little simpler"
+                : "Weekend dinner"}
+            </p>
+            <div className={styles.titleRow}>
               <h1 ref={heading} tabIndex={-1}>
                 {title}
               </h1>
+              {view === "overview" && !deleted ? (
+                <DesignCopyButton
+                  onCopy={copyLink}
+                  className={styles.shareButton}
+                >
+                  Share bill
+                </DesignCopyButton>
+              ) : null}
             </div>
-            {view === "overview" && !deleted ? (
-              <DesignCopyButton
-                onCopy={copyLink}
-                className={styles.shareButton}
-              >
-                Share
-              </DesignCopyButton>
-            ) : null}
           </div>
 
           {deleted ? (
@@ -608,21 +712,17 @@ export function MobileBill() {
               <p className={styles.subtitle}>
                 Good food. Great company. Fair shares.
               </p>
-              <section className={styles.balanceCard} aria-label="Your balance">
+              <BalanceCard>
                 <div className={styles.balanceTop}>
-                  <span className={styles.balanceTag}>
-                    <span />{" "}
-                    {myBalance.netMinor === 0 ? "All settled" : "Your balance"}
+                  <span className={styles.balanceLabel}>
+                    {myBalance.netMinor > 0
+                      ? "You’re owed"
+                      : myBalance.netMinor < 0
+                        ? "You owe"
+                        : "All settled"}
                   </span>
                   <span>USD</span>
                 </div>
-                <p>
-                  {myBalance.netMinor > 0
-                    ? "You’re owed"
-                    : myBalance.netMinor < 0
-                      ? "You owe"
-                      : "Nothing left to pay"}
-                </p>
                 <strong className={styles.balanceNumber}>
                   {money(myBalance.netMinor)}
                 </strong>
@@ -645,7 +745,7 @@ export function MobileBill() {
                       ? "Settle your share"
                       : "View balances"}
                 </Button>
-              </section>
+              </BalanceCard>
               <div className={styles.stats}>
                 <div>
                   <span>Total spent</span>
@@ -657,12 +757,15 @@ export function MobileBill() {
                 </div>
                 <div>
                   <span>Expenses</span>
-                  <strong>{expenses.length.toString().padStart(2, "0")}</strong>
+                  <strong>{expenses.length}</strong>
                 </div>
               </div>
-              <button
+              <Button
                 className={styles.peopleSummary}
                 type="button"
+                variant="secondary"
+                icon="arrow"
+                iconPosition="end"
                 onClick={() => navigate("overview/people")}
               >
                 <span className={styles.avatarStack}>
@@ -678,15 +781,18 @@ export function MobileBill() {
                       : "Everyone’s here"}
                   </small>
                 </span>
-                <span className={styles.chevron} aria-hidden="true">
-                  ›
-                </span>
-              </button>
+              </Button>
               <div className={styles.sectionHeading}>
                 <h2>Recent expenses</h2>
-                <button onClick={() => navigate("expenses")}>
-                  See all <span aria-hidden="true">↗</span>
-                </button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  icon="arrow"
+                  iconPosition="end"
+                  onClick={() => navigate("expenses")}
+                >
+                  See all
+                </Button>
               </div>
               <div className={styles.expenseList}>
                 {expenses.slice(0, 2).map((item) => (
@@ -699,23 +805,23 @@ export function MobileBill() {
                   />
                 ))}
               </div>
-              <div className={styles.sectionHeading}>
-                <h2>Around the table</h2>
-                <span className={styles.tinyLabel}>Recent activity</span>
-              </div>
-              <ul className={styles.activity}>
-                {activity.slice(0, 3).map((item, index) => (
-                  <li key={`${item}-${index}`}>
-                    <span className={styles.activityDot} />
-                    <span>
-                      {item}
-                      <small>
-                        {index === 0 ? "Just now" : "Earlier today"}
-                      </small>
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <section
+                className={styles.activitySection}
+                aria-labelledby="screen2-activity-heading"
+              >
+                <div className={styles.sectionHeading}>
+                  <h2 id="screen2-activity-heading">Recent activity</h2>
+                </div>
+                <ul className={styles.activity}>
+                  {activity.slice(0, 3).map((item, index) => (
+                    <ActivityCard
+                      key={`${item.actorId}-${item.message}-${index}`}
+                      entry={item}
+                      people={people}
+                    />
+                  ))}
+                </ul>
+              </section>
             </>
           ) : view === "expenses" ? (
             <>
@@ -1179,7 +1285,9 @@ export function MobileBill() {
                   Check each item before it joins the bill.
                 </p>
                 <div className={styles.receiptHeading}>
-                  <span className={styles.categoryIcon}>≋</span>
+                  <span className={styles.categoryIcon} aria-hidden="true">
+                    <Coffee size={20} strokeWidth={1.6} />
+                  </span>
                   <span>
                     <strong>Malis Phnom Penh</strong>
                     <small>29 Oct 2026 · Paid by {person.display_name}</small>
@@ -1731,9 +1839,7 @@ export function MobileBill() {
                     setExpenses((current) =>
                       current.filter((item) => item.id !== detail?.id),
                     );
-                    addActivity(
-                      `${person.display_name} removed ${detail?.description}`,
-                    );
+                    addActivity(`Removed ${detail?.description}`);
                     setNotice("Expense removed. Balances updated.");
                     navigate("expenses", true);
                   }}

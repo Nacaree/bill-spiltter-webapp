@@ -5,11 +5,11 @@
 
 ## Task
 
-Approved design applied: #663399, bold Helvetica, Round/Relaxed; animated
-calendar preview at /design-system#date-picker.
+Polish /screen2, then integrate bill functionality; keep the create-bill form.
+Main view, shimmer and activity timestamps applied; forms at /design-system#forms.
+Review previews before applying them to /screen2 drawers; see HANDOFF.
 User owns remaining real-device/screen-reader/full keyboard/Firefox checks.
 Stage 2 skipped; Stage 3 migration user-reported applied; Stage 5 readiness done.
-Preview RATE_LIMIT_SECRET configuration remains explicitly deferred.
 
 ## Latest hosted evidence
 
@@ -43,7 +43,7 @@ Preview RATE_LIMIT_SECRET configuration remains explicitly deferred.
 - Collect safe provider HTTP status/classification on recurrence; no proven fix.
 - No runtime edit, hosted write, provider call, migration, deployment, commit/push,
   credential/settings/policy change in Oct 25 follow-up. Own edits are Markdown.
-- Validation: 298 offline pass, 8 hosted skipped; lint/format/build pass. Oct 27:
-  17 calendar/reference checks pass on Chromium, WebKit and iPhone; preview-only.
+- Oct 29: 357 offline tests pass, 8 hosted skipped; 9 timestamp browser checks
+  pass across Chromium/WebKit/iPhone. Lint/format/build and axe pass.
 - Preview shares Production; no isolated backend. QR-orphan retry limit remains.
   Privacy/Help content stays off to-do list.

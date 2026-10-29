@@ -7,6 +7,7 @@ import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import { DesignButton, DesignSurface } from "./primitives";
 import { motionTiming, motionTransition } from "./motion-tokens";
 import styles from "./motion-showcase.module.css";
+import { DesignShimmer } from "./shimmer";
 
 const sampleExpenses = [
   {
@@ -144,13 +145,7 @@ export function MotionShowcase({ onPreviewDialog }) {
                     playShimmer();
                 }}
               >
-                <span className={styles.shimmerMask} aria-hidden="true">
-                  <span
-                    key={shimmerRun}
-                    className={styles.shimmerBeam}
-                    data-shimmer-beam={shimmer ? "active" : "idle"}
-                  />
-                </span>
+                <DesignShimmer active={shimmer} run={shimmerRun} />
                 <span>YOUR BALANCE</span>
                 <strong>$24.50</strong>
                 <p>Ready to settle up</p>

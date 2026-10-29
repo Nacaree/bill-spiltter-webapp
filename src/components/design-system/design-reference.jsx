@@ -13,6 +13,7 @@ import {
   DesignField,
   DesignSurface,
 } from "./primitives";
+import { FormShowcase } from "./form-showcase";
 import { DatePickerShowcase } from "./date-picker-showcase";
 import { DesignCopyButton } from "./copy-button";
 import { IconComparison } from "./icon-comparison";
@@ -264,6 +265,7 @@ export function DesignReference() {
           <a href="#motion">Motion</a>
           <a href="#materials">Materials</a>
           <a href="#patterns">In context</a>
+          <a href="#forms">Drawers & forms</a>
           <span className={styles.navCaption}>
             Made to be adjusted <span aria-hidden="true">↘</span>
           </span>
@@ -635,6 +637,14 @@ export function DesignReference() {
                   {receiptName}
                 </p>
               </DesignSurface>
+            </section>
+            <section id="forms" className={styles.section}>
+              <SectionHeading
+                number="06"
+                title="A place for every task"
+                description="Drawers for quick changes. Focused forms for details. Clear confirmations."
+              />
+              <FormShowcase />
             </section>
           </div>
 

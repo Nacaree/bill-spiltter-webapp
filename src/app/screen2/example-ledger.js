@@ -44,6 +44,30 @@ export const exampleExpenses = [
   },
 ];
 
+export const exampleActivity = [
+  { actorId: "nary", message: "Added Dinner at Malis" },
+  { actorId: "sokha", message: "Added Tuk-tuk home" },
+  { actorId: "mali", message: "Joined the bill" },
+];
+
+// Seed once per prototype opening/reset; these are synthetic demonstration events.
+export function createExampleActivity(now) {
+  if (now === null)
+    return exampleActivity.map((entry) => ({ ...entry, createdAt: null }));
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  yesterday.setHours(0, 0, 0, 0);
+  const timestamps = [
+    now - 5 * 60_000,
+    now - 2 * 3_600_000,
+    yesterday.getTime(),
+  ];
+  return exampleActivity.map((entry, index) => ({
+    ...entry,
+    createdAt: new Date(timestamps[index]).toISOString(),
+  }));
+}
+
 export const exampleReceipt = [
   {
     id: "amok",

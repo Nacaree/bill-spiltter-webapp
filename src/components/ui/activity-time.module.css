@@ -1,0 +1,74 @@
+.trigger,
+.placeholder {
+  color: var(--ds-muted);
+  font-family: var(--ds-font-body);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: right;
+  white-space: nowrap;
+}
+.placeholder {
+  display: block;
+  min-width: 48px;
+}
+.trigger {
+  display: flex;
+  min-width: var(--ds-control-height);
+  min-height: var(--ds-control-height);
+  align-items: center;
+  justify-content: flex-end;
+  /* Keep the large touch target inside the existing card padding. */
+  margin: -4px 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ds-control-radius);
+  background: transparent;
+  cursor: pointer;
+}
+.trigger:hover,
+.trigger[data-state="open"] {
+  color: var(--ds-brand-ink);
+}
+.trigger:focus-visible {
+  outline: 3px solid var(--ds-brand-ink);
+  outline-offset: 4px;
+}
+.details {
+  z-index: 60;
+  max-width: min(320px, calc(100vw - 32px));
+  padding: 12px 16px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-control-radius);
+  color: var(--ds-text);
+  background: var(--ds-surface);
+  box-shadow: 0 4px 20px #27223112;
+  font-family: var(--ds-font-body);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.details:focus {
+  outline: none;
+}
+.details[data-state="open"] {
+  animation: appear var(--ds-motion-fast) var(--ds-motion-ease);
+}
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .details[data-state="open"] {
+    animation: none;
+  }
+}
+@media (forced-colors: active) {
+  .details {
+    border-color: CanvasText;
+  }
+}

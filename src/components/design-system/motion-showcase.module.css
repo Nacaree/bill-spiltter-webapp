@@ -159,11 +159,11 @@
   width: 100%;
   padding: 22px;
 }
-.glassCard > :not(.shimmerMask) {
+.glassCard > :not([data-shimmer-mask]) {
   position: relative;
   z-index: 1;
 }
-.glassCard > span:not(.shimmerMask) {
+.glassCard > span:not([data-shimmer-mask]) {
   display: block;
   color: #655b72;
   font-size: 9px;
@@ -183,61 +183,6 @@
   font-size: 11px;
 }
 
-.shimmerMask {
-  position: absolute;
-  z-index: 0;
-  inset: 0;
-  overflow: hidden;
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-.shimmerBeam {
-  position: absolute;
-  top: -60%;
-  left: 0;
-  width: 45%;
-  height: 220%;
-  opacity: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    #ffffff0d 25%,
-    #ffffffb3 50%,
-    #ffffff0d 75%,
-    transparent
-  );
-  transform: translateX(-180%) skewX(-15deg);
-}
-
-.shimmerBeam[data-shimmer-beam="active"] {
-  animation: glassShimmer 1800ms cubic-bezier(0.4, 0, 0.6, 1) both;
-}
-
-@keyframes glassShimmer {
-  0% {
-    opacity: 0;
-    transform: translateX(-180%) skewX(-15deg);
-  }
-  25% {
-    opacity: 0.85;
-  }
-  75% {
-    opacity: 0.85;
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(320%) skewX(-15deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .shimmerBeam[data-shimmer-beam="active"] {
-    animation: none !important;
-    opacity: 0.55;
-    transform: translateX(60%) skewX(-15deg);
-  }
-}
 .successStage {
   display: grid;
   flex: 1;
