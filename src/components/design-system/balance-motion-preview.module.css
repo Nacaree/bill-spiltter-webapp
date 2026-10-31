@@ -1,0 +1,165 @@
+.preview {
+  margin-top: 16px;
+  min-width: 0;
+  scroll-margin-top: 100px;
+}
+.heading h4 {
+  margin: 0;
+  color: var(--ds-text);
+  font-family: var(--ds-font-heading);
+  font-size: 21px;
+  font-weight: var(--ds-weight-heading);
+  letter-spacing: -0.4px;
+}
+.preview .heading p,
+.preview .note {
+  margin-top: 5px;
+  color: var(--ds-muted);
+  font-size: 11px;
+}
+.card {
+  position: relative;
+  isolation: isolate;
+  max-width: 502px;
+  margin-top: 22px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ds-brand) 70%, white);
+  border-radius: var(--ds-card-radius);
+  padding: var(--ds-panel-padding);
+  color: var(--ds-brand-text);
+  background:
+    radial-gradient(
+      ellipse at 105% 0,
+      color-mix(in srgb, var(--ds-brand) 60%, #dba0ff),
+      transparent 65%
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--ds-brand) 90%, black),
+      color-mix(in srgb, var(--ds-brand) 88%, white)
+    );
+}
+.card::before,
+.card::after {
+  position: absolute;
+  z-index: -1;
+  top: 14px;
+  right: -155px;
+  width: 270px;
+  height: 270px;
+  border: 1px solid #ffffff14;
+  border-radius: 50%;
+  content: "";
+}
+.card::after {
+  top: -24px;
+  right: -194px;
+  width: 345px;
+  height: 345px;
+}
+.contourCard::before,
+.contourCard::after {
+  content: none;
+}
+.card
+  > :not([data-balance-glow]):not([data-shimmer-mask]):not(
+    [data-balance-contours]
+  ) {
+  position: relative;
+  z-index: 1;
+}
+.comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+.comparisonItem {
+  min-width: 0;
+  margin: 0;
+}
+.comparisonItem figcaption {
+  color: var(--ds-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.comparison .card {
+  --ds-shimmer-strength: 0.14;
+  --ds-shimmer-softness: 12px;
+  display: flex;
+  min-height: 200px;
+  flex-direction: column;
+  justify-content: center;
+  margin-top: 10px;
+}
+.comparison .card .caption {
+  margin-bottom: 0;
+}
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #f4e9fc;
+  font-size: 11px;
+}
+.top strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+.card .amount {
+  margin-top: 12px;
+  font-size: clamp(36px, 8vw, 60px);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.045em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.card .caption {
+  margin: 6px 0 24px;
+  color: #e2ccec;
+  font-size: 12px;
+}
+.card .addExpense {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  border: 1px solid #ffffff54;
+  color: #fff;
+  background: #ffffff0b;
+  font-size: 13px;
+}
+.card .addExpense:hover {
+  color: #fff;
+  background: #ffffff15;
+}
+.card .addExpense:focus-visible {
+  outline-color: #fff;
+}
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.controls button {
+  font-size: 12px;
+}
+.preview .note {
+  margin-top: 12px;
+}
+@media (max-width: 600px) {
+  .comparison {
+    grid-template-columns: 1fr;
+  }
+  .card {
+    padding: 16px;
+  }
+  .card .amount {
+    margin-top: 6px;
+  }
+  .card .caption {
+    margin-bottom: 16px;
+  }
+}

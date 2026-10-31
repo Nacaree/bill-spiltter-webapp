@@ -6,7 +6,10 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/ui/brand-mark";
 import { ActivityTime } from "@/components/ui/activity-time";
+import { AnimatedMoney } from "@/components/ui/animated-money";
 import { DesignShimmer } from "@/components/design-system/shimmer";
+import { DesignBalanceGlow } from "@/components/design-system/balance-glow";
+import { DesignBalanceContours } from "@/components/design-system/balance-contours";
 import { useDesignReducedMotion } from "@/components/design-system/use-design-reduced-motion";
 import { DesignCopyButton } from "@/components/design-system/copy-button";
 import { Coffee } from "@/components/design-system/icons/animate-ui/coffee";
@@ -67,7 +70,7 @@ function serverRoute() {
   return "overview";
 }
 
-function BalanceCard({ children }) {
+function BalanceCard({ children, balanceMinor }) {
   const card = useRef(null);
   const reducedMotion = useDesignReducedMotion();
   const [shimmerRun, setShimmerRun] = useState(0);
@@ -111,7 +114,17 @@ function BalanceCard({ children }) {
       ref={card}
       className={styles.balanceCard}
       aria-label="Your balance"
+      data-background-motion={
+        reducedMotion === false && shimmerActive ? "running" : "paused"
+      }
     >
+      <DesignBalanceContours
+        active={reducedMotion === false && shimmerActive}
+      />
+      <DesignBalanceGlow
+        active={reducedMotion === false && shimmerActive}
+        balanceMinor={balanceMinor}
+      />
       <DesignShimmer
         active={reducedMotion === true || shimmerActive}
         run={shimmerRun}
@@ -712,7 +725,7 @@ export function MobileBill() {
               <p className={styles.subtitle}>
                 Good food. Great company. Fair shares.
               </p>
-              <BalanceCard>
+              <BalanceCard balanceMinor={myBalance.netMinor}>
                 <div className={styles.balanceTop}>
                   <span className={styles.balanceLabel}>
                     {myBalance.netMinor > 0
@@ -724,7 +737,7 @@ export function MobileBill() {
                   <span>USD</span>
                 </div>
                 <strong className={styles.balanceNumber}>
-                  {money(myBalance.netMinor)}
+                  <AnimatedMoney amountMinor={Math.abs(myBalance.netMinor)} />
                 </strong>
                 <div className={styles.balanceCaption}>
                   {myBalance.netMinor > 0

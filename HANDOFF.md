@@ -1,16 +1,67 @@
 # Bill Splitter — Computer Handoff
 
 Read this file and `CURRENT_WORK.md` when resuming.
-Current branch: `main`. The earlier `work/mobile-accessibility-lifecycle` branch
-contains the same saved changes.
-Phase 3 implementation is included in this checkout; use `git log -1` for the
-latest commit. Check out/pull `main` and run `npm ci` when moving to another
-computer.
+Current branch: `main`; use `git log -1` for the latest saved commit. The earlier
+`work/mobile-accessibility-lifecycle` branch is historical; do not assume it
+matches current `main`. Phase 3 implementation is included in this checkout.
+Check out/pull `main` and run `npm ci` when moving to another computer.
 The user wants migration SQL saved in `supabase/migrations/` and will apply
 hosted migrations themselves. Tell them when a new migration is required.
 
-## Latest local UI work — Oct 29
+## Latest local UI work — Oct 31
 
+- `/screen2` now uses the approved balance motion. It remains a session-local
+  prototype; keep the existing main-app create-bill form. Next work is drawer/form
+  polish, then integration with the real bill actions and validation.
+- Balance amount tracking is -0.045em (loosened from -0.055em). Shared
+  `AnimatedMoney` uses `@number-flow/react` 0.6.2 and a 1100ms transition with
+  cubic-bezier(0.4, 0, 0.2, 1), from `balanceChangeTiming`. NumberFlow handles
+  digit rolling, interrupted changes, currency formatting and accessible labels.
+  The amount displays the absolute balance; owed/owe/settled labels follow its sign.
+- Shared `DesignBalanceContours` replaces the old two pseudo-element rings:
+  eight arcs on the right, three lower-left and three upper-left. All 14 lines
+  share one 9-second drift. Right-side arcs use 24-unit spacing (radii 142–310),
+  1px strokes, 0.16–0.06 opacity and -25° SVG rotation, giving a clean downward-right
+  lean. The user's black drawing specified direction; keep concentric curves.
+  Corner clusters are smaller/fainter. The last addition is the upper-left outer
+  arc at radius 153, opacity 0.035. Each cluster has its own fading mask.
+- Shared `DesignBalanceGlow` uses blue #266be8 and secondary #388dff at 0.35–0.55
+  layer opacity. It drifts from (8%, -6%) to (-14%, 12%) on a 24-second loop.
+  Saturated blue replaced pale lavender/mint tints that the user could not see.
+- A mounted, visible balance change briefly lifts only the glow's brightness
+  (1 → 1.18 → 1), sharing the 1100ms digit timing. Repeated changes merge from
+  the current brightness. Mounting/route returns do not replay old changes.
+  Pause, hidden/offscreen state, reduced motion and unmount cancel the reaction.
+- The existing shimmer remains: 1.8s sweep every 12s, 14% strength and 12px blur
+  on purple. Contours/glow reuse its visibility state: run only when at least
+  half the card is visible and the tab is foregrounded, with no extra timer.
+  Reduced motion keeps backgrounds still; forced colors hide decorative layers.
+  Phone cards retain the 190px minimum height, 16px padding and 48px action target.
+- `/design-system#balance-background` compares the previous two arcs against the
+  applied design, over the same glow/shimmer. Fast mode uses 1.5s contour and 4s
+  glow loops; Use natural speed matches Screen 2 (9s / 24s). Replay/pause and
+  expense/payment/reset controls work locally. `/design-system#balance-motion`
+  has the shared NumberFlow demo. `balance-rings.module.css` supports only the
+  previous-design comparison. Do not restore the old two rings on Screen 2.
+- New files: `src/components/ui/animated-money.*`; design-system
+  `balance-{background-preview,contours,glow,motion-preview}` JSX/CSS plus
+  `balance-rings.module.css`; `tests/components/balance-glow.test.jsx`.
+  Package and lockfile include NumberFlow; run `npm ci` on another computer.
+- Validation: 363 offline tests pass, 8 hosted/provider tests skipped. Six new
+  component tests cover reaction lifecycle and cancellation. Local Chromium/
+  WebKit checks cover final 8/3/3 counts, tilt, 9s timing, fixed text/card sizes,
+  real offscreen/hidden pausing, reduced motion, forced colors, glow reactions,
+  navigation, 320/393px bounds and axe. Screenshots reviewed; lint, formatting,
+  diff checks and production build pass. Browser checks were local scripts,
+  not newly persisted Playwright specs. No backend calls or new migrations.
+- Hosted cleanup, deployment and provider incident status were not refreshed in
+  this UI pass. Retain the operational fixture until the overdue follow-up below
+  is completed; do not treat old hosted evidence as current state.
+
+## Previous local UI work — Oct 29
+
+- Saved commit `badc3aa` contains the Oct 29 Screen 2 polish and real activity
+  timestamps. The Oct 31 motion work above builds on that baseline.
 - Prior baseline commit `b4d160d` added `/screens` and `/screen2` prototypes plus
   shared Animate UI button feedback. `795e759` adds saved receipt editing;
   its `20261028000000_edit_saved_receipts.sql` migration must be applied before
@@ -890,15 +941,15 @@ Statuses describe the evidence, not an assertion that a configuration is ideal.
 
 ### Deployment identity
 
-| Finding                                                                                                                                                                                                                                | Status    | Evidence / observation                                                                                                                                                                                                                                               | Next action / owner                                                                                                                                                                       |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Production is Ready/current on `main`, commit `32355c4ab85630e9ac5a18475a846a849d8bbd0d`; deployed Oct 21, 01:41:43 GMT+7                                                                                                              | Confirmed | V: [deployment details](https://vercel.com/nacarees-projects/bill-spiltter-webapp/BSwrfSxw3pgZvudZ6gsowSs4vGEQ)                                                                                                                                                      | Agent: use this release as the baseline; deployment of local changes is a later step.                                                                                                     |
-| Production URL: `https://bill-spiltter-webapp.vercel.app/`; immutable URL: `https://bill-spiltter-webapp-87e8ovlpj-nacarees-projects.vercel.app/`; branch alias: `https://bill-spiltter-webapp-git-main-nacarees-projects.vercel.app/` | Confirmed | V: deployment Domains panel                                                                                                                                                                                                                                          | Agent: use immutable URL when identifying the audited release.                                                                                                                            |
-| Latest retained Preview URL/commit/status                                                                                                                                                                                              | Missing   | V: [Preview deployment filter](https://vercel.com/nacarees-projects/bill-spiltter-webapp/deployments?environment=preview) returned No Results; overview had No Active Branches. Project retention is 30 days, so this does not establish that Preview never existed. | Agent: record a future Preview's identity when one is explicitly deployed.                                                                                                                |
-| At the last recorded operational audit, checkout was `main` at the audited commit; mobile/accessibility changes were uncommitted and undeployed                                                                                           | Historical | L: `git log -1`, `git status --short` at that audit; current local UI state is summarized at the top                                                                                                                                                                  | This audit snapshot predates the Oct 29 UI follow-up. Do not use it as current Git status.                                                                                                 |
-| Vercel framework Next.js; build/install/output overrides off; root default `./`; repository build script `next build`                                                                                                                  | Confirmed | V: [Build and Deployment](https://vercel.com/nacarees-projects/bill-spiltter-webapp/settings/build-and-deployment); L: `package.json`                                                                                                                                | Agent: reconcile README's `npm ci` / webpack override instructions with observed settings in a later documentation task. Historical build internals were not independently reconstructed. |
-| Vercel Node `24.x`; local Node `24.22.0`; CI Node `22`                                                                                                                                                                                 | Confirmed | V: project and deployment runtime settings; L: `node --version`, `.github/workflows/ci.yml`; README recommends Node 22                                                                                                                                               | Agent/user: choose and align a supported version in a later stage; no setting changed.                                                                                                    |
-| Vercel team Hobby; Fluid Compute enabled, function region `sin1`, standard 1 vCPU / 2 GB; Standard deployment protection                                                                                                               | Confirmed | V: project/deployment settings                                                                                                                                                                                                                                       | Agent: retain as operating context.                                                                                                                                                       |
+| Finding                                                                                                                                                                                                                                | Status     | Evidence / observation                                                                                                                                                                                                                                               | Next action / owner                                                                                                                                                                       |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Production is Ready/current on `main`, commit `32355c4ab85630e9ac5a18475a846a849d8bbd0d`; deployed Oct 21, 01:41:43 GMT+7                                                                                                              | Confirmed  | V: [deployment details](https://vercel.com/nacarees-projects/bill-spiltter-webapp/BSwrfSxw3pgZvudZ6gsowSs4vGEQ)                                                                                                                                                      | Agent: use this release as the baseline; deployment of local changes is a later step.                                                                                                     |
+| Production URL: `https://bill-spiltter-webapp.vercel.app/`; immutable URL: `https://bill-spiltter-webapp-87e8ovlpj-nacarees-projects.vercel.app/`; branch alias: `https://bill-spiltter-webapp-git-main-nacarees-projects.vercel.app/` | Confirmed  | V: deployment Domains panel                                                                                                                                                                                                                                          | Agent: use immutable URL when identifying the audited release.                                                                                                                            |
+| Latest retained Preview URL/commit/status                                                                                                                                                                                              | Missing    | V: [Preview deployment filter](https://vercel.com/nacarees-projects/bill-spiltter-webapp/deployments?environment=preview) returned No Results; overview had No Active Branches. Project retention is 30 days, so this does not establish that Preview never existed. | Agent: record a future Preview's identity when one is explicitly deployed.                                                                                                                |
+| At the last recorded operational audit, checkout was `main` at the audited commit; mobile/accessibility changes were uncommitted and undeployed                                                                                        | Historical | L: `git log -1`, `git status --short` at that audit; current local UI state is summarized at the top                                                                                                                                                                 | This audit snapshot predates the Oct 29 UI follow-up. Do not use it as current Git status.                                                                                                |
+| Vercel framework Next.js; build/install/output overrides off; root default `./`; repository build script `next build`                                                                                                                  | Confirmed  | V: [Build and Deployment](https://vercel.com/nacarees-projects/bill-spiltter-webapp/settings/build-and-deployment); L: `package.json`                                                                                                                                | Agent: reconcile README's `npm ci` / webpack override instructions with observed settings in a later documentation task. Historical build internals were not independently reconstructed. |
+| Vercel Node `24.x`; local Node `24.22.0`; CI Node `22`                                                                                                                                                                                 | Confirmed  | V: project and deployment runtime settings; L: `node --version`, `.github/workflows/ci.yml`; README recommends Node 22                                                                                                                                               | Agent/user: choose and align a supported version in a later stage; no setting changed.                                                                                                    |
+| Vercel team Hobby; Fluid Compute enabled, function region `sin1`, standard 1 vCPU / 2 GB; Standard deployment protection                                                                                                               | Confirmed  | V: project/deployment settings                                                                                                                                                                                                                                       | Agent: retain as operating context.                                                                                                                                                       |
 
 ### Environment mapping and variable inventory
 

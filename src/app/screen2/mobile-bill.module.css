@@ -180,30 +180,15 @@
   box-shadow: 0 10px 24px color-mix(in srgb, var(--ds-brand) 13%, transparent);
 }
 
-.balanceCard > :not([data-shimmer-mask]) {
+.balanceCard
+  > :not([data-shimmer-mask]):not([data-balance-glow]):not(
+    [data-balance-contours]
+  ) {
   position: relative;
   z-index: 1;
   flex-shrink: 0;
 }
 
-.balanceCard::before,
-.balanceCard::after {
-  position: absolute;
-  z-index: -1;
-  width: 270px;
-  height: 270px;
-  top: 14px;
-  right: -155px;
-  border: 1px solid #ffffff14;
-  border-radius: 50%;
-  content: "";
-}
-.balanceCard::after {
-  width: 345px;
-  height: 345px;
-  top: -24px;
-  right: -194px;
-}
 .balanceTop {
   display: flex;
   align-items: center;
@@ -221,7 +206,7 @@
   font-size: 60px;
   line-height: 1.15;
   font-weight: 500;
-  letter-spacing: -0.055em;
+  letter-spacing: -0.045em;
   font-variant-numeric: tabular-nums;
 }
 .balanceCaption {

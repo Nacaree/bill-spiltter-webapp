@@ -1,0 +1,6 @@
+.number {
+  --number-flow-mask-height: 0.08em;
+  line-height: 0.85;
+  vertical-align: top;
+  font-variant-numeric: tabular-nums;
+}

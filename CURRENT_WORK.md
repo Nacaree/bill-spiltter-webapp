@@ -6,18 +6,18 @@
 ## Task
 
 Polish /screen2, then integrate bill functionality; keep the create-bill form.
-Main view, shimmer and activity timestamps applied; forms at /design-system#forms.
-Review previews before applying them to /screen2 drawers; see HANDOFF.
+Screen2 now uses the approved 8/3/3 contour clusters with a 9-second drift.
+Forms at /design-system#forms; review before applying to /screen2 drawers; see HANDOFF.
 User owns remaining real-device/screen-reader/full keyboard/Firefox checks.
 Stage 2 skipped; Stage 3 migration user-reported applied; Stage 5 readiness done.
 
-## Latest hosted evidence
+## Latest hosted evidence (Oct 25; not refreshed)
 
 - Last verified Ready Production HYZYcPFFE / 876c22f; runtime matches eec047e.
 - Original 13 jobs previously verified gone. Now all six Stage 6 jobs also gone;
   their six exact bucket prefixes empty. No manual cleanup or deadline edits.
-- Three later jobs remain: due since Oct 25 15:42, attempts=1, unleased.
-  First scheduled opportunity is Oct 26 03:00–03:59 GMT+7, not today's run.
+- Three later jobs were pending: due since Oct 25 15:42, attempts=1, unleased.
+  First scheduled opportunity was Oct 26 03:00–03:59 GMT+7; follow-up remains open.
 - Retained synthetic bill/receipt active, confirmed, attempt_count=1, same one $12
   expense ID. Stored image 59,685 bytes; SHA-256 EXACT match to Oct 24 baseline.
 - Fresh incognito page visibly showed Receipt confirmed + actual Uploaded receipt;
@@ -41,9 +41,9 @@ Stage 2 skipped; Stage 3 migration user-reported applied; Stage 5 readiness done
   queue/hash/UI verification is valid even when the detailed log window is missed.
 - User records manual/device outcomes before Stage 7 signoff; Phase 4 remains open.
 - Collect safe provider HTTP status/classification on recurrence; no proven fix.
-- No runtime edit, hosted write, provider call, migration, deployment, commit/push,
-  credential/settings/policy change in Oct 25 follow-up. Own edits are Markdown.
-- Oct 29: 357 offline tests pass, 8 hosted skipped; 9 timestamp browser checks
-  pass across Chromium/WebKit/iPhone. Lint/format/build and axe pass.
+- Local UI work changes /screen2 and design-system previews, with no hosted-data
+  writes or migrations. Hosted deployment/cleanup status has not been refreshed.
+- Oct 31: 363 offline tests pass, 8 hosted skipped; contour checks pass
+  in Chromium/WebKit (prior 9 timestamp checks pass). Lint/format/build/axe pass.
 - Preview shares Production; no isolated backend. QR-orphan retry limit remains.
   Privacy/Help content stays off to-do list.

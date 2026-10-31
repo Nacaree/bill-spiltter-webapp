@@ -1,0 +1,34 @@
+.rings::before,
+.rings::after {
+  --ring-radius: 6px;
+  animation: ringOrbit var(--ring-inner-duration, 11000ms) linear infinite;
+  animation-play-state: paused;
+}
+.rings::after {
+  --ring-radius: 8px;
+  animation-duration: var(--ring-outer-duration, 14000ms);
+  animation-delay: var(--ring-phase, -1750ms);
+  animation-direction: reverse;
+}
+.rings[data-rings-playing="true"]::before,
+.rings[data-rings-playing="true"]::after,
+.rings[data-background-motion="running"]::before,
+.rings[data-background-motion="running"]::after {
+  animation-play-state: running;
+}
+@keyframes ringOrbit {
+  from {
+    transform: rotate(0turn) translateX(var(--ring-radius));
+  }
+  to {
+    transform: rotate(1turn) translateX(var(--ring-radius));
+  }
+}
+
+@media (prefers-reduced-motion: reduce), (forced-colors: active) {
+  .rings::before,
+  .rings::after {
+    animation: none;
+    transform: none;
+  }
+}

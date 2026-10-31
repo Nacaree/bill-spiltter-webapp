@@ -120,6 +120,27 @@ shows short press, selection, reveal, success and dialog transitions. A soft whi
 shimmer makes one 1.8-second pass on interaction. Reduced motion keeps controls
 functional and uses a still highlight. The icon comparison remains replayable.
 
+The [Screen 2 prototype](http://localhost:3000/screen2) uses session-local sample
+data. Keep the existing main-app create-bill form; integration of the polished
+prototype with the real bill actions is the next phase. Reloading or resetting
+the prototype restores the sample ledger.
+
+Its balance card shares NumberFlow (`@number-flow/react`) with the
+[balance animation preview](http://localhost:3000/design-system#balance-motion).
+Digit changes take 1.1 seconds. The background combines a 24-second blue glow,
+eight right-side contour arcs plus three in each left corner on one 9-second
+drift, and the existing 1.8-second shimmer every 12 seconds. Visible balance
+changes briefly lift the glow with the digit roll. Mounting or returning to the
+overview does not replay old balance changes.
+
+The [background comparison](http://localhost:3000/design-system#balance-background)
+shows the previous two arcs beside the applied design. It starts at a faster
+preview pace; **Use natural speed** matches Screen 2. Expense/payment/reset
+controls use local samples. Card motion pauses offscreen and in hidden tabs;
+reduced motion keeps the background still, and forced colors hide decorative
+layers. The shared implementation lives in `src/components/ui/animated-money.jsx`
+and the `balance-*` files under `src/components/design-system/`.
+
 The four-piece purple mark in `src/app/icon.svg` is the canonical logo and browser
 icon. Header, favicon ICO (16/32/48px) and Apple touch icon use that artwork.
 Regenerate raster icons with `npm run icons:generate` after changing the vector.

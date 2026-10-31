@@ -8,6 +8,8 @@ import { DesignButton, DesignSurface } from "./primitives";
 import { motionTiming, motionTransition } from "./motion-tokens";
 import styles from "./motion-showcase.module.css";
 import { DesignShimmer } from "./shimmer";
+import { BalanceMotionPreview } from "./balance-motion-preview";
+import { BalanceBackgroundPreview } from "./balance-background-preview";
 
 const sampleExpenses = [
   {
@@ -122,6 +124,8 @@ export function MotionShowcase({ onPreviewDialog }) {
             </p>
           </div>
         </DesignSurface>
+        <BalanceMotionPreview />
+        <BalanceBackgroundPreview />
         <div className={styles.grid}>
           <DesignSurface>
             <div className={styles.cardHeading}>

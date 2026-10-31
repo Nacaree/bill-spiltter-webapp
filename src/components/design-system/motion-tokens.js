@@ -6,6 +6,11 @@ export const motionTiming = {
   ease: [0.22, 1, 0.36, 1],
 };
 
+export const balanceChangeTiming = {
+  duration: 1100,
+  easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+};
+
 export function motionTransition(
   reducedMotion,
   duration = motionTiming.standard,
