@@ -15,7 +15,7 @@ test("activity times disclose the exact local time and keep their alignment", as
 }) => {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/screen2");
+  await page.goto("/screen2?preview=populated");
   const activity = page.getByRole("region", { name: "Recent activity" });
   const trigger = activity.getByRole("button", {
     name: "5 min ago, show exact date and time",
@@ -90,7 +90,7 @@ test("activity times disclose the exact local time and keep their alignment", as
 test("new events retain their creation time while labels advance and reset reseeds samples", async ({
   page,
 }) => {
-  await page.goto("/screen2");
+  await page.goto("/screen2?preview=populated");
   const activity = page.getByRole("region", { name: "Recent activity" });
   await expect(
     activity.getByRole("button", {
@@ -111,7 +111,8 @@ test("new events retain their creation time while labels advance and reset resee
   ).toBeVisible();
   await page.getByRole("button", { name: /3 people, one bill/ }).click();
   const sheet = page.getByRole("dialog");
-  await sheet.getByLabel("Add a name to the bill").fill("Timestamp check");
+  await sheet.getByRole("button", { name: "Add person", exact: true }).click();
+  await sheet.getByLabel("Person’s name").fill("Timestamp check");
   const before = await page.evaluate(() => Date.now());
   await sheet.getByRole("button", { name: "Add person", exact: true }).click();
   await sheet.getByText("Timestamp check", { exact: true }).waitFor();
@@ -161,7 +162,7 @@ test.describe("visitor timezone", () => {
     page.on("console", (message) => {
       if (message.type() === "error") errors.push(message.text());
     });
-    await page.goto("/screen2");
+    await page.goto("/screen2?preview=populated");
     const activity = page.getByRole("region", { name: "Recent activity" });
     await activity
       .getByRole("button", { name: "5 min ago, show exact date and time" })

@@ -8,7 +8,62 @@ Check out/pull `main` and run `npm ci` when moving to another computer.
 The user wants migration SQL saved in `supabase/migrations/` and will apply
 hosted migrations themselves. Tell them when a new migration is required.
 
-## Latest local UI work — Oct 31
+## Latest local UI work — Nov 1
+
+- `/screen2` compares populated and empty bills side by side, stacking on narrow
+  screens. **Open preview** opens `/screen2?preview=populated` or `?preview=empty`.
+  Independent frames isolate local data, focus, dialogs and navigation. Embedded
+  navigation uses a React back stack and replaces its hash, so one preview cannot
+  traverse the other preview's history.
+- The empty preset starts with Nary only, $0 totals, no ledger/activity and no QR.
+  User chose **Receipt vignette**: two CSS paper shapes, **A little receipt. A lot
+  less math.**, short copy and a tertiary **Add expense** action. That action stays
+  background-free on hover. Activity uses a compact clock/message line. Adding
+  entries and resetting swap these states locally; drafts use actual participants.
+  Decorative file-text/clock-3 icons are official Animate UI sources; provenance
+  is in the icons README. The comparison artifact is `work/empty-state-directions.html`.
+- Full expense and quick-person forms share `bill-form-dialogs.jsx` and
+  `form-dialog.jsx` with `/design-system#forms`. Expense entry/editing includes
+  description/amount, person picker, calendar, participant checks, equal/exact
+  splits, precise share preview, category and notes. Validation focuses errors.
+  X/Escape/backdrop preserve drafts. Expense/person footers have one primary
+  action, with no Cancel; confirmation keeps its safe dismissal action.
+- All Screen 2 menus, the first **Add to the bill** chooser and forms now use
+  `DialogPanel`: bottom drawers on phones, centered panels on desktop, compact
+  centered confirmations, scrollable bodies and visible form footers. Entrance
+  is 240ms and exit 140ms; reduced motion is immediate. Outgoing menu contents
+  stay mounted through exit and cannot intercept pointers. The initial chooser's
+  old instant shell was caught and replaced after the full-form rollout.
+- People management opens the separate quick-person form. Its **Add person**
+  entry action is the purple primary button with the plus beside the label.
+  Section spacing is on a wrapper; the obsolete inline-form grid had stacked the
+  icon and stretched the button. Focus return covers Safari pointer activation,
+  animated returns and nested picker/calendar portals. Existing `#new` links open
+  expense entry; receipt review stays full screen. New local IDs use UUIDs.
+- Shared primary/secondary buttons use subtle top lighting and lower shadows.
+  Purple uses a diffused 6% white fade; the user rejected a hard curved inset.
+  Outlined hover lighting follows the tint. People/activity cards use white top
+  insets and soft lavender shadows. Copy controls center complete icon/label pairs
+  with stable widths (6px gap on Screen 2, 8px elsewhere).
+- Balance-card glass actions retain their single border and `box-shadow: none`,
+  including hover. The user rejected a doubled top edge. Standard controls retain
+  shared lighting, 48px height and 22px corners. The receipt file picker uses the
+  shared upload-icon button with native keyboard file selection.
+- Validation: 381 offline tests pass; eight hosted/provider checks skipped.
+  41 studio/Screen 2 browser checks passed across Chromium/WebKit/iPhone, followed
+  by three final Add person flow checks. Coverage includes independent frames,
+  reset/add/edit, exact splits, retained drafts, error focus, nested pickers,
+  animated entrance/exit/focus return, timestamp/timezones, reflow and axe.
+  Final button inspection confirms purple/white colors, 48px height and aligned
+  icon/label. Screenshots reviewed; lint/format/webpack build pass. Source-map
+  uploads were disabled for the build. Use `PLAYWRIGHT_BASE_URL=http://localhost:3000`;
+  this computer's server did not hydrate scripts correctly on 127.0.0.1.
+- Continue UI review as requested, then integrate the polished prototype with
+  real bill actions. Keep the existing main-app create-bill form. Hosted data,
+  migrations, provider/operational evidence and the retained fixture were not
+  changed; deployed runtime status has not been reverified.
+
+## Previous local UI work — Oct 31
 
 - `/screen2` now uses the approved balance motion. It remains a session-local
   prototype; keep the existing main-app create-bill form. Next work is drawer/form
@@ -148,7 +203,7 @@ hosted migrations themselves. Tell them when a new migration is required.
   stays centered. Shared fields/calendar/person picker/checks/buttons, local
   equal-split previews, validation, retained drafts and scrollable form bodies
   with visible action footers are included. All data/actions remain local samples;
-  these formats have not yet been applied to `/screen2` drawers.
+  their subsequent `/screen2` rollout is documented in the Nov 1 section above.
 - Preview checks pass on desktop/phone Chromium and 320px WebKit: axe, nested
   picker/calendar interactions, error focus, draft preservation, focus return,
   sample actions, reduced motion and a short 480px viewport. No backend requests.

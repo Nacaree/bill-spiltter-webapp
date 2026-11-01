@@ -1,0 +1,529 @@
+<style>
+  #bill-empty-directions .bs-stage {
+    min-height: 650px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 56px 16px 24px;
+    box-sizing: border-box;
+  }
+  #bill-empty-directions .bs-product {
+    --bs-canvas: light-dark(#f8f6fb, #211c29);
+    --bs-surface: light-dark(#ffffff, #2d2637);
+    --bs-text: light-dark(#292432, #f4edf9);
+    --bs-muted: light-dark(#756b82, #bfb1cd);
+    --bs-line: light-dark(#e8e2ee, #463a53);
+    --bs-purple: light-dark(#663399, #c29ae9);
+    --bs-tint: light-dark(#f2edf8, #392a47);
+    --bs-shadow: light-dark(#37235015, #00000025);
+    --bs-space: 24px;
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    box-sizing: border-box;
+    padding: var(--bs-space);
+    border: 1px solid var(--bs-line);
+    border-radius: 32px;
+    color: var(--bs-text);
+    background: var(--bs-canvas);
+    font-family: Helvetica, "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  #bill-empty-directions .bs-product * {
+    box-sizing: border-box;
+  }
+  #bill-empty-directions .bs-product h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: -0.035em;
+  }
+  #bill-empty-directions .bs-product h3 {
+    margin: 0;
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.25;
+  }
+  #bill-empty-directions .bs-product p {
+    margin: 10px 0 0;
+    color: var(--bs-muted);
+    font-size: 13px;
+    line-height: 1.65;
+  }
+  #bill-empty-directions .bs-product button {
+    display: inline-flex;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 0;
+    border-radius: 22px;
+    padding: 10px 16px;
+    color: var(--bs-purple);
+    background: transparent;
+    font:
+      600 13px/1.4 Helvetica,
+      Arial,
+      sans-serif;
+  }
+  #bill-empty-directions .bs-product button:hover {
+    background: var(--bs-tint);
+  }
+  #bill-empty-directions .bs-product .bs-link {
+    padding-inline: 0;
+  }
+  #bill-empty-directions .bs-product .bs-primary {
+    color: light-dark(#ffffff, #211c29);
+    background: var(--bs-purple);
+  }
+  #bill-empty-directions .bs-product .bs-primary:hover {
+    filter: brightness(1.08);
+  }
+  #bill-empty-directions .bs-product svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+  #bill-empty-directions .bs-editorial {
+    padding: 32px 0 var(--bs-space);
+    border-bottom: 1px solid var(--bs-line);
+    margin-bottom: var(--bs-space);
+  }
+  #bill-empty-directions .bs-editorial > svg {
+    width: 28px;
+    height: 28px;
+    color: var(--bs-purple);
+    margin-bottom: 18px;
+    stroke-width: 1.4;
+  }
+  #bill-empty-directions .bs-editorial > i {
+    display: block;
+    width: 28px;
+    height: 28px;
+    margin-bottom: 18px;
+    color: var(--bs-purple);
+    line-height: 0;
+  }
+  #bill-empty-directions .bs-editorial > i svg {
+    width: 28px;
+    height: 28px;
+    stroke-width: 1.4;
+  }
+  #bill-empty-directions .bs-editorial .bs-link {
+    margin-top: 8px;
+  }
+  #bill-empty-directions .bs-activity-line {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 16px;
+    color: var(--bs-muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  #bill-empty-directions .bs-activity-line svg {
+    margin-top: 2px;
+    width: 16px;
+    height: 16px;
+  }
+  #bill-empty-directions .bs-activity-line p {
+    margin: 0;
+  }
+  #bill-empty-directions .bs-receipt-card {
+    margin: 18px 0 var(--bs-space);
+    padding: 24px 20px 18px;
+    border: 1px solid var(--bs-line);
+    border-radius: 22px;
+    background: var(--bs-surface);
+    box-shadow: 0 9px 24px -16px var(--bs-shadow);
+    text-align: center;
+  }
+  #bill-empty-directions .bs-receipt-card h3 {
+    font-size: 20px;
+  }
+  #bill-empty-directions .bs-receipt-card p {
+    max-width: 250px;
+    margin-inline: auto;
+  }
+  #bill-empty-directions .bs-receipt-card button {
+    margin-top: 12px;
+  }
+  #bill-empty-directions .bs-receipts {
+    position: relative;
+    width: 140px;
+    height: 112px;
+    margin: 0 auto 16px;
+  }
+  #bill-empty-directions .bs-paper {
+    position: absolute;
+    top: 3px;
+    left: 40px;
+    width: 64px;
+    height: 86px;
+    padding: 14px 12px;
+    border: 1px solid var(--bs-line);
+    border-radius: 9px;
+    background: var(--bs-surface);
+    box-shadow: 0 8px 14px var(--bs-shadow);
+    transform: rotate(9deg);
+  }
+  #bill-empty-directions .bs-paper-back {
+    top: 7px;
+    left: 29px;
+    transform: rotate(-13deg);
+    background: var(--bs-tint);
+  }
+  #bill-empty-directions .bs-paper svg {
+    display: block;
+    width: 20px;
+    height: 20px;
+    margin-bottom: 10px;
+    color: var(--bs-purple);
+    stroke-width: 1.5;
+  }
+  #bill-empty-directions .bs-paper-line {
+    display: block;
+    height: 3px;
+    margin-top: 5px;
+    border-radius: 3px;
+    background: var(--bs-line);
+  }
+  #bill-empty-directions .bs-paper-line:last-child {
+    width: 60%;
+  }
+  #bill-empty-directions .bs-activity-rule {
+    padding-top: 18px;
+    border-top: 1px solid var(--bs-line);
+  }
+  #bill-empty-directions .bs-welcome {
+    padding: 28px 4px 8px;
+    text-align: left;
+  }
+  #bill-empty-directions .bs-welcome h2 {
+    max-width: 290px;
+    font-size: 27px;
+    line-height: 1.15;
+  }
+  #bill-empty-directions .bs-welcome p {
+    margin-top: 16px;
+  }
+  #bill-empty-directions .bs-welcome-symbols {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 28px;
+  }
+  #bill-empty-directions .bs-symbol {
+    display: grid;
+    width: 52px;
+    height: 62px;
+    place-items: center;
+    border: 1px solid var(--bs-line);
+    border-radius: 16px;
+    background: var(--bs-surface);
+    color: var(--bs-purple);
+    transform: rotate(-8deg);
+  }
+  #bill-empty-directions .bs-symbol:last-child {
+    transform: rotate(8deg);
+    background: var(--bs-tint);
+  }
+  #bill-empty-directions .bs-symbol svg {
+    width: 25px;
+    height: 25px;
+    stroke-width: 1.4;
+  }
+  #bill-empty-directions .bs-connector {
+    color: var(--bs-muted);
+  }
+  #bill-empty-directions .bs-welcome-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 24px 0;
+  }
+  #bill-empty-directions .bs-footnote {
+    border-top: 1px solid var(--bs-line);
+    padding-top: 18px;
+  }
+  #bill-empty-directions .bs-choice-menu {
+    position: absolute;
+    z-index: 2;
+    right: 16px;
+    bottom: 16px;
+    left: 16px;
+    padding: 16px;
+    border: 1px solid var(--bs-line);
+    border-radius: 18px;
+    background: var(--bs-surface);
+    box-shadow: 0 8px 24px var(--bs-shadow);
+  }
+  #bill-empty-directions .bs-choice-menu p {
+    margin: 0 0 8px;
+    font-size: 13px;
+  }
+  #bill-empty-directions .bs-choice-menu strong {
+    font-weight: 700;
+    color: var(--bs-text);
+  }
+  #bill-empty-directions .bs-choice-menu button {
+    min-height: 44px;
+  }
+  #bill-empty-directions [hidden] {
+    display: none !important;
+  }
+  @media (max-width: 420px) {
+    #bill-empty-directions .bs-stage {
+      min-height: 740px;
+      padding-inline: 8px;
+    }
+    #bill-empty-directions .bs-product {
+      padding: 22px;
+    }
+  }
+</style>
+
+<div
+  id="bill-empty-directions"
+  class="viz-carousel viz-dotted-background"
+  aria-label="Bill Splitter empty-state directions"
+>
+  <section
+    data-variant="Quiet editorial"
+    aria-label="Quiet editorial direction"
+  >
+    <div class="bs-stage">
+      <div
+        id="bs-quiet"
+        class="bs-product"
+        aria-label="Quiet editorial empty sections"
+      >
+        <h2>Recent expenses</h2>
+        <div class="bs-editorial">
+          <i data-lucide="receipt-text" aria-hidden="true"></i>
+          <h3>Start with<br />something shared.</h3>
+          <p>
+            A meal, a ride, a little adventure.<br />Your first expense starts
+            here.
+          </p>
+          <button
+            type="button"
+            class="bs-link cursor-interaction"
+            data-bs-action="expense"
+          >
+            Add expense <i data-lucide="arrow-right" aria-hidden="true"></i>
+          </button>
+        </div>
+        <h2>Recent activity</h2>
+        <div class="bs-activity-line">
+          <i data-lucide="clock-3" aria-hidden="true"></i>
+          <p>
+            Your shared story starts here.<br />Activity will appear as you go.
+          </p>
+        </div>
+        <div class="bs-choice-menu" data-bs-menu hidden>
+          <p>
+            <strong>Add an expense</strong><br />Scan a receipt or enter the
+            details manually.
+          </p>
+          <button
+            type="button"
+            class="bs-link cursor-interaction"
+            data-bs-close
+          >
+            Back to preview
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section
+    data-variant="Receipt vignette"
+    aria-label="Receipt vignette direction"
+    hidden
+  >
+    <div class="bs-stage">
+      <div
+        id="bs-vignette"
+        class="bs-product"
+        aria-label="Receipt vignette empty sections"
+      >
+        <h2>Recent expenses</h2>
+        <div class="bs-receipt-card">
+          <div class="bs-receipts" aria-hidden="true">
+            <div class="bs-paper bs-paper-back"></div>
+            <div class="bs-paper">
+              <i data-lucide="receipt-text"></i
+              ><span class="bs-paper-line"></span
+              ><span class="bs-paper-line"></span
+              ><span class="bs-paper-line"></span>
+            </div>
+          </div>
+          <h3>A little receipt.<br />A lot less math.</h3>
+          <p>Add your first expense.<br />We’ll help with the split.</p>
+          <button
+            type="button"
+            class="bs-link cursor-interaction"
+            data-bs-action="expense"
+          >
+            Add expense <i data-lucide="arrow-right" aria-hidden="true"></i>
+          </button>
+        </div>
+        <h2>Recent activity</h2>
+        <div class="bs-activity-line">
+          <i data-lucide="clock-3" aria-hidden="true"></i>
+          <p>The little updates will live here.</p>
+        </div>
+        <div class="bs-choice-menu" data-bs-menu hidden>
+          <p>
+            <strong>Add an expense</strong><br />Scan a receipt or enter the
+            details manually.
+          </p>
+          <button
+            type="button"
+            class="bs-link cursor-interaction"
+            data-bs-close
+          >
+            Back to preview
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section
+    data-variant="Unified welcome"
+    aria-label="Unified welcome direction"
+    hidden
+  >
+    <div class="bs-stage">
+      <div
+        id="bs-welcome"
+        class="bs-product"
+        aria-label="Unified welcome empty sections"
+      >
+        <div class="bs-welcome">
+          <div class="bs-welcome-symbols" aria-hidden="true">
+            <span class="bs-symbol"><i data-lucide="receipt-text"></i></span>
+            <span class="bs-connector"><i data-lucide="plus"></i></span>
+            <span class="bs-symbol"><i data-lucide="users-round"></i></span>
+          </div>
+          <h2>Good company.<br />Fair shares.<br />A fresh start.</h2>
+          <p>
+            Bring your people. Add the first expense.<br />We’ll keep the
+            balance.
+          </p>
+          <div class="bs-welcome-actions">
+            <button
+              type="button"
+              class="bs-primary cursor-interaction"
+              data-bs-action="expense"
+            >
+              <i data-lucide="plus" aria-hidden="true"></i> Add expense
+            </button>
+            <button
+              type="button"
+              class="cursor-interaction"
+              data-bs-action="people"
+            >
+              Invite people <i data-lucide="arrow-right" aria-hidden="true"></i>
+            </button>
+          </div>
+          <p class="bs-footnote">
+            Expenses and activity appear here<br />as your bill grows.
+          </p>
+        </div>
+        <div class="bs-choice-menu" data-bs-menu hidden>
+          <p data-bs-menu-copy>
+            <strong>Add an expense</strong><br />Scan a receipt or enter the
+            details manually.
+          </p>
+          <button
+            type="button"
+            class="bs-link cursor-interaction"
+            data-bs-close
+          >
+            Back to preview
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  (() => {
+    const root = document.getElementById("bill-empty-directions");
+    const settings = {};
+    const saved =
+      window.openai?.widgetState?.privateContent?.spacingByDirection || {};
+    root.querySelectorAll(".bs-product").forEach((product) => {
+      const state = {
+        spacing: Number.isFinite(saved[product.id]) ? saved[product.id] : 24,
+      };
+      settings[product.id] = state;
+      const render = () =>
+        product.style.setProperty("--bs-space", `${state.spacing}px`);
+      render();
+      if (globalThis.Tweak) {
+        const tweak = new Tweak({
+          container: product,
+          onChange: () => {
+            render();
+            const spacingByDirection = Object.fromEntries(
+              Object.entries(settings).map(([id, value]) => [
+                id,
+                value.spacing,
+              ]),
+            );
+            window.openai
+              ?.setWidgetState?.({
+                modelContent: { spacingByDirection },
+                privateContent: { spacingByDirection },
+              })
+              .catch(() => {});
+          },
+        });
+        tweak.addSlider(state, "spacing", {
+          label: "Breathing room",
+          min: 20,
+          max: 36,
+          step: 4,
+          unit: "px",
+        });
+      }
+      const menu = product.querySelector("[data-bs-menu]");
+      let opener;
+      product.querySelectorAll("[data-bs-action]").forEach((button) => {
+        button.addEventListener("click", () => {
+          opener = button;
+          const copy = menu.querySelector("[data-bs-menu-copy]");
+          if (copy) {
+            copy.replaceChildren();
+            const strong = document.createElement("strong");
+            strong.textContent =
+              button.dataset.bsAction === "people"
+                ? "Invite your people"
+                : "Add an expense";
+            copy.append(
+              strong,
+              document.createElement("br"),
+              button.dataset.bsAction === "people"
+                ? "Share your bill link so everyone can join."
+                : "Scan a receipt or enter the details manually.",
+            );
+          }
+          menu.hidden = false;
+          menu.querySelector("button").focus();
+        });
+      });
+      menu.querySelector("[data-bs-close]").addEventListener("click", () => {
+        menu.hidden = true;
+        opener?.focus();
+      });
+    });
+  })();
+</script>

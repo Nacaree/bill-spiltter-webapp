@@ -86,7 +86,7 @@
 }
 
 .headerTools .iconButton,
-.sheetHeader .iconButton {
+.sheet .iconButton {
   width: var(--ds-control-height);
   min-width: var(--ds-control-height);
   min-height: var(--ds-control-height);
@@ -128,13 +128,16 @@
 .pageTitle .shareButton {
   flex-shrink: 0;
   min-height: var(--ds-control-height);
-  gap: 5px;
+  gap: 6px;
   padding: 9px 11px;
-  border-color: var(--ds-line);
   font-size: 12px;
   white-space: nowrap;
 }
-.pageTitle .shareButton [data-icon-library] {
+.pageTitle .shareButton[data-copy-state="copied"]:not(:disabled) {
+  --ds-button-top-light: var(--ds-tint);
+  box-shadow: var(--ds-button-surface-shadow);
+}
+.pageTitle .shareButton :is([data-icon-library], [data-icon-placeholder]) {
   width: 15px;
   height: 15px;
   flex-basis: 15px;
@@ -225,6 +228,7 @@
   border-radius: var(--ds-control-radius);
   color: var(--ds-brand-text);
   background: #ffffff0d;
+  /* The glass outline supplies this action's edge highlight. */
   box-shadow: none;
   font-size: 13px;
 }
@@ -307,6 +311,9 @@
   padding: var(--ds-row-padding);
   color: var(--ds-text);
   background: var(--ds-surface);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 8px 20px -14px rgba(55, 35, 80, 0.22);
   text-align: left;
   line-height: 1.5;
   cursor: pointer;
@@ -458,6 +465,97 @@
 .activitySection {
   margin-top: 16px;
 }
+.receiptEmpty {
+  display: grid;
+  justify-items: center;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-control-radius);
+  padding: 24px 20px 18px;
+  background: var(--ds-surface);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 8px 20px -14px rgba(55, 35, 80, 0.22);
+  text-align: center;
+}
+.receiptEmpty h3 {
+  margin: 0;
+  color: var(--ds-text);
+  font-size: 20px;
+  font-weight: var(--ds-weight-heading);
+  letter-spacing: -0.035em;
+  line-height: 1.25;
+}
+.receiptEmpty p {
+  max-width: 250px;
+  margin: 10px 0 0;
+  color: var(--ds-muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+.receiptIllustration {
+  position: relative;
+  width: 140px;
+  height: 112px;
+  margin-bottom: 16px;
+}
+.receiptPaper {
+  position: absolute;
+  top: 3px;
+  left: 40px;
+  width: 64px;
+  height: 86px;
+  border: 1px solid var(--ds-line);
+  border-radius: 9px;
+  padding: 14px 12px;
+  background: var(--ds-surface);
+  box-shadow: 0 8px 14px rgba(55, 35, 80, 0.08);
+  transform: rotate(9deg);
+}
+.receiptPaperBack {
+  top: 7px;
+  left: 29px;
+  background: var(--ds-tint);
+  transform: rotate(-13deg);
+}
+.receiptPaper svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  margin-bottom: 10px;
+  color: var(--ds-brand-ink);
+}
+.receiptRule {
+  display: block;
+  height: 3px;
+  margin-top: 5px;
+  border-radius: 3px;
+  background: var(--ds-line);
+}
+.receiptRule:last-child {
+  width: 60%;
+}
+.receiptEmpty .emptyExpenseAction {
+  gap: 8px;
+  margin-top: 12px;
+  padding-inline: 0;
+}
+.receiptEmpty .emptyExpenseAction:hover:not(:disabled) {
+  background: transparent;
+}
+.emptyActivity {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  color: var(--ds-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.emptyActivity > span {
+  display: inline-flex;
+  flex: 0 0 16px;
+  margin-top: 2px;
+}
 .activitySection > .sectionHeading {
   margin: 0 0 12px;
 }
@@ -477,7 +575,9 @@
   border: 1px solid color-mix(in srgb, var(--ds-line) 85%, transparent);
   border-radius: var(--ds-control-radius);
   background: var(--ds-surface);
-  box-shadow: 0 2px 8px #27223106;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 8px 20px -14px rgba(55, 35, 80, 0.22);
 }
 .activity li:not([data-has-actor]) {
   grid-template-columns: minmax(0, 1fr) auto;
@@ -550,11 +650,11 @@
 }
 .fullButton {
   width: 100%;
-  min-height: 50px;
 }
 
 /* Native row buttons retain their layout while sharing system feedback. */
-.page :where(a, button, summary):focus-visible {
+.page :where(a, button, summary):focus-visible,
+.sheet :where(a, button, summary):focus-visible {
   outline: 3px solid var(--ds-brand-ink);
   outline-offset: 4px;
 }
@@ -564,12 +664,19 @@
 .expenseRow:focus-visible {
   outline-offset: -4px;
 }
-.peopleSummary,
 .expenseRow {
   transition: background var(--ds-motion-standard) var(--ds-motion-ease);
 }
+.peopleSummary {
+  transition:
+    background var(--ds-motion-standard) var(--ds-motion-ease),
+    box-shadow var(--ds-motion-standard) var(--ds-motion-ease);
+}
 .peopleSummary:hover {
   background: var(--ds-tint);
+  box-shadow:
+    inset 0 1px 0 var(--ds-tint),
+    0 8px 20px -14px rgba(55, 35, 80, 0.22);
 }
 
 .expenseSummary {
@@ -1109,32 +1216,6 @@
   color: #6a5f71;
   font-size: 12px;
 }
-.fileLabel {
-  position: relative;
-  display: grid;
-  width: 100%;
-  min-height: 50px;
-  align-items: center;
-  overflow: hidden;
-  border: 1px solid #754098;
-  border-radius: 22px;
-  color: white;
-  background: #663399;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.fileLabel input {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  opacity: 0;
-  cursor: pointer;
-}
-.fileLabel:focus-within {
-  outline: 2px solid #663399;
-  outline-offset: 3px;
-}
 .receiptUpload .fileName {
   overflow-wrap: anywhere;
   color: #715489;
@@ -1385,50 +1466,9 @@
   text-align: center;
 }
 
-.sheet {
-  position: fixed;
-  inset: auto 0 0;
-  width: min(100%, 560px);
-  max-width: 100%;
-  max-height: 88dvh;
-  margin: 0 auto;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  border: 1px solid #e9dfee;
-  border-bottom: 0;
-  border-radius: 28px 28px 0 0;
-  padding: 10px 24px calc(26px + env(safe-area-inset-bottom));
-  color: #48324f;
-  background: #fdfbff;
-  box-shadow: 0 -18px 80px #34203f20;
-}
-.sheet::backdrop {
-  background: #30213970;
-  backdrop-filter: blur(4px);
-}
-.handle {
-  display: block;
-  width: 36px;
-  height: 4px;
-  margin: 0 auto 9px;
-  border-radius: 99px;
-  background: #d7c8e2;
-}
-.sheetHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.sheetHeader h2 {
-  margin: 0;
-  font-size: 23px;
-  line-height: 1.2;
-  letter-spacing: -0.04em;
-}
 .sheetDescription {
   margin: 10px 0 22px;
-  color: #6c5c75;
+  color: var(--ds-muted);
   font-size: 14px;
   line-height: 1.7;
 }
@@ -1436,30 +1476,11 @@
   display: flex;
   width: 100%;
   align-items: center;
+  justify-content: flex-start;
   gap: 14px;
   margin: 10px 0;
-  border: 1px solid #e7dbef;
-  border-radius: 20px;
   padding: 17px;
-  color: #6c477f;
-  background: #fff;
   text-align: left;
-  cursor: pointer;
-}
-.addOption > [data-icon-library] {
-  display: grid;
-  width: 48px;
-  height: 48px;
-  flex: 0 0 48px;
-  place-items: center;
-  border-radius: 14px;
-  color: #7b5d41;
-  background: #fcf1e7;
-  font-size: 31px;
-}
-.manualOption > [data-icon-library] {
-  color: #725788;
-  background: #f0e6f9;
 }
 .addOption > span:nth-child(2) {
   display: grid;
@@ -1470,7 +1491,7 @@
   font-weight: 600;
 }
 .addOption small {
-  color: #695c71;
+  color: var(--ds-muted);
   font-size: 12px;
 }
 .menuIdentity {
@@ -1544,9 +1565,7 @@
   border-radius: 50%;
   background: #a3c5ad;
 }
-.inviteForm {
-  display: grid;
-  gap: 12px;
+.inviteAction {
   margin-top: 24px;
   border-top: 1px solid #e6d9ef;
   padding-top: 22px;
@@ -1558,7 +1577,6 @@
 }
 .confirmButtons button {
   padding-inline: 10px;
-  font-size: 13px;
 }
 .error {
   border: 1px solid #ecc4d0;
@@ -1647,9 +1665,6 @@
     border-radius: 0;
     padding-bottom: calc(10px + env(safe-area-inset-bottom));
   }
-  .sheet {
-    max-width: 560px;
-  }
   .balanceCard {
     padding: 16px;
   }
@@ -1690,15 +1705,13 @@
   .stats strong {
     font-size: 18px;
   }
-  .sheet {
-    padding-inline: 18px;
-  }
   .twoFields {
     grid-template-columns: 1fr;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .pageTitle .shareButton,
   .peopleSummary,
   .expenseText strong {
     transition: none;

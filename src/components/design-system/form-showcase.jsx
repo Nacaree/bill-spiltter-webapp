@@ -1,16 +1,9 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
-import { Dialog } from "radix-ui";
-import { DatePicker } from "@/components/ui/date-picker";
-import { formatMoney, parseMoneyToMinor, splitEqually } from "@/lib/money";
-import {
-  DesignButton,
-  DesignCheckbox,
-  DesignField,
-  DesignSurface,
-} from "./primitives";
-import { PersonPicker } from "./person-picker";
+import { useState } from "react";
+import { DesignButton, DesignSurface } from "./primitives";
+import { FormDialog } from "./form-dialog";
+import { ExpenseFormDialog, PersonFormDialog } from "./bill-form-dialogs";
 import styles from "./form-showcase.module.css";
 
 const people = [
@@ -51,7 +44,6 @@ const formats = [
 ];
 
 export function FormShowcase() {
-  const id = useId();
   const [notice, setNotice] = useState("");
   return (
     <div className={styles.showcase}>
@@ -88,11 +80,7 @@ export function FormShowcase() {
                 ))}
               </div>
             </div>
-            <FormPreview
-              format={format}
-              id={`${id}-${format.id}`}
-              onSaved={setNotice}
-            />
+            <FormPreview format={format} onSaved={setNotice} />
           </DesignSurface>
         ))}
       </div>
@@ -113,259 +101,82 @@ export function FormShowcase() {
   );
 }
 
-function FormPreview({ format, id, onSaved }) {
+function FormPreview({ format, onSaved }) {
   const [open, setOpen] = useState(false);
-  const [description, setDescription] = useState("Dinner at Malis");
-  const [amount, setAmount] = useState("48.00");
-  const [payer, setPayer] = useState("you");
-  const [date, setDate] = useState("2026-10-29");
-  const [selected, setSelected] = useState(people.map((person) => person.id));
+  const [draft, setDraft] = useState({
+    description: "Dinner at Malis",
+    amount: "48.00",
+    paidBy: "you",
+    date: "2026-10-29",
+    people: people.map((person) => person.id),
+    method: "equal",
+    exact: {},
+    category: "Food & drinks",
+    notes: "",
+  });
   const [name, setName] = useState("");
-  const [errors, setErrors] = useState({});
-  const descriptionInput = useRef(null);
-  const amountInput = useRef(null);
-  const nameInput = useRef(null);
-  const splitGroup = useRef(null);
-  let shares = [];
-  try {
-    if (selected.length)
-      shares = splitEqually(parseMoneyToMinor(amount, "USD"), selected);
-  } catch {
-    /* Invalid sample amounts are explained on submit. */
-  }
-  const isExpense = format.id === "expense";
-  const isConfirm = format.id === "confirm";
-  const title = isExpense
-    ? "Add an expense"
-    : isConfirm
-      ? "Remove this expense?"
-      : "Add a person";
-
-  function submit(event) {
-    event.preventDefault();
-    const nextErrors = {};
-    if (isExpense) {
-      if (!description.trim())
-        nextErrors.description = "Give the expense a name.";
-      try {
-        parseMoneyToMinor(amount, "USD");
-      } catch {
-        nextErrors.amount =
-          "Enter an amount greater than zero, with up to two decimal places.";
-      }
-      if (!selected.length) nextErrors.people = "Choose at least one person.";
-    } else if (!isConfirm && !name.trim())
-      nextErrors.name = "Enter the person’s name.";
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length) {
-      (nextErrors.description
-        ? descriptionInput
-        : nextErrors.amount
-          ? amountInput
-          : nextErrors.name
-            ? nameInput
-            : splitGroup
-      ).current?.focus();
-      return;
-    }
-    onSaved(
-      isExpense
-        ? `Sample expense saved: ${description.trim()}. No real bill changed.`
-        : isConfirm
-          ? "Sample expense removed. No real bill changed."
-          : `${name.trim()} added to the sample preview. No real bill changed.`,
+  const trigger = (
+    <DesignButton variant="secondary" icon="arrow" iconPosition="end">
+      {format.button}
+    </DesignButton>
+  );
+  const common = {
+    open,
+    onOpenChange: setOpen,
+    trigger,
+    eyebrow: "Weekend dinner · Preview",
+    closeLabel: "Close form preview",
+    footerNote: "Sample draft only. Your entries stay here if you close.",
+  };
+  if (format.id === "expense")
+    return (
+      <ExpenseFormDialog
+        {...common}
+        value={draft}
+        onValueChange={(changes) =>
+          setDraft((current) => ({ ...current, ...changes }))
+        }
+        people={people}
+        allowExact
+        categoryOptions={["Food & drinks", "Transport", "Shopping", "Other"]}
+        submitLabel="Save sample expense"
+        onSave={() => {
+          onSaved(
+            `Sample expense saved: ${draft.description.trim()}. No real bill changed.`,
+          );
+          setOpen(false);
+        }}
+      />
     );
-    setOpen(false);
-  }
-
+  if (format.id === "person")
+    return (
+      <PersonFormDialog
+        {...common}
+        value={name}
+        onValueChange={setName}
+        people={people}
+        submitLabel="Add sample person"
+        onSave={(name) => {
+          onSaved(`${name} added to the sample preview. No real bill changed.`);
+          setOpen(false);
+        }}
+      />
+    );
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger asChild>
-        <DesignButton variant="secondary" icon="arrow" iconPosition="end">
-          {format.button}
-        </DesignButton>
-      </Dialog.Trigger>
-      <Dialog.Portal>
-        <Dialog.Overlay className={styles.overlay} />
-        <Dialog.Content
-          className={styles.panel}
-          data-kind={format.id}
-          onOpenAutoFocus={(event) => {
-            if (!isConfirm) {
-              event.preventDefault();
-              (isExpense ? descriptionInput : nameInput).current?.focus();
-            }
-          }}
-        >
-          {!isConfirm && <span className={styles.handle} aria-hidden="true" />}
-          <div className={styles.header}>
-            <div>
-              <p className={styles.eyebrow}>WEEKEND DINNER · PREVIEW</p>
-              <Dialog.Title>{title}</Dialog.Title>
-              <Dialog.Description>
-                {isExpense
-                  ? "A little shared, a little simpler."
-                  : isConfirm
-                    ? "Dinner at Malis · $48.00. Removing it would recalculate everyone’s share."
-                    : "They can claim their name when they open the shared bill link."}
-              </Dialog.Description>
-            </div>
-            <Dialog.Close asChild>
-              <DesignButton
-                icon="close"
-                variant="ghost"
-                className={styles.close}
-                aria-label="Close form preview"
-              />
-            </Dialog.Close>
-          </div>
-          <form noValidate onSubmit={submit} className={styles.form}>
-            {!isConfirm && (
-              <div className={styles.body}>
-                {isExpense ? (
-                  <>
-                    <DesignField
-                      id={`${id}-description`}
-                      label="Description"
-                      value={description}
-                      onChange={(event) => setDescription(event.target.value)}
-                      ref={descriptionInput}
-                      error={errors.description}
-                      maxLength={120}
-                      required
-                    />
-                    <div className={styles.twoColumns}>
-                      <DesignField
-                        id={`${id}-amount`}
-                        label="Amount · USD"
-                        inputMode="decimal"
-                        value={amount}
-                        onChange={(event) => setAmount(event.target.value)}
-                        ref={amountInput}
-                        error={errors.amount}
-                        required
-                      />
-                      <PersonPicker
-                        id={`${id}-payer`}
-                        label="Paid by"
-                        people={people}
-                        value={payer}
-                        onValueChange={setPayer}
-                      />
-                    </div>
-                    <DatePicker
-                      id={`${id}-date`}
-                      label="Expense date"
-                      value={date}
-                      onValueChange={setDate}
-                    />
-                    <fieldset
-                      ref={splitGroup}
-                      tabIndex={-1}
-                      className={styles.split}
-                      aria-describedby={
-                        errors.people ? `${id}-people-error` : undefined
-                      }
-                    >
-                      <legend>Split equally between</legend>
-                      <div className={styles.choices}>
-                        {people.map((person) => (
-                          <DesignCheckbox
-                            key={person.id}
-                            checked={selected.includes(person.id)}
-                            onChange={(event) =>
-                              setSelected((current) =>
-                                event.target.checked
-                                  ? [...current, person.id]
-                                  : current.filter(
-                                      (value) => value !== person.id,
-                                    ),
-                              )
-                            }
-                          >
-                            {person.name}
-                          </DesignCheckbox>
-                        ))}
-                      </div>
-                      {errors.people && (
-                        <p
-                          className={styles.error}
-                          id={`${id}-people-error`}
-                          role="alert"
-                        >
-                          {errors.people}
-                        </p>
-                      )}
-                    </fieldset>
-                    <div
-                      className={styles.sharePreview}
-                      aria-label="Sample share preview"
-                    >
-                      <p>Everyone’s share</p>
-                      {shares.length ? (
-                        shares.map((share) => (
-                          <div key={share.participantId}>
-                            <span>
-                              {
-                                people.find(
-                                  (person) => person.id === share.participantId,
-                                ).name
-                              }
-                            </span>
-                            <strong>
-                              {formatMoney(share.amountMinor, "USD")}
-                            </strong>
-                          </div>
-                        ))
-                      ) : (
-                        <span>
-                          Enter an amount and choose people to preview the
-                          split.
-                        </span>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <DesignField
-                    id={`${id}-name`}
-                    label="Person’s name"
-                    placeholder="e.g. Dara"
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    ref={nameInput}
-                    error={errors.name}
-                    maxLength={60}
-                    required
-                  />
-                )}
-              </div>
-            )}
-            <div className={styles.footer}>
-              <p>
-                {isConfirm
-                  ? "Preview only. No real expense will be removed."
-                  : "Sample draft only. Your entries stay here if you close."}
-              </p>
-              <div className={styles.actions}>
-                <Dialog.Close asChild>
-                  <DesignButton variant="secondary">Cancel</DesignButton>
-                </Dialog.Close>
-                <DesignButton
-                  type="submit"
-                  variant={isConfirm ? "destructive" : "primary"}
-                  icon={isConfirm ? undefined : "plus"}
-                >
-                  {isExpense
-                    ? "Save sample expense"
-                    : isConfirm
-                      ? "Remove sample expense"
-                      : "Add sample person"}
-                </DesignButton>
-              </div>
-            </div>
-          </form>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+    <FormDialog
+      {...common}
+      kind="confirm"
+      title="Remove this expense?"
+      description="Dinner at Malis · $48.00. Removing it would recalculate everyone’s share."
+      footerNote="Preview only. No real expense will be removed."
+      cancelLabel="Cancel"
+      submitIcon={null}
+      submitLabel="Remove sample expense"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSaved("Sample expense removed. No real bill changed.");
+        setOpen(false);
+      }}
+    />
   );
 }

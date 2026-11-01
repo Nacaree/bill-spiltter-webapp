@@ -169,9 +169,15 @@ export function DesignButton({
         onKeyDown?.(event);
       }}
     >
-      {iconPosition !== "end" && iconElement}
-      {children}
-      {iconPosition === "end" && iconElement}
+      {typeof children === "function" ? (
+        children(iconElement)
+      ) : (
+        <>
+          {iconPosition !== "end" && iconElement}
+          {children}
+          {iconPosition === "end" && iconElement}
+        </>
+      )}
     </button>
   );
 }

@@ -1,0 +1,133 @@
+.comparison {
+  min-height: 100dvh;
+  padding: 36px 24px 48px;
+  color: var(--ds-text);
+  background:
+    radial-gradient(ellipse at 50% 0, #e9dff2, transparent 65%), #eeebf2;
+}
+
+.intro {
+  max-width: 872px;
+  margin: 0 auto 32px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--ds-brand-ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.intro h1 {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 36px);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 1.15;
+}
+
+.intro > p:last-child {
+  margin: 10px 0 0;
+  color: var(--ds-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.previews {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 420px));
+  justify-content: center;
+  align-items: start;
+  gap: 32px;
+  max-width: 872px;
+  margin: 0 auto;
+}
+
+.previews > section {
+  min-width: 0;
+}
+
+.previewHeading {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.previewHeading h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.previewHeading a {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--ds-control-radius);
+  color: var(--ds-brand-ink);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.previewHeading a:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.previewHeading a:focus-visible {
+  outline: 3px solid var(--ds-brand-ink);
+  outline-offset: 4px;
+}
+
+.frame {
+  display: block;
+  width: 100%;
+  height: clamp(740px, calc(100dvh - 225px), 1000px);
+  border: 0;
+  border-radius: var(--ds-card-radius);
+  background: var(--ds-canvas);
+  box-shadow:
+    0 0 0 1px var(--ds-line),
+    0 16px 48px rgba(55, 35, 80, 0.08);
+}
+
+@media (max-width: 860px) {
+  .previews {
+    grid-template-columns: minmax(0, 420px);
+    gap: 36px;
+  }
+
+  .intro {
+    max-width: 420px;
+  }
+}
+
+@media (max-width: 480px) {
+  .comparison {
+    padding: 28px 0;
+  }
+
+  .intro,
+  .previewHeading {
+    padding-inline: 16px;
+  }
+
+  .frame {
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .frame {
+    outline: 1px solid CanvasText;
+    box-shadow: none;
+  }
+}

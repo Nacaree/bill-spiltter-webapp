@@ -5,9 +5,9 @@
 
 ## Task
 
-Polish /screen2, then integrate bill functionality; keep the create-bill form.
-Screen2 now uses the approved 8/3/3 contour clusters with a 9-second drift.
-Forms at /design-system#forms; review before applying to /screen2 drawers; see HANDOFF.
+Screen2 UI pass complete; next: integrate real bill actions; keep create-bill form.
+Screen2 compares independent populated/empty bills; empty uses Receipt vignette.
+Shared forms and animated drawers at /design-system#forms and /screen2; see HANDOFF.
 User owns remaining real-device/screen-reader/full keyboard/Firefox checks.
 Stage 2 skipped; Stage 3 migration user-reported applied; Stage 5 readiness done.
 
@@ -43,7 +43,7 @@ Stage 2 skipped; Stage 3 migration user-reported applied; Stage 5 readiness done
 - Collect safe provider HTTP status/classification on recurrence; no proven fix.
 - Local UI work changes /screen2 and design-system previews, with no hosted-data
   writes or migrations. Hosted deployment/cleanup status has not been refreshed.
-- Oct 31: 363 offline tests pass, 8 hosted skipped; contour checks pass
-  in Chromium/WebKit (prior 9 timestamp checks pass). Lint/format/build/axe pass.
+- Nov 1: 381 offline tests pass, 8 hosted skipped; shared entry/menu shell fixed.
+  41 browser checks + 3 final Add person checks pass; lint/format/build pass.
 - Preview shares Production; no isolated backend. QR-orphan retry limit remains.
   Privacy/Help content stays off to-do list.

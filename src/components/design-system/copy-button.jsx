@@ -46,6 +46,14 @@ export function DesignCopyButton({
     }
   }
 
+  const iconPlaceholder = (
+    <span
+      className={styles.buttonIcon}
+      data-icon-placeholder
+      aria-hidden="true"
+    />
+  );
+
   return (
     <DesignButton
       type="button"
@@ -58,17 +66,28 @@ export function DesignCopyButton({
       iconAnimate={state === "copied"}
       onClick={copy}
     >
-      <span className={styles.copyLabels} aria-live="polite" aria-atomic="true">
-        <span className={styles.copyIdleLabel} aria-hidden={state === "copied"}>
-          {children}
-        </span>
+      {(icon) => (
         <span
-          className={styles.copySuccessLabel}
-          aria-hidden={state !== "copied"}
+          className={styles.copyLabels}
+          aria-live="polite"
+          aria-atomic="true"
         >
-          {copiedLabel}
+          <span
+            className={styles.copyIdleLabel}
+            aria-hidden={state === "copied"}
+          >
+            {state !== "copied" ? icon : iconPlaceholder}
+            <span>{children}</span>
+          </span>
+          <span
+            className={styles.copySuccessLabel}
+            aria-hidden={state !== "copied"}
+          >
+            {state === "copied" ? icon : iconPlaceholder}
+            <span>{copiedLabel}</span>
+          </span>
         </span>
-      </span>
+      )}
     </DesignButton>
   );
 }

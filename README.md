@@ -86,6 +86,8 @@ The approved system is applied across the app and shared with this reference:
 - **#663399** brand and **Helvetica** throughout, with **Bold (700)** headings.
 - **Round** corners: 22px controls, 32px cards; circular checks inside split pills.
 - **Relaxed** spacing: 48px controls, 28px panel padding and 18px ledger rows.
+- Filled and outlined buttons use a faint top highlight and soft bottom shadow.
+  Purple highlights are restrained; outlined hover lighting follows the tint.
 - Selective glass at frost 45 for navigation, balance summaries and picker menus;
   forms, ledger entries, receipt review and QR details retain solid surfaces.
 - One inner focus stroke on fields, accessible keyboard menus, visible validation
@@ -106,24 +108,45 @@ checkmark column. Unusually long labels use an ellipsis with full-text titles.
 Helvetica uses the system installation with Helvetica Neue/Arial fallbacks.
 No custom heading font is downloaded.
 
+The [form previews](http://localhost:3000/design-system#forms) and Screen 2 share
+the complete expense and quick-person forms. They open as bottom drawers on phones
+and centered panels on desktop, with a scrollable body and visible action footer.
+Expense entry supports the person picker, calendar, equal/exact shares, category
+and notes. Close, Escape and backdrop dismissal retain the current local draft;
+expense and person forms have one primary footer action. Confirmation keeps Cancel.
+Screen 2's entry chooser and menus share the same panel, including its 240ms
+entrance and 140ms exit. The people drawer uses a purple primary **Add person**
+button with its icon and label in one row.
+
 The [calendar preview](http://localhost:3000/design-system#date-picker) combines
 DayPicker with Animate UI: a rounded glass panel, bold Helvetica month headings,
 purple selected dates, an outlined today, and Today / Yesterday shortcuts.
 Opening takes 240ms, month transitions 300ms, and selection feedback 150ms.
 The calendar stays anchored when it fits, and centers on narrow/short screens or
 when neither side of the field has enough room. Reduced motion makes changes
-immediate. This is a local design preview; live expense, receipt and payment date
-fields still use the native picker pending visual review.
+immediate. The same calendar control is used by expense, receipt-review and
+payment date fields.
 
 The [motion playground](http://localhost:3000/design-system#motion-playground)
 shows short press, selection, reveal, success and dialog transitions. A soft white
 shimmer makes one 1.8-second pass on interaction. Reduced motion keeps controls
 functional and uses a still highlight. The icon comparison remains replayable.
 
-The [Screen 2 prototype](http://localhost:3000/screen2) uses session-local sample
-data. Keep the existing main-app create-bill form; integration of the polished
-prototype with the real bill actions is the next phase. Reloading or resetting
-the prototype restores the sample ledger.
+The [Screen 2 prototype](http://localhost:3000/screen2) compares a populated bill
+and a fresh bill side by side, stacking them on narrow screens. Each preview has
+independent navigation, dialogs and session-local data. **Open preview** opens
+either state on its own: [with expenses](http://localhost:3000/screen2?preview=populated)
+or [empty](http://localhost:3000/screen2?preview=empty). The fresh bill starts with
+only its owner, zero totals, no expenses/activity and no saved payment QR. Its
+first-expense and invitation actions work locally; reloading or resetting restores
+that preview's starting state. Keep the existing main-app create-bill form;
+integration of the polished prototype with the real bill actions is the next phase.
+The empty overview uses the approved receipt-paper vignette with an **Add expense**
+action and a compact clock/activity message. The illustration is decorative and
+still; adding the first expense replaces it with the ledger and activity rows.
+Screen 2's action buttons use the studio's shared lighting, corners and control
+height across overview, expense/payment, drawer and receipt flows. The receipt
+picker uses the shared upload-icon button with native keyboard file selection.
 
 Its balance card shares NumberFlow (`@number-flow/react`) with the
 [balance animation preview](http://localhost:3000/design-system#balance-motion).

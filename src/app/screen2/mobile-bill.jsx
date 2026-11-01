@@ -2,6 +2,12 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import QRCode from "qrcode";
+import { DialogPanel } from "@/components/design-system/form-dialog";
+import dialogStyles from "@/components/design-system/form-dialog.module.css";
+import {
+  ExpenseFormDialog,
+  PersonFormDialog,
+} from "@/components/design-system/bill-form-dialogs";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/ui/brand-mark";
@@ -16,6 +22,8 @@ import { Coffee } from "@/components/design-system/icons/animate-ui/coffee";
 import { Route } from "@/components/design-system/icons/animate-ui/route";
 import { ShoppingBag } from "@/components/design-system/icons/animate-ui/shopping-bag";
 import { Tag } from "@/components/design-system/icons/animate-ui/tag";
+import { FileText } from "@/components/design-system/icons/animate-ui/file-text";
+import { Clock3 } from "@/components/design-system/icons/animate-ui/clock-3";
 import { calculateBalances, suggestTransfers } from "@/lib/balances";
 import { formatMoney, parseMoneyToMinor, splitEqually } from "@/lib/money";
 import { refreshVisibleClock } from "@/lib/visible-clock";
@@ -52,6 +60,17 @@ const emptyDraft = {
   notes: "",
   editing: null,
 };
+
+function createExpenseDraft(people, paidBy = "nary") {
+  return { ...emptyDraft, paidBy, people: people.map((person) => person.id) };
+}
+
+function createReceiptDraft(people) {
+  return exampleReceipt.map((line) => ({
+    ...line,
+    people: people.map((person) => person.id),
+  }));
+}
 
 function subscribeRoute(callback) {
   window.addEventListener("hashchange", callback);
@@ -162,46 +181,35 @@ function ActivityCard({ entry, people }) {
   );
 }
 
-function Sheet({ open, title, children, onDismiss }) {
-  const dialog = useRef(null);
-  useEffect(() => {
-    if (open && !dialog.current.open) dialog.current.showModal();
-    if (!open && dialog.current.open) dialog.current.close();
-  }, [open]);
+function Sheet({
+  open,
+  title,
+  children,
+  onDismiss,
+  returnFocusRef,
+  restoreFocus,
+  kind,
+}) {
   return (
-    <dialog
-      ref={dialog}
-      className={styles.sheet}
-      aria-labelledby="screen2-sheet-title"
-      onCancel={(event) => {
-        event.preventDefault();
-        onDismiss();
+    <DialogPanel
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) onDismiss();
       }}
-      onClick={(event) => {
-        if (event.target !== event.currentTarget) return;
-        const rect = event.currentTarget.getBoundingClientRect();
-        if (
-          event.clientY < rect.top ||
-          event.clientY > rect.bottom ||
-          event.clientX < rect.left ||
-          event.clientX > rect.right
-        )
-          onDismiss();
+      title={title}
+      kind={kind}
+      closeLabel="Close menu"
+      className={styles.sheet}
+      onCloseAutoFocus={(event) => {
+        event.preventDefault();
+        if (restoreFocus && returnFocusRef.current?.isConnected)
+          returnFocusRef.current.focus({ preventScroll: true });
       }}
     >
-      <span className={styles.handle} />
-      <div className={styles.sheetHeader}>
-        <h2 id="screen2-sheet-title">{title}</h2>
-        <Button
-          icon="close"
-          variant="ghost"
-          className={styles.iconButton}
-          aria-label="Close menu"
-          onClick={onDismiss}
-        />
+      <div className={`${dialogStyles.body} ${dialogStyles.optionsBody}`}>
+        {children}
       </div>
-      {children}
-    </dialog>
+    </DialogPanel>
   );
 }
 
@@ -268,30 +276,48 @@ function ExpenseRow({ expense, people, currentId, onOpen }) {
   );
 }
 
-export function MobileBill() {
+export function MobileBill({ initialState = "populated", embedded = false }) {
+  const startsEmpty = initialState === "empty";
+  const initialPeople = startsEmpty ? examplePeople.slice(0, 1) : examplePeople;
   const route = useSyncExternalStore(
     subscribeRoute,
     routeSnapshot,
     serverRoute,
   );
-  const [view, overlay] = route.split("/");
+  const [routeView, routeOverlay] = route.split("/");
+  // Keep existing bookmarked manual-entry links working with the shared drawer.
+  const view = routeView === "new" ? "expenses" : routeView;
+  const overlay = routeView === "new" ? "expense" : routeOverlay;
+  const sheetOpen =
+    Boolean(overlay) && overlay !== "expense" && overlay !== "person";
+  const [lastSheetOverlay, setLastSheetOverlay] = useState(overlay);
+  if (sheetOpen && lastSheetOverlay !== overlay) setLastSheetOverlay(overlay);
+  // Keep the outgoing panel's contents intact during its exit animation.
+  const sheetOverlay = sheetOpen ? overlay : lastSheetOverlay;
+
   const [role, setRole] = useState("owner");
   const [settlerId, setSettlerId] = useState("sokha");
-  const [people, setPeople] = useState(examplePeople);
-  const [expenses, setExpenses] = useState(exampleExpenses);
+  const [people, setPeople] = useState(initialPeople);
+  const [expenses, setExpenses] = useState(startsEmpty ? [] : exampleExpenses);
   const [settlements, setSettlements] = useState([]);
   const [activity, setActivity] = useState(() =>
-    createExampleActivity(typeof window === "undefined" ? null : Date.now()),
+    startsEmpty
+      ? []
+      : createExampleActivity(
+          typeof window === "undefined" ? null : Date.now(),
+        ),
   );
-  const [draft, setDraft] = useState(emptyDraft);
-  const [receiptLines, setReceiptLines] = useState(exampleReceipt);
+  const [draft, setDraft] = useState(() => createExpenseDraft(initialPeople));
+  const [receiptLines, setReceiptLines] = useState(() =>
+    createReceiptDraft(initialPeople),
+  );
   const [receiptStage, setReceiptStage] = useState("choose");
   const [receiptFile, setReceiptFile] = useState("");
   const [filter, setFilter] = useState("All");
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [qrEnabled, setQrEnabled] = useState(true);
+  const [qrEnabled, setQrEnabled] = useState(!startsEmpty);
   const [qrImage, setQrImage] = useState("");
   const [payAmount, setPayAmount] = useState("");
   const [paymentNote, setPaymentNote] = useState("");
@@ -299,7 +325,16 @@ export function MobileBill() {
   const [joinedName, setJoinedName] = useState("");
   const [deleted, setDeleted] = useState(false);
   const heading = useRef(null);
-  const currentId = role === "owner" ? "nary" : settlerId;
+  const receiptInput = useRef(null);
+  const expenseReturnFocus = useRef(null);
+  const sheetReturnFocus = useRef(null);
+  const addPersonTrigger = useRef(null);
+  const previousView = useRef(null);
+  const [previewHistory, setPreviewHistory] = useState([]);
+  const settler =
+    people.find((item) => item.id === settlerId) ??
+    people.find((item) => !item.is_creator);
+  const currentId = role === "owner" ? "nary" : (settler?.id ?? "nary");
   const person = people.find((item) => item.id === currentId) ?? people[0];
   const findPerson = (id) => people.find((item) => item.id === id);
   const balances = calculateBalances({
@@ -310,6 +345,7 @@ export function MobileBill() {
   const transfers = suggestTransfers(balances);
   const myBalance = balances.find((item) => item.id === currentId);
   const total = expenses.reduce((sum, item) => sum + item.amount_minor, 0);
+  const hasLedger = expenses.length > 0 || settlements.length > 0;
   const activeTab =
     view === "overview" || view === "join"
       ? "overview"
@@ -346,9 +382,12 @@ export function MobileBill() {
         : (titles[view] ?? "Weekend dinner")));
 
   useEffect(() => {
+    if (previousView.current === view) return;
+    previousView.current = view;
     window.scrollTo({ top: 0, behavior: "instant" });
-    heading.current?.focus({ preventScroll: true });
-  }, [view]);
+    if (overlay !== "expense" && overlay !== "person")
+      heading.current?.focus({ preventScroll: true });
+  }, [view, overlay]);
 
   useEffect(() => {
     if (!notice) return;
@@ -371,13 +410,21 @@ export function MobileBill() {
     };
   }, []);
 
-  function navigate(next, replace = false) {
+  function navigate(next, replace = false, trigger) {
     setError("");
+    const nextOverlay = next.split("/")[1];
+    if (nextOverlay && !overlay) {
+      sheetReturnFocus.current = trigger ?? document.activeElement;
+      if (nextOverlay === "add")
+        expenseReturnFocus.current = trigger ?? document.activeElement;
+    }
+    if (embedded && !replace)
+      setPreviewHistory((current) => [...current, route]);
     const state = {
       ...window.history.state,
       screen2From: replace ? window.history.state?.screen2From : route,
     };
-    window.history[replace ? "replaceState" : "pushState"](
+    window.history[embedded || replace ? "replaceState" : "pushState"](
       state,
       "",
       `#${next}`,
@@ -387,7 +434,11 @@ export function MobileBill() {
 
   function back(fallback = activeTab) {
     setError("");
-    if (window.history.state?.screen2From) window.history.back();
+    if (embedded) {
+      const previous = previewHistory.at(-1) ?? fallback;
+      setPreviewHistory((current) => current.slice(0, -1));
+      navigate(previous, true);
+    } else if (window.history.state?.screen2From) window.history.back();
     else navigate(fallback, true);
   }
 
@@ -402,13 +453,13 @@ export function MobileBill() {
   function openManual() {
     if (!draft.description && !draft.editing)
       updateDraft({ paidBy: currentId });
-    navigate("new", true);
+    navigate(`${view}/expense`, true);
   }
 
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(
-        `${window.location.origin}/screen2#overview`,
+        `${window.location.origin}/screen2?preview=${initialState}#overview`,
       );
       return true;
     } catch {
@@ -427,56 +478,36 @@ export function MobileBill() {
     refreshVisibleClock();
   }
 
-  function saveExpense(event) {
-    event.preventDefault();
-    try {
-      const amount = parseMoneyToMinor(draft.amount, "USD");
-      if (!draft.description.trim())
-        throw new Error("Give this expense a name.");
-      if (!draft.people.length)
-        throw new Error("Choose at least one person to split with.");
-      const shares =
-        draft.method === "equal"
-          ? splitEqually(amount, draft.people)
-          : draft.people.map((id) => ({
-              participantId: id,
-              amountMinor: parseMoneyToMinor(draft.exact[id] ?? "0", "USD", {
-                allowZero: true,
-              }),
-            }));
-      if (shares.reduce((sum, row) => sum + row.amountMinor, 0) !== amount)
-        throw new Error("The individual shares need to add up to the total.");
-      const expense = {
-        id: draft.editing ?? `expense_${Date.now()}`,
-        description: draft.description.trim(),
-        amount_minor: amount,
-        paid_by_participant_id: draft.paidBy,
-        category: draft.category,
-        date: draft.date,
-        shares,
-        notes: draft.notes,
-      };
-      setExpenses((current) =>
-        draft.editing
-          ? current.map((item) => (item.id === draft.editing ? expense : item))
-          : [expense, ...current],
-      );
-      addActivity(
-        `${draft.editing ? "Updated" : "Added"} ${expense.description}`,
-      );
-      setNotice(
-        draft.editing
-          ? "Expense updated. Balances are up to date."
-          : "Expense added. Everyone’s balance is up to date.",
-      );
-      setDraft({ ...emptyDraft, paidBy: currentId });
-      navigate("expenses", true);
-    } catch (problem) {
-      setError(problem.message);
-    }
+  function saveExpense({ amountMinor, shares }) {
+    const expense = {
+      id: draft.editing ?? `expense_${crypto.randomUUID()}`,
+      description: draft.description.trim(),
+      amount_minor: amountMinor,
+      paid_by_participant_id: draft.paidBy,
+      category: draft.category,
+      date: draft.date,
+      shares,
+      notes: draft.notes,
+    };
+    setExpenses((current) =>
+      draft.editing
+        ? current.map((item) => (item.id === draft.editing ? expense : item))
+        : [expense, ...current],
+    );
+    addActivity(
+      `${draft.editing ? "Updated" : "Added"} ${expense.description}`,
+    );
+    setNotice(
+      draft.editing
+        ? "Expense updated. Balances are up to date."
+        : "Expense added. Everyone’s balance is up to date.",
+    );
+    setDraft(createExpenseDraft(people, currentId));
+    navigate("expenses", true);
   }
 
-  function editExpense() {
+  function editExpense(event) {
+    expenseReturnFocus.current = event.currentTarget;
     setDraft({
       description: detail.description,
       amount: (detail.amount_minor / 100).toFixed(2),
@@ -494,7 +525,7 @@ export function MobileBill() {
       notes: detail.notes ?? "",
       editing: detail.id,
     });
-    navigate("new");
+    navigate(`${view}/expense`);
   }
 
   function confirmReceipt(event) {
@@ -535,7 +566,7 @@ export function MobileBill() {
       ]);
       addActivity("Added Lunch at Malis from a receipt");
       setReceiptStage("choose");
-      setReceiptLines(exampleReceipt);
+      setReceiptLines(createReceiptDraft(people));
       setNotice(
         "Receipt added. The confirmed items now count toward balances.",
       );
@@ -580,22 +611,11 @@ export function MobileBill() {
     }
   }
 
-  function addPerson(event) {
-    event.preventDefault();
-    const name = newPerson.trim();
-    if (!name) return;
-    if (
-      people.some(
-        (item) => item.display_name.toLowerCase() === name.toLowerCase(),
-      )
-    ) {
-      setError("That person is already on the bill.");
-      return;
-    }
+  function addPerson(name) {
     setPeople((current) => [
       ...current,
       {
-        id: `person_${Date.now()}`,
+        id: `person_${crypto.randomUUID()}`,
         display_name: name,
         initials: name
           .split(/\s+/)
@@ -610,22 +630,29 @@ export function MobileBill() {
     setNewPerson("");
     addActivity(`Added ${name} to the bill`);
     setNotice(`${name} can claim their name from the shared link.`);
+    back(`${view}/people`);
   }
 
   function reset() {
-    setPeople(examplePeople);
-    setExpenses(exampleExpenses);
+    setPreviewHistory([]);
+    setPeople(initialPeople);
+    setExpenses(startsEmpty ? [] : exampleExpenses);
     setSettlements([]);
-    setDraft(emptyDraft);
-    setReceiptLines(exampleReceipt);
+    setDraft(createExpenseDraft(initialPeople));
+    setReceiptLines(createReceiptDraft(initialPeople));
     setReceiptStage("choose");
+    setReceiptFile("");
     setRole("owner");
     setSettlerId("sokha");
     setDeleted(false);
-    setQrEnabled(true);
-    setActivity(createExampleActivity(Date.now()));
+    setQrEnabled(!startsEmpty);
+    setActivity(startsEmpty ? [] : createExampleActivity(new Date().getTime()));
     refreshVisibleClock();
     setNotice("");
+    setPayAmount("");
+    setPaymentNote("");
+    setNewPerson("");
+    setJoinedName("");
     setQuery("");
     setFilter("All");
     navigate("overview", true);
@@ -667,9 +694,11 @@ export function MobileBill() {
                 aria-label="View as"
               >
                 <option value="owner">Owner · Nary</option>
-                <option value="settler">
-                  Settler · {findPerson(settlerId)?.display_name}
-                </option>
+                {settler ? (
+                  <option value="settler">
+                    Settler · {settler.display_name}
+                  </option>
+                ) : null}
               </select>
             </label>
             <Button
@@ -677,7 +706,9 @@ export function MobileBill() {
               variant="ghost"
               className={styles.iconButton}
               aria-label="Bill menu"
-              onClick={() => navigate(`${view}/menu`)}
+              onClick={(event) =>
+                navigate(`${view}/menu`, false, event.currentTarget)
+              }
             />
           </div>
         </header>
@@ -723,16 +754,20 @@ export function MobileBill() {
           ) : view === "overview" ? (
             <>
               <p className={styles.subtitle}>
-                Good food. Great company. Fair shares.
+                {hasLedger
+                  ? "Good food. Great company. Fair shares."
+                  : "Your bill is ready. Start sharing."}
               </p>
               <BalanceCard balanceMinor={myBalance.netMinor}>
                 <div className={styles.balanceTop}>
                   <span className={styles.balanceLabel}>
-                    {myBalance.netMinor > 0
-                      ? "You’re owed"
-                      : myBalance.netMinor < 0
-                        ? "You owe"
-                        : "All settled"}
+                    {!hasLedger
+                      ? "Ready when you are"
+                      : myBalance.netMinor > 0
+                        ? "You’re owed"
+                        : myBalance.netMinor < 0
+                          ? "You owe"
+                          : "All settled"}
                   </span>
                   <span>USD</span>
                 </div>
@@ -740,23 +775,39 @@ export function MobileBill() {
                   <AnimatedMoney amountMinor={Math.abs(myBalance.netMinor)} />
                 </strong>
                 <div className={styles.balanceCaption}>
-                  {myBalance.netMinor > 0
-                    ? `From ${personalTransfers.filter((item) => item.toParticipantId === currentId).length} ${personalTransfers.length === 1 ? "person" : "people"} in this bill`
-                    : myBalance.netMinor < 0
-                      ? "Your share, after what you’ve already paid"
-                      : "You’re up to date with the group"}
+                  {!hasLedger
+                    ? "Add an expense to start sharing costs"
+                    : myBalance.netMinor > 0
+                      ? `From ${personalTransfers.filter((item) => item.toParticipantId === currentId).length} ${personalTransfers.length === 1 ? "person" : "people"} in this bill`
+                      : myBalance.netMinor < 0
+                        ? "Your share, after what you’ve already paid"
+                        : "You’re up to date with the group"}
                 </div>
                 <Button
-                  icon={myBalance.netMinor === 0 ? "check" : "arrow"}
+                  icon={
+                    !hasLedger
+                      ? "plus"
+                      : myBalance.netMinor === 0
+                        ? "check"
+                        : "arrow"
+                  }
                   iconPosition="end"
                   className={styles.balanceAction}
-                  onClick={() => navigate("settle")}
+                  onClick={(event) =>
+                    navigate(
+                      hasLedger ? "settle" : "overview/add",
+                      false,
+                      event.currentTarget,
+                    )
+                  }
                 >
-                  {myBalance.netMinor > 0
-                    ? "See who owes you"
-                    : myBalance.netMinor < 0
-                      ? "Settle your share"
-                      : "View balances"}
+                  {!hasLedger
+                    ? "Add your first expense"
+                    : myBalance.netMinor > 0
+                      ? "See who owes you"
+                      : myBalance.netMinor < 0
+                        ? "Settle your share"
+                        : "View balances"}
                 </Button>
               </BalanceCard>
               <div className={styles.stats}>
@@ -779,7 +830,9 @@ export function MobileBill() {
                 variant="secondary"
                 icon="arrow"
                 iconPosition="end"
-                onClick={() => navigate("overview/people")}
+                onClick={(event) =>
+                  navigate("overview/people", false, event.currentTarget)
+                }
               >
                 <span className={styles.avatarStack}>
                   {people.slice(0, 3).map((item) => (
@@ -787,37 +840,88 @@ export function MobileBill() {
                   ))}
                 </span>
                 <span>
-                  <strong>{people.length} people, one bill</strong>
+                  <strong>
+                    {people.length === 1
+                      ? "Just you, for now"
+                      : `${people.length} people, one bill`}
+                  </strong>
                   <small>
-                    {people.some((item) => item.waiting)
-                      ? "Someone is waiting to join"
-                      : "Everyone’s here"}
+                    {people.length === 1
+                      ? "Invite people to split with you"
+                      : people.some((item) => item.waiting)
+                        ? "Someone is waiting to join"
+                        : "Everyone’s here"}
                   </small>
                 </span>
               </Button>
               <div className={styles.sectionHeading}>
                 <h2>Recent expenses</h2>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  icon="arrow"
-                  iconPosition="end"
-                  onClick={() => navigate("expenses")}
+                {expenses.length > 0 ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    icon="arrow"
+                    iconPosition="end"
+                    onClick={() => navigate("expenses")}
+                  >
+                    See all
+                  </Button>
+                ) : null}
+              </div>
+              {expenses.length > 0 ? (
+                <div className={styles.expenseList}>
+                  {expenses.slice(0, 2).map((item) => (
+                    <ExpenseRow
+                      key={item.id}
+                      expense={item}
+                      people={people}
+                      currentId={currentId}
+                      onOpen={() => navigate(`detail-${item.id}`)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <section
+                  className={styles.receiptEmpty}
+                  aria-labelledby="screen2-empty-expenses-title"
                 >
-                  See all
-                </Button>
-              </div>
-              <div className={styles.expenseList}>
-                {expenses.slice(0, 2).map((item) => (
-                  <ExpenseRow
-                    key={item.id}
-                    expense={item}
-                    people={people}
-                    currentId={currentId}
-                    onOpen={() => navigate(`detail-${item.id}`)}
-                  />
-                ))}
-              </div>
+                  <div
+                    className={styles.receiptIllustration}
+                    aria-hidden="true"
+                  >
+                    <span
+                      className={`${styles.receiptPaper} ${styles.receiptPaperBack}`}
+                    />
+                    <span className={styles.receiptPaper}>
+                      <FileText size={20} strokeWidth={1.5} animate={false} />
+                      <span className={styles.receiptRule} />
+                      <span className={styles.receiptRule} />
+                      <span className={styles.receiptRule} />
+                    </span>
+                  </div>
+                  <h3 id="screen2-empty-expenses-title">
+                    A little receipt.
+                    <br />A lot less math.
+                  </h3>
+                  <p>
+                    Add your first expense.
+                    <br />
+                    We’ll help with the split.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    icon="arrow"
+                    iconPosition="end"
+                    className={styles.emptyExpenseAction}
+                    onClick={(event) =>
+                      navigate("overview/add", false, event.currentTarget)
+                    }
+                  >
+                    Add expense
+                  </Button>
+                </section>
+              )}
               <section
                 className={styles.activitySection}
                 aria-labelledby="screen2-activity-heading"
@@ -825,15 +929,24 @@ export function MobileBill() {
                 <div className={styles.sectionHeading}>
                   <h2 id="screen2-activity-heading">Recent activity</h2>
                 </div>
-                <ul className={styles.activity}>
-                  {activity.slice(0, 3).map((item, index) => (
-                    <ActivityCard
-                      key={`${item.actorId}-${item.message}-${index}`}
-                      entry={item}
-                      people={people}
-                    />
-                  ))}
-                </ul>
+                {activity.length > 0 ? (
+                  <ul className={styles.activity}>
+                    {activity.slice(0, 3).map((item, index) => (
+                      <ActivityCard
+                        key={`${item.actorId}-${item.message}-${index}`}
+                        entry={item}
+                        people={people}
+                      />
+                    ))}
+                  </ul>
+                ) : (
+                  <p className={styles.emptyActivity}>
+                    <span aria-hidden="true">
+                      <Clock3 size={16} animate={false} />
+                    </span>
+                    The little updates will live here.
+                  </p>
+                )}
               </section>
             </>
           ) : view === "expenses" ? (
@@ -850,7 +963,9 @@ export function MobileBill() {
               <Button
                 icon="plus"
                 className={styles.fullButton}
-                onClick={() => navigate("expenses/add")}
+                onClick={(event) =>
+                  navigate("expenses/add", false, event.currentTarget)
+                }
               >
                 Add expense
               </Button>
@@ -1007,7 +1122,9 @@ export function MobileBill() {
                 <button
                   type="button"
                   className={styles.qrSettings}
-                  onClick={() => navigate("settle/qr")}
+                  onClick={(event) =>
+                    navigate("settle/qr", false, event.currentTarget)
+                  }
                 >
                   <span className={styles.qrMini} aria-hidden="true">
                     ▦
@@ -1069,170 +1186,6 @@ export function MobileBill() {
                 </p>
               )}
             </>
-          ) : view === "new" ? (
-            <form
-              id="screen2-expense-form"
-              className={styles.form}
-              onSubmit={saveExpense}
-            >
-              <p className={styles.subtitle}>
-                A few details, and we’ll do the splitting.
-              </p>
-              <Field
-                label="What was it for?"
-                value={draft.description}
-                onChange={(event) =>
-                  updateDraft({ description: event.target.value })
-                }
-                placeholder="e.g. Dinner at Malis"
-                required
-                maxLength={100}
-              />
-              <Field label="Amount" className={styles.amountField}>
-                <span className={styles.amountInput}>
-                  <span>USD</span>
-                  <input
-                    aria-label="Amount"
-                    inputMode="decimal"
-                    placeholder="0.00"
-                    value={draft.amount}
-                    onChange={(event) =>
-                      updateDraft({ amount: event.target.value })
-                    }
-                    required
-                  />
-                </span>
-              </Field>
-              <div className={styles.twoFields}>
-                <Field label="Paid by">
-                  <select
-                    value={draft.paidBy}
-                    onChange={(event) =>
-                      updateDraft({ paidBy: event.target.value })
-                    }
-                  >
-                    {people.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.display_name}
-                        {item.id === currentId ? " (you)" : ""}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <Field
-                  label="Date"
-                  type="date"
-                  value={draft.date}
-                  onChange={(event) =>
-                    updateDraft({ date: event.target.value })
-                  }
-                  required
-                />
-              </div>
-              <fieldset className={styles.splitField}>
-                <legend>Split with</legend>
-                <div className={styles.splitChoices}>
-                  {people.map((item) => (
-                    <label
-                      key={item.id}
-                      className={
-                        draft.people.includes(item.id)
-                          ? styles.selectedChoice
-                          : ""
-                      }
-                    >
-                      <input
-                        type="checkbox"
-                        checked={draft.people.includes(item.id)}
-                        onChange={() =>
-                          updateDraft({
-                            people: draft.people.includes(item.id)
-                              ? draft.people.filter((id) => id !== item.id)
-                              : [...draft.people, item.id],
-                          })
-                        }
-                      />
-                      <Avatar person={item} small />
-                      <span>{item.display_name}</span>
-                      <span className={styles.choiceTick} aria-hidden="true">
-                        {draft.people.includes(item.id) ? "✓" : "+"}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-              <div
-                className={styles.methodToggle}
-                role="group"
-                aria-label="Split method"
-              >
-                {[
-                  ["equal", "Split equally"],
-                  ["exact", "Exact amounts"],
-                ].map(([id, label]) => (
-                  <button
-                    type="button"
-                    key={id}
-                    aria-pressed={draft.method === id}
-                    onClick={() => updateDraft({ method: id })}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              {draft.method === "exact" ? (
-                <div className={styles.exactFields}>
-                  {draft.people.map((id) => (
-                    <Field
-                      key={id}
-                      label={`${findPerson(id).display_name}’s share`}
-                      inputMode="decimal"
-                      placeholder="0.00"
-                      value={draft.exact[id] ?? ""}
-                      onChange={(event) =>
-                        updateDraft({
-                          exact: { ...draft.exact, [id]: event.target.value },
-                        })
-                      }
-                    />
-                  ))}
-                </div>
-              ) : (
-                <p className={styles.splitHint}>
-                  {draft.people.length
-                    ? `Each person’s share is about ${money(Math.round(previewMinor(draft.amount) / draft.people.length))}.`
-                    : "Choose who shared this expense."}
-                </p>
-              )}
-              <details className={styles.optional}>
-                <summary>
-                  Category & notes <span aria-hidden="true">+</span>
-                </summary>
-                <Field label="Category">
-                  <select
-                    value={draft.category}
-                    onChange={(event) =>
-                      updateDraft({ category: event.target.value })
-                    }
-                  >
-                    <option>Food & drinks</option>
-                    <option>Transport</option>
-                    <option>Shopping</option>
-                    <option>Other</option>
-                  </select>
-                </Field>
-                <Field label="Notes">
-                  <textarea
-                    rows={3}
-                    placeholder="Anything the group should know?"
-                    value={draft.notes}
-                    onChange={(event) =>
-                      updateDraft({ notes: event.target.value })
-                    }
-                  />
-                </Field>
-              </details>
-            </form>
           ) : view === "receipt" ? (
             receiptStage === "choose" ? (
               <section className={styles.receiptUpload}>
@@ -1263,16 +1216,24 @@ export function MobileBill() {
                 <p>
                   Choose an image, check the items, and decide who shared what.
                 </p>
-                <label className={styles.fileLabel}>
+                <Button
+                  icon="upload"
+                  type="button"
+                  className={styles.fullButton}
+                  onClick={() => receiptInput.current?.click()}
+                >
                   Choose receipt image
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/heic,image/heif"
-                    onChange={(event) =>
-                      setReceiptFile(event.target.files?.[0]?.name ?? "")
-                    }
-                  />
-                </label>
+                </Button>
+                <input
+                  ref={receiptInput}
+                  hidden
+                  type="file"
+                  accept="image/jpeg,image/png,image/heic,image/heif"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) setReceiptFile(file.name);
+                  }}
+                />
                 {receiptFile ? (
                   <p className={styles.fileName}>{receiptFile}</p>
                 ) : null}
@@ -1447,7 +1408,9 @@ export function MobileBill() {
               <Button
                 variant="ghost"
                 className={styles.removeButton}
-                onClick={() => navigate(`${view}/remove`)}
+                onClick={(event) =>
+                  navigate(`${view}/remove`, false, event.currentTarget)
+                }
               >
                 Remove expense
               </Button>
@@ -1605,31 +1568,23 @@ export function MobileBill() {
               </Button>
             ))}
           </nav>
-        ) : view === "new" ||
-          (view === "receipt" && receiptStage === "review") ||
-          transfer ? (
+        ) : (view === "receipt" && receiptStage === "review") || transfer ? (
           <div className={styles.actionBar}>
             <Button
               icon="check"
               type="submit"
               form={
-                view === "new"
-                  ? "screen2-expense-form"
-                  : view === "receipt"
-                    ? "screen2-receipt-form"
-                    : "screen2-payment-form"
+                view === "receipt"
+                  ? "screen2-receipt-form"
+                  : "screen2-payment-form"
               }
               className={styles.fullButton}
             >
-              {view === "new"
-                ? draft.editing
-                  ? "Save changes"
-                  : "Add expense"
-                : view === "receipt"
-                  ? "Confirm & add expense"
-                  : isSender
-                    ? "I’ve paid — record payment"
-                    : "Record received payment"}
+              {view === "receipt"
+                ? "Confirm & add expense"
+                : isSender
+                  ? "I’ve paid — record payment"
+                  : "Record received payment"}
             </Button>
           </div>
         ) : null}
@@ -1646,8 +1601,46 @@ export function MobileBill() {
           ) : null}
         </div>
 
+        <ExpenseFormDialog
+          open={overlay === "expense"}
+          onOpenChange={(open) => {
+            if (!open) dismiss();
+          }}
+          value={draft}
+          onValueChange={updateDraft}
+          people={people}
+          onSave={saveExpense}
+          allowExact
+          categoryOptions={["Food & drinks", "Transport", "Shopping", "Other"]}
+          title={draft.editing ? "Edit expense" : "Add an expense"}
+          submitLabel={draft.editing ? "Save changes" : "Add expense"}
+          submitIcon={draft.editing ? "check" : "plus"}
+          returnFocusRef={expenseReturnFocus}
+          fallbackFocusRef={heading}
+          closeLabel="Close expense form"
+        />
+        <PersonFormDialog
+          open={overlay === "person"}
+          onOpenChange={(open) => {
+            if (!open) dismiss();
+          }}
+          value={newPerson}
+          onValueChange={setNewPerson}
+          people={people}
+          onSave={addPerson}
+          returnFocusRef={addPersonTrigger}
+          fallbackFocusRef={heading}
+          closeLabel="Close person form"
+        />
         <Sheet
-          open={Boolean(overlay)}
+          open={sheetOpen}
+          kind={
+            sheetOverlay === "remove" || sheetOverlay === "delete"
+              ? "confirm"
+              : "options"
+          }
+          returnFocusRef={sheetReturnFocus}
+          restoreFocus={overlay !== "expense" && overlay !== "person"}
           title={
             {
               add: "Add to the bill",
@@ -1656,11 +1649,11 @@ export function MobileBill() {
               qr: "Your payment QR",
               remove: "Remove this expense?",
               delete: "Delete this bill?",
-            }[overlay] ?? "Bill options"
+            }[sheetOverlay] ?? "Bill options"
           }
           onDismiss={dismiss}
         >
-          {overlay === "add" ? (
+          {sheetOverlay === "add" ? (
             <>
               <p className={styles.sheetDescription}>
                 Choose what’s easiest. We’ll handle the math.
@@ -1683,7 +1676,7 @@ export function MobileBill() {
               <Button
                 icon="plus"
                 variant="secondary"
-                className={`${styles.addOption} ${styles.manualOption}`}
+                className={styles.addOption}
                 onClick={openManual}
               >
                 <span>
@@ -1694,7 +1687,7 @@ export function MobileBill() {
               </Button>
             </>
           ) : null}
-          {overlay === "menu" ? (
+          {sheetOverlay === "menu" ? (
             <>
               <div className={styles.menuIdentity}>
                 <Avatar person={person} />
@@ -1750,7 +1743,7 @@ export function MobileBill() {
               </div>
             </>
           ) : null}
-          {overlay === "people" ? (
+          {sheetOverlay === "people" ? (
             <>
               <p className={styles.sheetDescription}>
                 One private link keeps everyone together.
@@ -1779,26 +1772,20 @@ export function MobileBill() {
               <DesignCopyButton onCopy={copyLink} className={styles.fullButton}>
                 Copy invitation link
               </DesignCopyButton>
-              <form onSubmit={addPerson} className={styles.inviteForm}>
-                <Field
-                  label="Add a name to the bill"
-                  value={newPerson}
-                  onChange={(event) => setNewPerson(event.target.value)}
-                  placeholder="e.g. Dara"
-                  required
-                />
+              <div className={styles.inviteAction}>
                 <Button
+                  ref={addPersonTrigger}
                   icon="plus"
-                  type="submit"
-                  variant="secondary"
+                  variant="primary"
                   className={styles.fullButton}
+                  onClick={() => navigate(`${view}/person`)}
                 >
                   Add person
                 </Button>
-              </form>
+              </div>
             </>
           ) : null}
-          {overlay === "qr" ? (
+          {sheetOverlay === "qr" ? (
             <>
               <p className={styles.sheetDescription}>
                 {qrEnabled
@@ -1836,7 +1823,7 @@ export function MobileBill() {
               </Button>
             </>
           ) : null}
-          {overlay === "remove" ? (
+          {sheetOverlay === "remove" ? (
             <>
               <p className={styles.sheetDescription}>
                 Remove {detail?.description} from the bill? Everyone’s balance
@@ -1862,7 +1849,7 @@ export function MobileBill() {
               </div>
             </>
           ) : null}
-          {overlay === "delete" ? (
+          {sheetOverlay === "delete" ? (
             <>
               <p className={styles.sheetDescription}>
                 Everyone will lose access to this bill and its expenses.
