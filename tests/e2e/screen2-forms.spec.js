@@ -191,17 +191,29 @@ test("exact splits validate totals and preserve details through editing", async 
   expect(backendRequests).toEqual([]);
 });
 
-test("quick person form validates, retains its draft and returns to the people list", async ({
+test("people drawer adds names inline, retains drafts and supports repeated entry", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/screen2?preview=empty");
-  await page.getByRole("button", { name: /Just you, for now/ }).click();
+  const trigger = page.getByRole("button", { name: /Just you, for now/ });
+  await expect(trigger).toContainText("Add names or share an invitation link");
+  await trigger.click();
   const people = page.getByRole("dialog", { name: "The people at your table" });
+  const originalPanel = await people.elementHandle();
+  const peopleUrl = page.url();
   const add = people.getByRole("button", { name: "Add person", exact: true });
   await add.click();
-  const form = page.getByRole("dialog", { name: "Add a person", exact: true });
+  const form = people.getByRole("form", { name: "Add a person", exact: true });
   const name = form.getByLabel("Person’s name", { exact: true });
+  await expect(page.getByRole("dialog")).toHaveCount(1);
+  expect(page.url()).toBe(peopleUrl);
+  expect(
+    await people.evaluate((node, original) => node === original, originalPanel),
+  ).toBe(true);
+  await expect(
+    people.getByRole("button", { name: "Copy invitation link" }),
+  ).toBeVisible();
   await expect(name).toBeFocused();
   await expect(
     form.getByRole("button", { name: "Cancel", exact: true }),
@@ -213,18 +225,173 @@ test("quick person form validates, retains its draft and returns to the people l
   await expect(form).toContainText("already on the bill");
   await name.fill("Dara");
   await page.keyboard.press("Escape");
-  await expect(people).toBeVisible();
-  await expect(add).toBeFocused();
+  await expect(people).toBeHidden();
+  await expect(trigger).toBeFocused();
+  await trigger.click();
   await expect(people.getByText("Dara", { exact: true })).toHaveCount(0);
-  await add.click();
   await expect(name).toHaveValue("Dara");
+  await expect(name).toBeFocused();
   await form.getByRole("button", { name: "Add person", exact: true }).click();
   await expect(people.getByText("Dara", { exact: true })).toBeVisible();
-  await expect(add).toBeFocused();
+  await expect(name).toHaveValue("");
+  await expect(name).toBeFocused();
+  await expect(form.getByRole("status")).toContainText("Dara added.");
+  await name.fill("  dara  ");
+  await name.press("Enter");
+  await expect(form).toContainText("already on the bill");
+  await name.fill("Mali");
+  await name.press("Enter");
+  await expect(people.getByText("Mali", { exact: true })).toBeVisible();
+  await expect(
+    people.getByText("Waiting to join", { exact: true }),
+  ).toHaveCount(2);
+  await expect(name).toHaveValue("");
+  await expect(name).toBeFocused();
+  expect(page.url()).toBe(peopleUrl);
+  // Audit the final colors after the intentional entry fade has settled.
+  await expect(people.getByRole("listitem").last()).toHaveCSS("opacity", "1");
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await people.getByRole("button", { name: "Close menu" }).click();
   await expect(
-    page.getByRole("button", { name: /2 people, one bill/ }),
+    page.getByRole("button", { name: /3 people, one bill/ }),
   ).toBeVisible();
+});
+
+test("people entry morphs in place and respects reduced motion", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 393, height: 740 });
+  for (const reducedMotion of ["no-preference", "reduce"]) {
+    await page.emulateMedia({ reducedMotion });
+    await page.goto("/screen2?preview=empty");
+    await page.getByRole("button", { name: /Just you, for now/ }).click();
+    const form = page.getByRole("form", { name: "Add a person" });
+    const result = await form.evaluate(async (node) => {
+      node.querySelector('button[type="button"]').click();
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      );
+      const input = node.querySelector("input");
+      const submit = node.querySelector('button[type="submit"]');
+      const animations = node.getAnimations({ subtree: true });
+      const layout = animations.find(
+        (animation) => animation.transitionProperty === "grid-template-columns",
+      );
+      let widthChange = 0;
+      let duration = 0;
+      if (layout) {
+        animations.forEach((animation) => animation.pause());
+        duration = Number(layout.effect.getTiming().duration);
+        layout.currentTime = 0;
+        const start = input.getBoundingClientRect().width;
+        layout.currentTime = duration;
+        widthChange = start - input.getBoundingClientRect().width;
+        animations.forEach((animation) => animation.finish());
+      }
+      return {
+        duration,
+        widthChange,
+        inputHeight: input.getBoundingClientRect().height,
+        submitWidth: submit.getBoundingClientRect().width,
+        submitHeight: submit.getBoundingClientRect().height,
+        scrollOverflow: node.scrollWidth > node.clientWidth,
+      };
+    });
+    if (reducedMotion === "reduce") expect(result.duration).toBe(0);
+    else {
+      expect(result.duration).toBe(240);
+      expect(result.widthChange).toBeGreaterThan(45);
+    }
+    expect(result.inputHeight).toBe(48);
+    expect(result.submitWidth).toBe(48);
+    expect(result.submitHeight).toBe(48);
+    expect(result.scrollOverflow).toBe(false);
+    await expect(form.getByLabel("Person’s name")).toBeFocused();
+    await expect(page.getByRole("dialog")).toHaveCount(1);
+  }
+});
+
+test("new people use the studio list reveal without replaying on drawer reopen", async ({
+  page,
+}) => {
+  await page.clock.install();
+  for (const reducedMotion of ["no-preference", "reduce"]) {
+    await page.emulateMedia({ reducedMotion });
+    await page.goto("/screen2?preview=empty");
+    await page.getByRole("button", { name: /Just you, for now/ }).click();
+    const people = page.getByRole("dialog", {
+      name: "The people at your table",
+    });
+    await people
+      .getByRole("button", { name: "Add person", exact: true })
+      .click();
+    await page.clock.runFor(300);
+    const name = people.getByLabel("Person’s name");
+    await name.fill("Dara");
+    await name.press("Enter");
+    const row = people.getByRole("listitem").last();
+    const measure = () =>
+      row.evaluate((node) => ({
+        height: node.getBoundingClientRect().height,
+        opacity: Number(getComputedStyle(node).opacity),
+      }));
+    await page.clock.runFor(16);
+    // Height uses Motion's frame loop; opacity may use a native Web Animation,
+    // whose timeline is independent of Playwright's JavaScript clock.
+    await row.evaluate((node) =>
+      node.getAnimations().forEach((animation) => {
+        animation.pause();
+        animation.currentTime = 0;
+      }),
+    );
+    const start = await measure();
+    if (reducedMotion === "reduce") {
+      expect(start.height).toBe(70);
+      expect(start.opacity).toBe(1);
+    } else {
+      expect(start.height).toBeLessThan(70);
+      expect(start.opacity).toBeLessThan(1);
+      await page.clock.runFor(80);
+      await row.evaluate((node) =>
+        node.getAnimations().forEach((animation) => {
+          animation.currentTime = 96;
+        }),
+      );
+      const middle = await measure();
+      expect(middle.height).toBeGreaterThan(start.height);
+      expect(middle.height).toBeLessThan(70);
+      expect(middle.opacity).toBeGreaterThan(start.opacity);
+    }
+    await page.clock.runFor(300);
+    await row.evaluate((node) =>
+      node.getAnimations().forEach((animation) => animation.finish()),
+    );
+    expect(await measure()).toEqual({ height: 70, opacity: 1 });
+    await expect(name).toBeFocused();
+    await people.getByRole("button", { name: "Close menu" }).click();
+    await expect(people).toBeHidden();
+    await page.getByRole("button", { name: /2 people, one bill/ }).click();
+    // Existing rows should be fully visible as soon as the drawer mounts.
+    expect(await measure()).toEqual({ height: 70, opacity: 1 });
+    await name.fill("Mali");
+    await name.press("Enter");
+    await name.fill("Kosal");
+    await name.press("Enter");
+    await page.clock.runFor(300);
+    await people
+      .getByRole("listitem")
+      .evaluateAll((nodes) =>
+        nodes.forEach((node) =>
+          node.getAnimations().forEach((animation) => animation.finish()),
+        ),
+      );
+    await expect(people.getByRole("listitem")).toHaveCount(4);
+    for (const item of await people.getByRole("listitem").all()) {
+      await expect(item).toHaveCSS("height", "70px");
+      await expect(item).toHaveCSS("opacity", "1");
+    }
+    await expect(name).toBeFocused();
+  }
 });
 
 test("studio and Screen2 use responsive forms with a visible action footer", async ({

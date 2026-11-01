@@ -8,6 +8,10 @@ Check out/pull `main` and run `npm ci` when moving to another computer.
 The user wants migration SQL saved in `supabase/migrations/` and will apply
 hosted migrations themselves. Tell them when a new migration is required.
 
+Latest approved people UX: one drawer, button-to-field morph with a compact purple
+**+**, and the studio's smooth list-entry reveal. Preserve this direction when
+integrating real bill actions; keep the existing main-app create-bill form.
+
 ## Latest local UI work — Nov 1
 
 - `/screen2` compares populated and empty bills side by side, stacking on narrow
@@ -22,24 +26,40 @@ hosted migrations themselves. Tell them when a new migration is required.
   entries and resetting swap these states locally; drafts use actual participants.
   Decorative file-text/clock-3 icons are official Animate UI sources; provenance
   is in the icons README. The comparison artifact is `work/empty-state-directions.html`.
-- Full expense and quick-person forms share `bill-form-dialogs.jsx` and
-  `form-dialog.jsx` with `/design-system#forms`. Expense entry/editing includes
-  description/amount, person picker, calendar, participant checks, equal/exact
+- Full expense forms share `bill-form-dialogs.jsx` and `form-dialog.jsx` with
+  `/design-system#forms`, which retains a standalone quick-person example.
+  Expense entry/editing includes description/amount, person picker, calendar,
+  participant checks, equal/exact
   splits, precise share preview, category and notes. Validation focuses errors.
-  X/Escape/backdrop preserve drafts. Expense/person footers have one primary
-  action, with no Cancel; confirmation keeps its safe dismissal action.
+  X/Escape/backdrop preserve drafts. Expense and studio person-form footers have
+  one primary action, with no Cancel; confirmation keeps its safe dismissal action.
 - All Screen 2 menus, the first **Add to the bill** chooser and forms now use
   `DialogPanel`: bottom drawers on phones, centered panels on desktop, compact
   centered confirmations, scrollable bodies and visible form footers. Entrance
   is 240ms and exit 140ms; reduced motion is immediate. Outgoing menu contents
   stay mounted through exit and cannot intercept pointers. The initial chooser's
   old instant shell was caught and replaced after the full-form rollout.
-- People management opens the separate quick-person form. Its **Add person**
-  entry action is the purple primary button with the plus beside the label.
-  Section spacing is on a wrapper; the obsolete inline-form grid had stacked the
-  icon and stretched the button. Focus return covers Safari pointer activation,
-  animated returns and nested picker/calendar portals. Existing `#new` links open
-  expense entry; receipt review stays full screen. New local IDs use UUIDs.
+- People management now uses one drawer: **Add person** transforms in place into
+  an outlined name field with a compact purple **+** submit button. The shared
+  surface fades from purple as the row makes room for the 48px action, with helper
+  text revealed below. Motion is 240ms; reduced motion switches immediately.
+  The people list and invitation link stay in the same panel. Saving
+  adds the person without navigating, clears/refocuses the field for another
+  name and announces success. Empty/duplicate names are rejected. Closing keeps
+  the unfinished name; reopening restores entry. The overview subtitle now says
+  **Add names or share an invitation link**. Legacy `#overview/person` links open
+  the inline form. Existing `#new` links open expense entry; receipt review stays
+  full screen. New local IDs use UUIDs.
+- Newly added people now reuse the motion playground's list-entry recipe:
+  `AnimatePresence initial={false}`, position layout, opacity/height 0 to 1/auto,
+  shared 240ms reveal timing/easing. Existing rows do not replay on drawer open;
+  reduced motion is immediate. The 70px row content sits inside the clipped
+  animated list item so minimum height does not prevent expansion from zero.
+  Row follow-up validation: 15 affected browser checks pass across Chromium,
+  WebKit and iPhone emulation, including timed height/opacity samples, rapid
+  additions, no replay on reopen, reduced motion, retained drafts and settled axe.
+  Screenshots/bounds reviewed at desktop, 393px and 320px/480px. 381 offline tests
+  pass, eight hosted/provider tests skipped; lint/format/webpack build pass.
 - Shared primary/secondary buttons use subtle top lighting and lower shadows.
   Purple uses a diffused 6% white fade; the user rejected a hard curved inset.
   Outlined hover lighting follows the tint. People/activity cards use white top
@@ -58,6 +78,13 @@ hosted migrations themselves. Tell them when a new migration is required.
   icon/label. Screenshots reviewed; lint/format/webpack build pass. Source-map
   uploads were disabled for the build. Use `PLAYWRIGHT_BASE_URL=http://localhost:3000`;
   this computer's server did not hydrate scripts correctly on 127.0.0.1.
+- Inline people follow-up: 381 offline tests pass, eight hosted/provider tests
+  skipped; 36 affected form/preview/activity browser checks pass across Chromium,
+  WebKit and iPhone emulation. Checks cover one unchanged dialog/URL, validation,
+  draft retention, repeat entry, focus, activity, axe, the 240ms morph and immediate
+  reduced-motion behavior. Desktop, 393px phone and 320px short-viewport screenshots
+  reviewed in Chromium/WebKit; bounds pass.
+  Lint, formatting and webpack build pass with source-map uploads disabled.
 - Continue UI review as requested, then integrate the polished prototype with
   real bill actions. Keep the existing main-app create-bill form. Hosted data,
   migrations, provider/operational evidence and the retained fixture were not

@@ -1,13 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import QRCode from "qrcode";
+import { AnimatePresence, motion } from "motion/react";
 import { DialogPanel } from "@/components/design-system/form-dialog";
 import dialogStyles from "@/components/design-system/form-dialog.module.css";
-import {
-  ExpenseFormDialog,
-  PersonFormDialog,
-} from "@/components/design-system/bill-form-dialogs";
+import { ExpenseFormDialog } from "@/components/design-system/bill-form-dialogs";
+import systemStyles from "@/components/design-system/system.module.css";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/ui/brand-mark";
@@ -17,6 +22,10 @@ import { DesignShimmer } from "@/components/design-system/shimmer";
 import { DesignBalanceGlow } from "@/components/design-system/balance-glow";
 import { DesignBalanceContours } from "@/components/design-system/balance-contours";
 import { useDesignReducedMotion } from "@/components/design-system/use-design-reduced-motion";
+import {
+  motionTiming,
+  motionTransition,
+} from "@/components/design-system/motion-tokens";
 import { DesignCopyButton } from "@/components/design-system/copy-button";
 import { Coffee } from "@/components/design-system/icons/animate-ui/coffee";
 import { Route } from "@/components/design-system/icons/animate-ui/route";
@@ -222,6 +231,117 @@ function Field({ label, children, className = "", ...props }) {
   );
 }
 
+function InlinePersonForm({
+  expanded,
+  onExpand,
+  value,
+  onValueChange,
+  people,
+  onSave,
+}) {
+  const id = useId();
+  const input = useRef(null);
+  const [error, setError] = useState("");
+  const [addedName, setAddedName] = useState("");
+
+  useEffect(() => {
+    if (expanded) input.current?.focus();
+  }, [expanded]);
+
+  function submit(event) {
+    event.preventDefault();
+    const name = value.trim();
+    const message = !name
+      ? "Enter the person’s name."
+      : people.some(
+            (person) =>
+              person.display_name.toLowerCase() === name.toLowerCase(),
+          )
+        ? "That person is already on the bill."
+        : "";
+    setError(message);
+    if (!message) {
+      onSave(name);
+      setAddedName(name);
+    }
+    input.current?.focus();
+  }
+
+  return (
+    <form
+      noValidate
+      onSubmit={submit}
+      className={styles.inlinePersonForm}
+      aria-label="Add a person"
+      data-expanded={expanded}
+    >
+      <div className={styles.personComposer}>
+        <div className={styles.personEntry}>
+          <label htmlFor={`${id}-name`} className="sr-only">
+            Person’s name
+          </label>
+          <input
+            id={`${id}-name`}
+            className={`${systemStyles.input} ${styles.personNameInput}`}
+            placeholder="Person’s name"
+            autoComplete="off"
+            value={value}
+            onChange={(event) => {
+              onValueChange(event.target.value);
+              setError("");
+            }}
+            ref={input}
+            disabled={!expanded}
+            aria-hidden={!expanded}
+            aria-invalid={Boolean(error)}
+            aria-describedby={`${id}-hint${error ? ` ${id}-error` : ""}`}
+            maxLength={60}
+            required
+          />
+          <Button
+            type="button"
+            icon="plus"
+            className={styles.personReveal}
+            onClick={onExpand}
+            aria-expanded={expanded}
+            aria-controls={`${id}-name`}
+            aria-hidden={expanded}
+            tabIndex={expanded ? -1 : undefined}
+          >
+            Add person
+          </Button>
+        </div>
+        <div className={styles.personSubmit} aria-hidden={!expanded}>
+          <Button
+            icon="plus"
+            type="submit"
+            aria-label="Add person"
+            title="Add person"
+            disabled={!expanded}
+          />
+        </div>
+      </div>
+      <div className={styles.personDetails} aria-hidden={!expanded}>
+        <div>
+          <p id={`${id}-hint`} className={styles.personHint}>
+            They can claim their name when they open the shared bill link.
+          </p>
+          {error && (
+            <p id={`${id}-error`} className={styles.personError} role="alert">
+              {error}
+            </p>
+          )}
+          <p className={styles.personStatus} role="status">
+            {addedName
+              ? `${addedName} added. Add another name or share the link.`
+              : ""}
+          </p>
+        </div>
+      </div>
+    </form>
+  );
+}
+
 function ExpenseRow({ expense, people, currentId, onOpen }) {
   const reducedMotion = useDesignReducedMotion();
   const [iconActive, setIconActive] = useState(false);
@@ -277,6 +397,7 @@ function ExpenseRow({ expense, people, currentId, onOpen }) {
 }
 
 export function MobileBill({ initialState = "populated", embedded = false }) {
+  const reducedMotion = useDesignReducedMotion();
   const startsEmpty = initialState === "empty";
   const initialPeople = startsEmpty ? examplePeople.slice(0, 1) : examplePeople;
   const route = useSyncExternalStore(
@@ -288,12 +409,13 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
   // Keep existing bookmarked manual-entry links working with the shared drawer.
   const view = routeView === "new" ? "expenses" : routeView;
   const overlay = routeView === "new" ? "expense" : routeOverlay;
-  const sheetOpen =
-    Boolean(overlay) && overlay !== "expense" && overlay !== "person";
+  const sheetOpen = Boolean(overlay) && overlay !== "expense";
   const [lastSheetOverlay, setLastSheetOverlay] = useState(overlay);
   if (sheetOpen && lastSheetOverlay !== overlay) setLastSheetOverlay(overlay);
   // Keep the outgoing panel's contents intact during its exit animation.
-  const sheetOverlay = sheetOpen ? overlay : lastSheetOverlay;
+  const retainedOverlay = sheetOpen ? overlay : lastSheetOverlay;
+  const sheetOverlay =
+    retainedOverlay === "person" ? "people" : retainedOverlay;
 
   const [role, setRole] = useState("owner");
   const [settlerId, setSettlerId] = useState("sokha");
@@ -322,13 +444,13 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
   const [payAmount, setPayAmount] = useState("");
   const [paymentNote, setPaymentNote] = useState("");
   const [newPerson, setNewPerson] = useState("");
+  const [addingPerson, setAddingPerson] = useState(false);
   const [joinedName, setJoinedName] = useState("");
   const [deleted, setDeleted] = useState(false);
   const heading = useRef(null);
   const receiptInput = useRef(null);
   const expenseReturnFocus = useRef(null);
   const sheetReturnFocus = useRef(null);
-  const addPersonTrigger = useRef(null);
   const previousView = useRef(null);
   const [previewHistory, setPreviewHistory] = useState([]);
   const settler =
@@ -385,8 +507,7 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
     if (previousView.current === view) return;
     previousView.current = view;
     window.scrollTo({ top: 0, behavior: "instant" });
-    if (overlay !== "expense" && overlay !== "person")
-      heading.current?.focus({ preventScroll: true });
+    if (overlay !== "expense") heading.current?.focus({ preventScroll: true });
   }, [view, overlay]);
 
   useEffect(() => {
@@ -630,7 +751,6 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
     setNewPerson("");
     addActivity(`Added ${name} to the bill`);
     setNotice(`${name} can claim their name from the shared link.`);
-    back(`${view}/people`);
   }
 
   function reset() {
@@ -652,6 +772,7 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
     setPayAmount("");
     setPaymentNote("");
     setNewPerson("");
+    setAddingPerson(false);
     setJoinedName("");
     setQuery("");
     setFilter("All");
@@ -847,7 +968,7 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
                   </strong>
                   <small>
                     {people.length === 1
-                      ? "Invite people to split with you"
+                      ? "Add names or share an invitation link"
                       : people.some((item) => item.waiting)
                         ? "Someone is waiting to join"
                         : "Everyone’s here"}
@@ -1619,19 +1740,6 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
           fallbackFocusRef={heading}
           closeLabel="Close expense form"
         />
-        <PersonFormDialog
-          open={overlay === "person"}
-          onOpenChange={(open) => {
-            if (!open) dismiss();
-          }}
-          value={newPerson}
-          onValueChange={setNewPerson}
-          people={people}
-          onSave={addPerson}
-          returnFocusRef={addPersonTrigger}
-          fallbackFocusRef={heading}
-          closeLabel="Close person form"
-        />
         <Sheet
           open={sheetOpen}
           kind={
@@ -1640,7 +1748,7 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
               : "options"
           }
           returnFocusRef={sheetReturnFocus}
-          restoreFocus={overlay !== "expense" && overlay !== "person"}
+          restoreFocus={overlay !== "expense"}
           title={
             {
               add: "Add to the bill",
@@ -1749,39 +1857,56 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
                 One private link keeps everyone together.
               </p>
               <ul className={styles.peopleList}>
-                {people.map((item) => (
-                  <li key={item.id}>
-                    <Avatar person={item} />
-                    <span>
-                      <strong>
-                        {item.display_name}
-                        {item.id === currentId ? " (you)" : ""}
-                      </strong>
-                      <small>
-                        {item.is_creator
-                          ? "Bill owner"
-                          : item.waiting
-                            ? "Waiting to join"
-                            : "Joined"}
-                      </small>
-                    </span>
-                    <span className={styles.joinedDot} />
-                  </li>
-                ))}
+                <AnimatePresence initial={false}>
+                  {people.map((item) => (
+                    <motion.li
+                      key={item.id}
+                      layout="position"
+                      initial={
+                        reducedMotion !== false
+                          ? false
+                          : { opacity: 0, height: 0 }
+                      }
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={motionTransition(
+                        reducedMotion !== false,
+                        motionTiming.reveal,
+                      )}
+                    >
+                      <div className={styles.peopleRow}>
+                        <Avatar person={item} />
+                        <span>
+                          <strong>
+                            {item.display_name}
+                            {item.id === currentId ? " (you)" : ""}
+                          </strong>
+                          <small>
+                            {item.is_creator
+                              ? "Bill owner"
+                              : item.waiting
+                                ? "Waiting to join"
+                                : "Joined"}
+                          </small>
+                        </span>
+                        <span className={styles.joinedDot} />
+                      </div>
+                    </motion.li>
+                  ))}
+                </AnimatePresence>
               </ul>
               <DesignCopyButton onCopy={copyLink} className={styles.fullButton}>
                 Copy invitation link
               </DesignCopyButton>
               <div className={styles.inviteAction}>
-                <Button
-                  ref={addPersonTrigger}
-                  icon="plus"
-                  variant="primary"
-                  className={styles.fullButton}
-                  onClick={() => navigate(`${view}/person`)}
-                >
-                  Add person
-                </Button>
+                <InlinePersonForm
+                  expanded={addingPerson || overlay === "person"}
+                  onExpand={() => setAddingPerson(true)}
+                  value={newPerson}
+                  onValueChange={setNewPerson}
+                  people={people}
+                  onSave={addPerson}
+                />
               </div>
             </>
           ) : null}

@@ -109,14 +109,23 @@ Helvetica uses the system installation with Helvetica Neue/Arial fallbacks.
 No custom heading font is downloaded.
 
 The [form previews](http://localhost:3000/design-system#forms) and Screen 2 share
-the complete expense and quick-person forms. They open as bottom drawers on phones
-and centered panels on desktop, with a scrollable body and visible action footer.
+the complete expense form. It opens as a bottom drawer on phones
+and a centered panel on desktop, with a scrollable body and visible action footer.
 Expense entry supports the person picker, calendar, equal/exact shares, category
 and notes. Close, Escape and backdrop dismissal retain the current local draft;
 expense and person forms have one primary footer action. Confirmation keeps Cancel.
 Screen 2's entry chooser and menus share the same panel, including its 240ms
-entrance and 140ms exit. The people drawer uses a purple primary **Add person**
-button with its icon and label in one row.
+entrance and 140ms exit. In the people drawer, **Add person** transforms into an
+outlined name field with a compact purple **+** submit button alongside it.
+The 240ms transition softens the purple surface, makes room for the submit button
+and reveals the helper text; reduced motion switches immediately.
+Saving adds the person to the list and clears/refocuses the field for
+another name, keeping one drawer open. Empty/duplicate names are rejected;
+closing retains unfinished entries. The invitation link remains in the same
+drawer. The studio retains its standalone quick-person form example.
+New people use the motion playground's 240ms fade and height reveal, so the list
+makes room smoothly. Opening the drawer does not replay existing rows;
+reduced motion adds rows immediately.
 
 The [calendar preview](http://localhost:3000/design-system#date-picker) combines
 DayPicker with Animate UI: a rounded glass panel, bold Helvetica month headings,

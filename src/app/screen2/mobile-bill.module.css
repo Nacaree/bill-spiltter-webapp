@@ -1539,13 +1539,16 @@
   list-style: none;
 }
 .peopleList li {
+  overflow: hidden;
+}
+.peopleRow {
   display: flex;
   min-height: 70px;
   align-items: center;
   gap: 12px;
   border-bottom: 1px solid #eee4f4;
 }
-.peopleList li > span:nth-child(2) {
+.peopleRow > span:nth-child(2) {
   display: grid;
   gap: 4px;
 }
@@ -1569,6 +1572,110 @@
   margin-top: 24px;
   border-top: 1px solid #e6d9ef;
   padding-top: 22px;
+}
+.personComposer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 0px;
+  column-gap: 0;
+  transition:
+    grid-template-columns var(--ds-motion-reveal) var(--ds-motion-ease),
+    column-gap var(--ds-motion-reveal) var(--ds-motion-ease);
+}
+.inlinePersonForm[data-expanded="true"] .personComposer {
+  grid-template-columns: minmax(0, 1fr) var(--ds-control-height);
+  column-gap: 10px;
+}
+.personEntry {
+  position: relative;
+  min-width: 0;
+}
+.personEntry .personReveal {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  transition: opacity 100ms ease;
+}
+.personEntry .personNameInput {
+  display: block;
+  min-width: 0;
+  height: var(--ds-control-height);
+  opacity: 0;
+  background: var(--ds-brand);
+  transition:
+    background-color var(--ds-motion-reveal) var(--ds-motion-ease),
+    opacity 140ms ease;
+}
+.inlinePersonForm[data-expanded="true"] .personReveal {
+  opacity: 0;
+  pointer-events: none;
+}
+.inlinePersonForm[data-expanded="true"] .personNameInput {
+  opacity: 1;
+  background: var(--ds-surface);
+  transition-delay: 0ms, 60ms;
+}
+.personSubmit {
+  min-width: 0;
+  overflow: clip;
+  overflow-clip-margin: 12px;
+  opacity: 0;
+  transform: translateX(-6px) scale(0.9);
+  pointer-events: none;
+  transition:
+    opacity 140ms ease,
+    transform var(--ds-motion-reveal) var(--ds-motion-ease);
+}
+.personSubmit > button {
+  display: flex;
+  width: var(--ds-control-height);
+  padding: 0;
+}
+.inlinePersonForm[data-expanded="true"] .personSubmit {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+  transition-delay: 80ms;
+}
+.personDetails {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows var(--ds-motion-reveal) var(--ds-motion-ease),
+    opacity 140ms ease;
+}
+.personDetails > div {
+  min-height: 0;
+  overflow: hidden;
+}
+.inlinePersonForm[data-expanded="true"] .personDetails {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.personHint,
+.personError,
+.personStatus {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.personHint,
+.personStatus {
+  color: var(--ds-muted);
+}
+.personError {
+  color: #ac263c;
+  font-weight: var(--ds-weight-heading);
+}
+.personStatus:empty {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .inlinePersonForm *,
+  .personEntry .personReveal,
+  .personEntry .personNameInput {
+    transition: none;
+  }
 }
 .confirmButtons {
   display: grid;
