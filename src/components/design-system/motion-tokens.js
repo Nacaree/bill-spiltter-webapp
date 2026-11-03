@@ -11,6 +11,12 @@ export const balanceChangeTiming = {
   easing: "cubic-bezier(0.4, 0, 0.2, 1)",
 };
 
+export const navigationIconTiming = {
+  duration: 0.6,
+  topLineSpeed: 1.5,
+  ease: [0.4, 0, 0.2, 1],
+};
+
 export function motionTransition(
   reducedMotion,
   duration = motionTiming.standard,

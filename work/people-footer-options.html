@@ -1,0 +1,686 @@
+<div
+  id="people-footer-options"
+  class="viz-carousel viz-dotted-background"
+  aria-label="People drawer separation options"
+>
+  <section data-variant="Quiet spacing" aria-label="Quiet spacing drawer">
+    <div class="pf-stage" data-treatment="spacing"></div>
+  </section>
+  <section data-variant="Soft feather" aria-label="Soft feather drawer" hidden>
+    <div class="pf-stage" data-treatment="feather"></div>
+  </section>
+  <section data-variant="Inset tray" aria-label="Inset tray drawer" hidden>
+    <div class="pf-stage" data-treatment="tray"></div>
+  </section>
+</div>
+<template id="people-footer-template">
+  <div class="pf-sheet">
+    <div class="pf-handle" aria-hidden="true"></div>
+    <header class="pf-header">
+      <p class="pf-eyebrow">WEEKEND DINNER</p>
+      <div class="pf-title">
+        <h2>The people at your table</h2>
+        <button
+          type="button"
+          class="pf-close cursor-interaction"
+          aria-label="Close people drawer"
+        >
+          <i data-lucide="x" aria-hidden="true"></i>
+        </button>
+      </div>
+      <p class="pf-description">One private link keeps everyone together.</p>
+      <p class="pf-count"></p>
+    </header>
+    <div class="pf-list-wrap">
+      <ul class="pf-list" aria-label="People"></ul>
+      <div class="pf-feather" aria-hidden="true"></div>
+    </div>
+    <footer class="pf-footer">
+      <div class="pf-tray">
+        <form class="pf-form" aria-label="Add a person" novalidate>
+          <div class="pf-actions">
+            <button class="pf-add pf-primary cursor-interaction" type="button">
+              <i data-lucide="plus" aria-hidden="true"></i
+              ><span>Add person</span>
+            </button>
+            <label class="pf-input-label"
+              ><span class="pf-sr">Person’s name</span
+              ><input
+                class="pf-input"
+                placeholder="Person’s name"
+                autocomplete="off"
+                maxlength="60"
+                disabled
+            /></label>
+            <button
+              class="pf-submit pf-primary cursor-interaction"
+              type="submit"
+              aria-label="Add person"
+              disabled
+            >
+              <i data-lucide="plus" aria-hidden="true"></i>
+            </button>
+            <button
+              class="pf-copy cursor-interaction"
+              type="button"
+              aria-label="Copy invitation link"
+            >
+              <i data-lucide="copy" aria-hidden="true"></i
+              ><span>Copy link</span>
+            </button>
+          </div>
+          <div class="pf-details">
+            <p>
+              They can claim their name when they open the shared bill link.
+            </p>
+            <p class="pf-error" role="alert"></p>
+            <p class="pf-status" role="status" aria-live="polite"></p>
+          </div>
+        </form>
+      </div>
+    </footer>
+  </div>
+  <button class="pf-reopen pf-primary cursor-interaction" type="button" hidden>
+    People &amp; invitations
+  </button>
+</template>
+<style>
+  #people-footer-options {
+    --pf-paper: light-dark(#fff, #25202d);
+    --pf-text: light-dark(#292333, #f6effc);
+    --pf-muted: light-dark(#756b80, #c5b8cf);
+    --pf-brand: light-dark(#7135a2, #b782df);
+    --pf-brand-text: light-dark(#fff, #251032);
+    --pf-ink: light-dark(#7135a2, #dfb9ff);
+    --pf-line: light-dark(#eee4f4, #4c3b58);
+    --pf-avatar: light-dark(#f4eef9, #43314e);
+    --pf-tray: light-dark(#f7f3fb, #32283c);
+    --pf-success: light-dark(#a3c5ad, #83b995);
+    --pf-error: light-dark(#a92b43, #ffa5ba);
+    --pf-shadow: light-dark(#3d235d0d, #0003);
+    --pf-list-height: 350px;
+    --pf-entry-extra: 0px;
+  }
+  #people-footer-options .pf-stage * {
+    box-sizing: border-box;
+  }
+  #people-footer-options .pf-stage [hidden] {
+    display: none !important;
+  }
+  #people-footer-options .pf-stage {
+    height: calc(var(--pf-list-height) + 352px + var(--pf-entry-extra));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 0;
+  }
+  #people-footer-options .pf-sheet {
+    font-family: Helvetica, Arial, sans-serif;
+    color: var(--pf-text);
+    width: 100%;
+    max-width: 393px;
+    background: var(--pf-paper);
+    border-radius: 32px;
+    overflow: hidden;
+    box-shadow: 0 12px 36px var(--pf-shadow);
+  }
+  #people-footer-options .pf-handle {
+    width: 36px;
+    height: 4px;
+    border-radius: 8px;
+    background: var(--pf-line);
+    margin: 12px auto 0;
+  }
+  #people-footer-options .pf-header {
+    padding: 24px 28px 8px;
+  }
+  #people-footer-options .pf-sheet p {
+    margin: 0;
+  }
+  #people-footer-options .pf-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    color: var(--pf-ink);
+    margin-bottom: 10px;
+  }
+  #people-footer-options .pf-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  #people-footer-options .pf-sheet h2 {
+    font-size: 26px;
+    line-height: 1.2;
+    letter-spacing: -0.7px;
+    font-weight: 700;
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    color: var(--pf-text);
+  }
+  #people-footer-options .pf-sheet button,
+  #people-footer-options .pf-sheet input {
+    font: inherit;
+  }
+  #people-footer-options .pf-sheet button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    border-radius: 22px;
+    touch-action: manipulation;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  #people-footer-options .pf-sheet button svg {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    pointer-events: none;
+  }
+  #people-footer-options .pf-close {
+    width: 48px;
+    padding: 0;
+    flex: 0 0 48px;
+    margin-top: -8px;
+    border: 0;
+    background: transparent;
+    color: var(--pf-ink);
+  }
+  #people-footer-options .pf-description {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--pf-muted);
+    margin-top: 12px;
+  }
+  #people-footer-options .pf-count {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--pf-muted);
+    margin-top: 20px;
+  }
+  #people-footer-options .pf-list-wrap {
+    position: relative;
+    margin: 0 28px;
+  }
+  #people-footer-options .pf-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 350px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--pf-line) transparent;
+    overflow-anchor: none;
+  }
+  #people-footer-options .pf-person {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 70px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--pf-line);
+  }
+  #people-footer-options .pf-person:last-child {
+    border-bottom: 0;
+  }
+  #people-footer-options .pf-avatar {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--pf-avatar);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--pf-ink);
+  }
+  #people-footer-options .pf-person-copy {
+    min-width: 0;
+    flex: 1;
+  }
+  #people-footer-options .pf-person-name {
+    font-size: 15px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+    color: var(--pf-ink);
+  }
+  #people-footer-options .pf-person-role {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--pf-muted);
+    margin-top: 4px;
+  }
+  #people-footer-options .pf-dot {
+    width: 7px;
+    height: 7px;
+    flex: 0 0 7px;
+    border-radius: 50%;
+    background: var(--pf-success);
+  }
+  #people-footer-options .pf-footer {
+    position: relative;
+    padding: 24px 28px;
+    background: var(--pf-paper);
+  }
+  #people-footer-options .pf-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 114px;
+    gap: 10px;
+    align-items: center;
+  }
+  #people-footer-options .pf-primary {
+    background:
+      linear-gradient(180deg, #ffffff0f, transparent 65%), var(--pf-brand);
+    color: var(--pf-brand-text);
+    border: 1px solid transparent;
+    box-shadow: 0 3px 8px color-mix(in srgb, var(--pf-brand) 16%, transparent);
+    padding: 10px 12px;
+  }
+  #people-footer-options .pf-copy {
+    min-width: 0;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--pf-line);
+    background: var(--pf-paper);
+    color: var(--pf-ink);
+    font-size: 13px;
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, var(--pf-paper) 90%, transparent),
+      0 3px 8px -5px var(--pf-shadow);
+  }
+  #people-footer-options .pf-input-label {
+    min-width: 0;
+    display: none;
+  }
+  #people-footer-options .pf-input {
+    width: 100%;
+    min-width: 0;
+    height: 48px;
+    padding: 10px 14px;
+    background: var(--pf-paper);
+    color: var(--pf-text);
+    border: 1px solid var(--pf-line);
+    border-radius: 22px;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+  #people-footer-options .pf-input::placeholder {
+    color: var(--pf-muted);
+    opacity: 1;
+  }
+  #people-footer-options .pf-submit {
+    display: none;
+    width: 48px;
+    padding: 0;
+  }
+  #people-footer-options .pf-details {
+    display: none;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--pf-muted);
+    padding-top: 10px;
+  }
+  #people-footer-options .pf-error {
+    color: var(--pf-error);
+  }
+  #people-footer-options .pf-error:empty,
+  #people-footer-options .pf-status:empty {
+    display: none;
+  }
+  #people-footer-options .pf-error:not(:empty),
+  #people-footer-options .pf-status:not(:empty) {
+    margin-top: 8px;
+  }
+  #people-footer-options[data-expanded="true"] .pf-actions {
+    grid-template-columns: minmax(0, 1fr) 48px 48px;
+  }
+  #people-footer-options[data-expanded="true"] .pf-add {
+    display: none;
+  }
+  #people-footer-options[data-expanded="true"] .pf-input-label,
+  #people-footer-options[data-expanded="true"] .pf-details {
+    display: block;
+  }
+  #people-footer-options[data-expanded="true"] .pf-submit {
+    display: flex;
+  }
+  #people-footer-options[data-expanded="true"] .pf-copy {
+    padding: 0;
+  }
+  #people-footer-options[data-expanded="true"] .pf-copy span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  #people-footer-options .pf-copy[data-copied="true"] {
+    background: var(--pf-tray);
+    border-color: color-mix(in srgb, var(--pf-brand) 24%, var(--pf-paper));
+  }
+  #people-footer-options .pf-feather {
+    display: none;
+    position: absolute;
+    inset: auto 0 0;
+    height: 28px;
+    pointer-events: none;
+    background: linear-gradient(to bottom, transparent, var(--pf-paper));
+    opacity: 0;
+    transition: opacity 160ms ease;
+  }
+  #people-footer-options [data-treatment="feather"] .pf-feather {
+    display: block;
+  }
+  #people-footer-options
+    [data-treatment="feather"]
+    .pf-list-wrap[data-more="true"]
+    .pf-feather {
+    opacity: 1;
+  }
+  #people-footer-options [data-treatment="tray"] .pf-footer {
+    padding: 16px;
+  }
+  #people-footer-options [data-treatment="tray"] .pf-tray {
+    padding: 12px;
+    border-radius: 28px;
+    background: var(--pf-tray);
+  }
+  #people-footer-options .pf-reopen {
+    width: auto;
+    min-height: 48px;
+    border-radius: 22px;
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding-inline: 24px;
+  }
+  #people-footer-options .pf-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  @media (max-width: 360px) {
+    #people-footer-options .pf-header {
+      padding-inline: 24px;
+    }
+    #people-footer-options .pf-list-wrap {
+      margin-inline: 24px;
+    }
+    #people-footer-options .pf-footer {
+      padding-inline: 24px;
+    }
+    #people-footer-options .pf-sheet h2 {
+      font-size: 24px;
+    }
+    #people-footer-options .pf-stage {
+      height: calc(var(--pf-list-height) + 372px + var(--pf-entry-extra));
+    }
+    #people-footer-options .pf-actions {
+      grid-template-columns: minmax(0, 1fr) 110px;
+    }
+    #people-footer-options [data-treatment="tray"] .pf-tray {
+      padding: 8px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #people-footer-options .pf-feather {
+      transition: none;
+    }
+  }
+</style>
+<script>
+  (() => {
+    const root = document.getElementById("people-footer-options");
+    const template = document.getElementById("people-footer-template");
+    const seed = [
+      "Nary",
+      "Sokha",
+      "Mali",
+      "Dara",
+      "Sophea",
+      "Vanna",
+      "Rith",
+      "Lina",
+      "Chan",
+      "Kanha",
+    ];
+    const saved = window.openai?.widgetState?.modelContent;
+    const state = {
+      count: Number.isInteger(saved?.peopleCount)
+        ? Math.max(1, Math.min(20, saved.peopleCount))
+        : 6,
+      expanded: false,
+    };
+    let names = Array.from(
+      { length: state.count },
+      (_, i) => seed[i] || "Guest " + (i + 1),
+    );
+    let draft = "",
+      error = "",
+      status = "",
+      closed = false,
+      copied = false,
+      copyTimer;
+    const stages = Array.from(root.querySelectorAll(".pf-stage"));
+    const parts = stages.map((stage) => {
+      stage.append(template.content.cloneNode(true));
+      const select = (selector) => stage.querySelector(selector);
+      const ui = {
+        stage,
+        sheet: select(".pf-sheet"),
+        list: select(".pf-list"),
+        wrap: select(".pf-list-wrap"),
+        count: select(".pf-count"),
+        form: select(".pf-form"),
+        input: select(".pf-input"),
+        submit: select(".pf-submit"),
+        copy: select(".pf-copy"),
+        error: select(".pf-error"),
+        status: select(".pf-status"),
+        reopen: select(".pf-reopen"),
+      };
+      select(".pf-add").addEventListener("click", () => {
+        state.expanded = true;
+        render();
+        ui.input.focus();
+        save();
+      });
+      ui.input.addEventListener("input", (event) => {
+        draft = event.target.value;
+        error = "";
+        parts.forEach((part) => {
+          if (part.input !== event.target) part.input.value = draft;
+          part.error.textContent = "";
+        });
+      });
+      function submit(event) {
+        event.preventDefault();
+        const name = draft.trim();
+        if (!name) error = "Enter the person’s name.";
+        else if (
+          names.some(
+            (existing) => existing.toLowerCase() === name.toLowerCase(),
+          )
+        )
+          error = "That person is already on the bill.";
+        else {
+          names.push(name);
+          state.count = names.length;
+          draft = "";
+          error = "";
+          status = name + " added.";
+        }
+        render();
+        ui.input.focus();
+        if (!error) {
+          ui.list.scrollTop = ui.list.scrollHeight;
+          updateEdges(ui);
+        }
+        save();
+      }
+      ui.form.addEventListener("submit", submit);
+      ui.submit.addEventListener("click", submit);
+      ui.input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && !event.isComposing) submit(event);
+      });
+      ui.copy.addEventListener("click", () => {
+        copied = true;
+        clearTimeout(copyTimer);
+        renderCopy();
+        copyTimer = setTimeout(() => {
+          copied = false;
+          renderCopy();
+        }, 1800);
+      });
+      select(".pf-close").addEventListener("click", () => {
+        closed = true;
+        state.expanded = Boolean(draft.trim());
+        if (!state.expanded) draft = "";
+        render();
+      });
+      ui.reopen.addEventListener("click", () => {
+        closed = false;
+        state.expanded = Boolean(draft.trim());
+        error = "";
+        status = "";
+        render();
+        if (state.expanded) ui.input.focus();
+      });
+      ui.list.addEventListener("scroll", () => updateEdges(ui));
+      return ui;
+    });
+    function updateEdges(ui) {
+      ui.wrap.dataset.more = String(
+        ui.list.scrollHeight - ui.list.clientHeight - ui.list.scrollTop > 1,
+      );
+    }
+    function renderCopy() {
+      parts.forEach((ui) => {
+        ui.copy.dataset.copied = String(copied);
+        ui.copy.querySelector("span").textContent = copied
+          ? "Copied"
+          : "Copy link";
+        const icon = ui.copy.querySelector("svg,[data-lucide]");
+        if (icon) {
+          const next = document.createElement("i");
+          next.dataset.lucide = copied ? "check" : "copy";
+          next.setAttribute("aria-hidden", "true");
+          icon.replaceWith(next);
+        }
+      });
+      globalThis.lucide?.createIcons();
+    }
+    function render() {
+      if (state.count !== names.length)
+        names = Array.from(
+          { length: state.count },
+          (_, i) => seed[i] || "Guest " + (i + 1),
+        );
+      root.dataset.expanded = String(state.expanded);
+      root.style.setProperty(
+        "--pf-list-height",
+        Math.min(names.length, 5) * 70 + "px",
+      );
+      root.style.setProperty(
+        "--pf-entry-extra",
+        state.expanded ? "84px" : "0px",
+      );
+      parts.forEach((ui) => {
+        const oldScroll = ui.list.scrollTop;
+        ui.sheet.hidden = closed;
+        ui.reopen.hidden = !closed;
+        ui.count.textContent =
+          names.length + " " + (names.length === 1 ? "person" : "people");
+        ui.input.disabled = !state.expanded;
+        ui.submit.disabled = !state.expanded;
+        ui.input.value = draft;
+        ui.error.textContent = error;
+        ui.status.textContent = status;
+        ui.list.replaceChildren(
+          ...names.map((name, index) => {
+            const row = document.createElement("li");
+            row.className = "pf-person";
+            const avatar = document.createElement("span");
+            avatar.className = "pf-avatar";
+            avatar.setAttribute("aria-hidden", "true");
+            avatar.textContent = name
+              .split(/\s+/)
+              .map((word) => word[0])
+              .slice(0, 2)
+              .join("")
+              .toUpperCase();
+            if (index === 0) avatar.textContent = "NA";
+            const text = document.createElement("div");
+            text.className = "pf-person-copy";
+            const label = document.createElement("div");
+            label.className = "pf-person-name";
+            label.textContent = name + (index === 0 ? " (you)" : "");
+            const role = document.createElement("div");
+            role.className = "pf-person-role";
+            role.textContent =
+              index === 0
+                ? "Bill owner"
+                : index < 3
+                  ? "Joined"
+                  : "Waiting to join";
+            const dot = document.createElement("span");
+            dot.className = "pf-dot";
+            dot.setAttribute("aria-hidden", "true");
+            text.append(label, role);
+            row.append(avatar, text, dot);
+            return row;
+          }),
+        );
+        ui.list.scrollTop = oldScroll;
+        updateEdges(ui);
+      });
+      renderCopy();
+    }
+    function save() {
+      window.openai
+        ?.setWidgetState?.({
+          modelContent: { peopleCount: state.count },
+          privateContent: null,
+        })
+        ?.catch(() => {});
+    }
+    window.addEventListener("openai:set_globals", (event) => {
+      const count =
+        event.detail?.globals?.widgetState?.modelContent?.peopleCount;
+      if (Number.isInteger(count) && count >= 1 && count <= 20) {
+        state.count = count;
+        render();
+      }
+    });
+    render();
+    const observer = new ResizeObserver(() => parts.forEach(updateEdges));
+    parts.forEach((ui) => observer.observe(ui.list));
+    if (globalThis.Tweak) {
+      const tweak = new Tweak({
+        container: root,
+        onChange: () => {
+          render();
+          save();
+        },
+      });
+      tweak.addSlider(state, "count", {
+        label: "People",
+        min: 1,
+        max: 20,
+        step: 1,
+      });
+      tweak.addToggle(state, "expanded", { label: "Name entry" });
+    }
+  })();
+</script>

@@ -14,7 +14,7 @@
   width: min(100%, 560px);
   min-height: calc(100dvh - 48px);
   margin: 0 auto;
-  padding-bottom: 100px;
+  padding-bottom: calc(100px + env(safe-area-inset-bottom));
   overflow: clip;
   border: 1px solid var(--ds-line);
   border-radius: var(--ds-card-radius);
@@ -98,11 +98,41 @@
   container-type: inline-size;
   padding: var(--ds-panel-padding) var(--screen-gutter);
 }
-.titleRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+.pageTitle {
+  --page-title-size: 34px;
+  --page-title-leading: 1.12;
+}
+.pageTitle[data-overview] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 16px;
+  margin-bottom: 22px;
+}
+.pageTitle[data-overview] .eyebrow {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  margin: 0;
+}
+.pageTitle[data-overview] h1 {
+  grid-column: 1;
+  grid-row: 2;
+}
+.pageTitle[data-overview] .subtitle {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  margin: 0;
+}
+.pageTitle[data-overview] .shareButton {
+  grid-column: 2;
+  grid-row: 2 / span 2;
+  align-self: start;
+  margin-top: calc(
+    (
+        var(--page-title-size) * var(--page-title-leading) -
+          var(--ds-control-height)
+      ) /
+      2
+  );
 }
 .eyebrow {
   margin: 0 0 7px;
@@ -114,11 +144,10 @@
 }
 .pageTitle h1 {
   min-width: 0;
-  flex: 1;
   margin: 0;
   color: var(--ds-text);
-  font-size: 34px;
-  line-height: 1.12;
+  font-size: var(--page-title-size);
+  line-height: var(--page-title-leading);
   font-weight: var(--ds-weight-heading);
   letter-spacing: -0.055em;
 }
@@ -616,37 +645,17 @@
   border: 1px solid var(--ds-line);
   border-top-color: var(--ds-line);
   border-radius: 0 0 var(--ds-card-radius) var(--ds-card-radius);
-  padding: 9px 18px 13px;
+}
+.bottomNav {
+  display: block;
+  border-top: 0;
+}
+.actionBar {
+  display: flex;
+  padding: 14px var(--screen-gutter);
   background: #fffffff2;
   box-shadow: 0 -8px 30px #4d316806;
   backdrop-filter: blur(var(--ds-glass-blur));
-}
-.bottomNav .tabButton {
-  display: flex;
-  min-height: 58px;
-  flex: 1;
-  flex-direction: column;
-  gap: 5px;
-  border: 0;
-  border-radius: var(--ds-control-radius);
-  padding: 7px 4px;
-  color: var(--ds-muted);
-  background: transparent;
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 1.2;
-}
-.bottomNav .tabButton[aria-current="page"] {
-  color: var(--ds-brand-ink);
-  background: var(--ds-tint);
-  font-weight: var(--ds-weight-heading);
-}
-.bottomNav .tabButton svg {
-  width: 20px;
-  height: 20px;
-}
-.actionBar {
-  padding: 14px var(--screen-gutter);
 }
 .fullButton {
   width: 100%;
@@ -1533,24 +1542,76 @@
 .menuFooter button {
   font-size: 12px;
 }
+.sheet .peopleBody {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 8px;
+  padding-bottom: 0;
+}
+.peopleCount {
+  flex-shrink: 0;
+  margin: 0;
+  color: var(--ds-muted);
+  font-size: 12px;
+}
+.peopleListViewport {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  flex: 0 1 auto;
+  flex-direction: column;
+}
 .peopleList {
-  margin: 10px 0 20px;
+  --people-row-height: 70px;
+  min-height: 0;
+  flex: 1 1 auto;
+  margin: 0;
   padding: 0;
   list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  overflow-anchor: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ds-line) transparent;
+}
+.peopleFeather {
+  position: absolute;
+  z-index: 1;
+  inset: auto 0 0;
+  height: 28px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--ds-surface));
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+.peopleListViewport[data-more="true"] .peopleFeather {
+  opacity: 1;
 }
 .peopleList li {
   overflow: hidden;
 }
+.peopleList:focus-visible {
+  outline: 3px solid var(--ds-brand-ink);
+  outline-offset: -3px;
+  border-radius: 8px;
+}
 .peopleRow {
   display: flex;
-  min-height: 70px;
+  min-height: var(--people-row-height);
   align-items: center;
   gap: 12px;
   border-bottom: 1px solid #eee4f4;
 }
+.peopleList li:last-child .peopleRow {
+  border-bottom: 0;
+}
 .peopleRow > span:nth-child(2) {
+  min-width: 0;
   display: grid;
   gap: 4px;
+  overflow-wrap: anywhere;
 }
 .peopleList strong {
   color: #7c5290;
@@ -1562,16 +1623,34 @@
   font-size: 12px;
 }
 .joinedDot {
+  flex-shrink: 0;
   width: 7px;
   height: 7px;
   margin-left: auto;
   border-radius: 50%;
   background: #a3c5ad;
 }
-.inviteAction {
-  margin-top: 24px;
-  border-top: 1px solid #e6d9ef;
-  padding-top: 22px;
+.peopleFooter {
+  flex-shrink: 0;
+  padding: 24px var(--ds-panel-padding) max(24px, env(safe-area-inset-bottom));
+  background: var(--ds-surface);
+}
+.sheet .peopleCopy {
+  display: flex;
+  min-width: 0;
+  width: 100%;
+  height: var(--ds-control-height);
+  padding-inline: 12px;
+  color: var(--ds-brand-ink);
+  font-size: 13px;
+}
+.sheet .peopleCopy[data-icon-only] {
+  padding-inline: 0;
+}
+@media (max-width: 639px) {
+  .peopleList {
+    max-height: calc(var(--people-row-height) * 5);
+  }
 }
 .personComposer {
   display: grid;
@@ -1584,6 +1663,25 @@
 .inlinePersonForm[data-expanded="true"] .personComposer {
   grid-template-columns: minmax(0, 1fr) var(--ds-control-height);
   column-gap: 10px;
+}
+.inlinePersonForm[data-has-copy="true"] .personComposer {
+  grid-template-columns: minmax(0, 1fr) 0px 124px;
+  column-gap: 0;
+}
+.inlinePersonForm[data-has-copy="true"][data-expanded="true"] .personComposer {
+  grid-template-columns:
+    minmax(0, 1fr) calc(var(--ds-control-height) + 10px)
+    calc(var(--ds-control-height) + 10px);
+}
+.inlinePersonForm[data-has-copy="true"] .personReveal {
+  padding-inline: 12px;
+}
+.inlinePersonForm[data-has-copy="true"] .personSubmit > button {
+  margin-left: auto;
+}
+.personCopy {
+  min-width: 0;
+  padding-left: 10px;
 }
 .personEntry {
   position: relative;
@@ -1763,6 +1861,7 @@
   }
   .bottomNav,
   .actionBar {
+    --bill-navigation-bottom-padding: calc(10px + env(safe-area-inset-bottom));
     bottom: 0;
     width: 100%;
     max-width: 560px;
@@ -1799,8 +1898,8 @@
     padding-left: 6px;
     font-size: 11px;
   }
-  .pageTitle h1 {
-    font-size: 29px;
+  .pageTitle {
+    --page-title-size: 29px;
   }
   .pageTitle .shareButton {
     padding-inline: 9px;
@@ -1818,6 +1917,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .peopleFeather {
+    transition: none;
+  }
   .pageTitle .shareButton,
   .peopleSummary,
   .expenseText strong {
@@ -1836,6 +1938,9 @@
 }
 
 @media (forced-colors: active) {
+  .peopleFeather {
+    display: none;
+  }
   .balanceCard {
     border-color: CanvasText;
     color: CanvasText;

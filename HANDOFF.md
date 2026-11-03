@@ -9,10 +9,147 @@ The user wants migration SQL saved in `supabase/migrations/` and will apply
 hosted migrations themselves. Tell them when a new migration is required.
 
 Latest approved people UX: one drawer, button-to-field morph with a compact purple
-**+**, and the studio's smooth list-entry reveal. Preserve this direction when
+**+**, side-by-side add/copy actions, pinned header/footer, soft scroll feather and the
+studio's smooth list-entry reveal. Preserve this direction when
 integrating real bill actions; keep the existing main-app create-bill form.
 
-## Latest local UI work — Nov 1
+## Latest local UI work — Nov 3
+
+- This checkpoint includes the approved people drawer, header alignment and
+  Quiet bar refinements. README documents the current behavior;
+  CURRENT_WORK stays under 50 lines. Continue design comparisons in /design-system,
+  rather than creating separate HTML previews unless requested. Earlier people
+  drawer/separation sketches remain in work/ as design references. Next feature
+  work is real bill action integration; retain the existing create-bill form.
+- Screen 2 now uses the approved Quiet bar in both independent bill previews
+  and standalone pages. Shared BillNavigation is also the live Quiet bar specimen
+  at /design-system#navigation; future changes should update this component.
+  Floating dock/Compact capsule remain comparison concepts. Standalone navbar
+  HTML files were removed per the user's preference for design-system previews.
+  The flat opaque surface has three 64px targets, a 44×32px lavender icon chip,
+  visible labels, and no full-tab fill, top divider, blur or floating shadow.
+  Screen 2 retains its existing fixed positioning/desktop corners; phone layout
+  respects the bottom safe area and reserves enough content space below the list.
+- The highlight slides for 240ms and the chosen label lifts 1px/scales to 1.04
+  with the same timing. Icons begin after the actual highlight transition finishes.
+  The user restored navigationIconTiming.duration to 0.6 before this integration;
+  preserve 600ms (their brief 300ms trial is superseded). House uses its door
+  gesture, Expenses reveals receipt lines, and Wallet pulses once. Initial loads
+  stay still, rapid selections discard pending playback, deselection resets the
+  icon, and a later selection replays. Reduced motion suppresses these effects;
+  forced colors outlines the chip and underlines the selected label.
+- Expenses uses the official Lucide receipt-text outline with two centered detail
+  lines in every navigation specimen and Screen 2. ReceiptText is a local Motion
+  component with simultaneous write-on: both strokes begin together after the
+  highlight lands, with the top finishing in 400ms and the bottom in 600ms.
+  Both paths start at x=8 and draw left to right at full ink opacity; the outline
+  stays still. navigationIconTiming.topLineSpeed is 1.5; the old linePause was
+  removed because there is no delay between the strokes.
+  Reduced motion and initial/resting states show both lines fully drawn.
+  Animate UI receipt URLs returned 404;
+  official Lucide SVG artwork and ISC license are recorded under icons/.
+  Other icons reuse the unchanged Animate UI presets with normalized speed.
+- Navigation integration checks cover both states at 1280/393/320px, independent
+  frames, route history, heading focus/keyboard activation, fixed control bounds,
+  chip size, animated sequencing/cancellation, reduced motion, forced colors and
+  axe. Desktop/phone screenshots of both states were reviewed in Chromium and
+  WebKit. The receipt-upload focus assertion raced once under concurrent checks,
+  then passed alone and in the full offline suite with two workers; no code or
+  test assertion was changed for that unrelated failure.
+  Integration validation: 387 offline tests pass (eight hosted/provider checks skipped),
+  24 shared-navigation checks plus 92 affected browser checks pass across the
+  configured Chromium/WebKit/iPhone targets, and one additional Chromium check
+  passes against the webpack production build. Lint, full formatting, diff checks
+  and webpack build pass. The temporary production smoke server was stopped.
+  Latest write-on validation: 27 affected navigation browser checks pass across
+  Chromium/WebKit/iPhone; the stroke check samples actual progress on both
+  /screen2 and /design-system and verifies direction, overlapping drawing, the
+  top leading/finishing first, and complete resting lines. Lint/format/diff/webpack
+  build pass.
+- Overview eyebrow/title/subtitle now form one grid group with 8px vertical gaps.
+  Eyebrow and subtitle span the full width; Share bill has its own column with a
+  16px gap, centered on the first title line even when the title wraps. The action
+  spans title/subtitle tracks so its 48px height does not stretch text spacing.
+  Existing title sizes, visible Share bill label and stable copied-state width stay.
+- Shared DialogPanel headers place the eyebrow above a title row, align the 48px
+  close target to the title's first line and give the description the full width
+  below with a 12px gap. Compact headers derive padding from the 20px title line
+  to keep the close target inside the panel. Close-only keyboard focus is 2px with
+  a 2px offset and Highlight in forced colors; other controls keep their focus style.
+- Screen 2 people drawer now grows naturally for small groups and scrolls only
+  the list at its viewport limit. Phone lists additionally cap at five standard
+  70px rows; shorter viewports can scroll sooner and desktop remains height-based.
+  The very-short-height shared scroller removes that cap to avoid nested scrolling.
+  Title/close and participant count stay above; a solid footer holds the shared
+  add/copy row. Desktop and both isolated comparison frames reuse it.
+  The final person row stays borderless; the footer no longer has a divider.
+- Footer actions now sit side by side: primary Add person fills remaining space;
+  outlined Copy link is 114px wide with a 10px gap. During the 240ms morph, the
+  field opens alongside separate 48px add and copy controls with 10px gaps.
+  At 320px the field retains 146px. Reduced motion switches immediately.
+  Helper/error/status text stays below; there is no separate invitation-button row.
+- Soft feather now matches the approved preview: 24px footer padding above/below
+  (bottom respects safe area), and a decorative 28px surface-color gradient at
+  the list's bottom only when scrollHeight - clientHeight - scrollTop > 1px.
+  It clears at the end or when everyone fits. Opacity transitions over 160ms;
+  reduced motion is immediate and forced colors hide it. The opaque footer stays.
+  PeopleList wraps its existing focusable ul in a positioned viewport; a passive
+  scroll listener, row/list ResizeObserver and child-list MutationObserver update
+  the flag through coalesced animation frames and clean up on close. The short
+  shared-scroll fallback expands the wrapper and disables the feather.
+- InlinePersonForm accepts a copyAction slot; DesignCopyButton adds optional
+  iconOnly, aria-label and title props. One copy instance stays mounted through
+  expansion, retaining pending writes and confirmation timing. Compact success
+  shows the check/tint, politely announces Copied and resets after 1.8s. Keyboard
+  copy never submits a name; clipboard failures retain the draft. Default copy
+  callers keep their labels and behavior.
+  Accessible naming now matches the collapsed visible Copy link text (Copy link
+  to invite people), while compact mode keeps Copy invitation link. A full button
+  showing Copied uses its visible success label as its name. Axe covers both states.
+- Local submissions identify the created participant by UUID, follow its 240ms
+  row expansion inside the list and retain field focus for repeated entry.
+  Later submissions supersede earlier reveal requests; direct scrolling cancels
+  following. External child updates preserve scrollTop; reopening starts at top.
+  Draft restoration, name validation, focus trapping/return and reduced motion stay.
+- Reopening people now starts a fresh entry session: an empty/whitespace-only
+  field returns to Add person plus labeled Copy link; an unfinished name restores
+  its original text and field focus. Successful saving stays expanded for repeat
+  entry until the drawer closes. Only the form session remounts on reopening,
+  clearing stale errors/status without replaying people rows. Closing retains the
+  expanded form through exit. Legacy person links still open entry directly;
+  rapid reopening applies the same empty-versus-draft rule.
+- DialogPanel adds opt-in viewportAware sizing. visualViewport resize/scroll
+  events fit the drawer above the keyboard; dynamic viewport units are the fallback.
+  At 480px or shorter the header compacts. If a count and one row cannot fit with
+  the pinned footer, contents share one scroll area below the fixed header and
+  the field/error is revealed. Observers, frames and event listeners clean up.
+- The scrollable list has keyboard focus and a visible focus outline; long names
+  wrap. Real-phone keyboard behavior still requires device confirmation. This is
+  local prototype work; live participant synchronization belongs to integration.
+- Validation: 387 offline tests pass with `npm test -- --maxWorkers=4`; eight
+  hosted/provider checks skipped. Three PeopleList component checks cover the
+  one-pixel boundary, external content/size changes, reader position and cleanup.
+  All 84 affected header/form/preview/people browser checks pass across Chromium,
+  WebKit and iPhone emulation. Includes one/five/overflowing people, scroll-end
+  feather visibility, wheel/keyboard scrolling and emulated touch hit testing,
+  resizing, reduced motion and Chromium forced colors, long names, animated
+  additions, keyboard viewport/fallback, copy success/failure/pending expansion,
+  drafts and empty-entry reset through X/Escape/backdrop/Back, rapid reopening,
+  legacy links, focus, independent comparison frames and axe.
+  Header checks cover first-line alignment, 8px overview spacing, full-width
+  descriptions, wrapped titles, unchanged geometry during Share bill confirmation,
+  48px close targets/2px focus rings, compact height, chooser/expense/confirmation/
+  studio variants and idle/copied accessible names.
+  Test opening waits for initial route focus before scrolling an offscreen trigger.
+  Small-group, overflow and end-of-list screenshots reviewed at desktop, 393px
+  and 320px in Chromium plus 393px WebKit; short shared-scroll fallback reviewed.
+  Revised overview/drawer headers reviewed at 1280/393/320px in Chromium and
+  393px WebKit, including the 320px/230px compact WebKit drawer.
+  Lint, formatting and webpack build pass; source-map uploads disabled locally.
+  Hosted data, operational evidence and migrations were not changed; deployment
+  status has not been refreshed as part of these local UI checks.
+
+## Previous local UI work — Nov 1
 
 - `/screen2` compares populated and empty bills side by side, stacking on narrow
   screens. **Open preview** opens `/screen2?preview=populated` or `?preview=empty`.

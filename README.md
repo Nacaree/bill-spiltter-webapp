@@ -92,9 +92,10 @@ The approved system is applied across the app and shared with this reference:
   forms, ledger entries, receipt review and QR details retain solid surfaces.
 - One inner focus stroke on fields, accessible keyboard menus, visible validation
   messages and preserved entries after rejected submissions.
-- **Animate UI** is the production animated icon library. Lucide Animated remains
-  in the side-by-side reference comparison. Original sources and licenses remain
-  under `src/components/design-system/icons/`.
+- **Animate UI** supplies the shared animated icons. Expenses uses a Lucide
+  receipt outline with a custom Motion write-on. Lucide Animated remains in the
+  side-by-side reference comparison. Original sources and licenses remain under
+  `src/components/design-system/icons/`.
 
 The **Approved foundations** panel is read-only. **Copy theme** exports the locked
 settings. Interactive reference examples use sample data and never scan receipts
@@ -121,11 +122,29 @@ The 240ms transition softens the purple surface, makes room for the submit butto
 and reveals the helper text; reduced motion switches immediately.
 Saving adds the person to the list and clears/refocuses the field for
 another name, keeping one drawer open. Empty/duplicate names are rejected;
-closing retains unfinished entries. The invitation link remains in the same
-drawer. The studio retains its standalone quick-person form example.
+closing retains unfinished entries. Reopening an empty field returns to
+**Add person**. The outlined **Copy link** control shares its row, becoming a
+48px icon button when the name field opens; copy confirmation survives the morph.
+The studio retains its standalone quick-person form example.
 New people use the motion playground's 240ms fade and height reveal, so the list
 makes room smoothly. Opening the drawer does not replay existing rows;
 reduced motion adds rows immediately.
+
+The people drawer pins its title and actions while only the list scrolls. On
+phones it caps at five standard rows, with shorter viewports scrolling sooner.
+A soft feather appears at the list's bottom only while more people remain below.
+Local additions reveal the new row; other updates preserve the reader's position.
+Keyboard-aware sizing uses `visualViewport`, with a shared scroll area in very
+short viewports. Real-phone keyboard behavior still needs device confirmation.
+
+The [navigation gallery](http://localhost:3000/design-system#navigation) compares
+three directions. Its approved **Quiet bar** and Screen 2 use the same
+`BillNavigation` component: a flat surface, visible labels and a small lavender
+icon highlight. The highlight and label move for 240ms, then the selected icon
+plays once. Receipt lines write left to right together, with the top finishing
+in 400ms and the bottom in 600ms; the outline stays still. Initial and reduced-motion
+states show complete icons. Timing lives in `motion-tokens.js`.
+Keep new design experiments in the design studio so they can be tested in context.
 
 The [calendar preview](http://localhost:3000/design-system#date-picker) combines
 DayPicker with Animate UI: a rounded glass panel, bold Helvetica month headings,

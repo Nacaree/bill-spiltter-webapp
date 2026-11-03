@@ -1,0 +1,241 @@
+.showcase {
+  min-width: 0;
+}
+
+.intro,
+.note,
+.caption p {
+  color: var(--ds-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.intro {
+  margin-bottom: 20px !important;
+}
+
+.options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  align-items: start;
+  gap: 28px 20px;
+}
+
+.option {
+  min-width: 0;
+  margin: 0;
+}
+
+.caption {
+  min-height: 88px;
+  padding-bottom: 16px;
+}
+
+.caption h3 {
+  font-size: 16px;
+  letter-spacing: -0.3px;
+}
+
+.caption p {
+  margin-top: 6px !important;
+  max-width: 360px;
+}
+
+.phone {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 393px;
+  min-height: 338px;
+  margin-inline: auto;
+  padding-bottom: 16px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-card-radius);
+  background: var(--ds-canvas);
+}
+
+.content {
+  padding: 24px 20px;
+}
+
+.content .eyebrow {
+  color: var(--ds-muted);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+}
+
+.content h4 {
+  margin: 8px 0 18px;
+  font-size: 26px;
+  letter-spacing: -0.7px;
+}
+
+.sample {
+  padding: 16px;
+  border-radius: 20px;
+  background: var(--ds-surface);
+}
+
+.sample p {
+  color: var(--ds-muted);
+  font-size: 11px;
+}
+
+.sample strong {
+  display: block;
+  margin-block: 4px;
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.navigation {
+  color: var(--ds-muted);
+  background: var(--ds-surface);
+}
+
+.track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.destination {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  min-height: var(--ds-control-height);
+  padding: 6px 4px;
+  border: 0;
+  border-radius: 18px;
+  color: var(--ds-muted);
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: color var(--ds-motion-standard) var(--ds-motion-ease);
+}
+
+.destination[aria-current="page"] {
+  color: var(--ds-brand-ink);
+  font-weight: 600;
+}
+
+.symbol {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.symbol svg {
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.label {
+  white-space: nowrap;
+}
+
+.floating {
+  margin-inline: 16px;
+  padding: 8px;
+  border: 1px solid var(--ds-line);
+  border-radius: 28px;
+  box-shadow:
+    0 8px 28px #40235210,
+    0 1px 3px #40235210;
+}
+
+.floating .destination {
+  height: 64px;
+}
+
+.floating .symbol {
+  width: 44px;
+  height: 32px;
+  border-radius: 16px;
+  transition: background-color var(--ds-motion-standard) var(--ds-motion-ease);
+}
+
+.floating .destination[aria-current="page"] .symbol {
+  background: var(--ds-tint);
+}
+
+.quietPreview {
+  border-radius: 0 0 30px 30px;
+  margin-bottom: -16px;
+}
+
+.compact {
+  margin-inline: 8px;
+  padding: 6px;
+  border: 1px solid var(--ds-line);
+  border-radius: 24px;
+  background: var(--ds-tint);
+}
+
+.compact .track {
+  height: 50px;
+}
+
+.compact .destination {
+  flex-direction: row;
+  gap: 5px;
+  padding: 4px;
+}
+
+.compact .symbol svg {
+  width: 18px;
+  height: 18px;
+}
+
+.selection {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: calc(100% / 3);
+  border-radius: 18px;
+  background: var(--ds-surface);
+  box-shadow: 0 2px 8px #40235210;
+  transform: translateX(calc(var(--navigation-selected) * 100%));
+  transition: transform var(--ds-motion-reveal) var(--ds-motion-ease);
+}
+
+.note {
+  margin-top: 20px !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .destination,
+  .floating .symbol,
+  .selection {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .navigation {
+    border: 1px solid CanvasText;
+  }
+
+  .destination[aria-current="page"] {
+    color: Highlight;
+  }
+
+  .destination[aria-current="page"] .label {
+    text-decoration: underline;
+  }
+
+  .selection {
+    border: 1px solid Highlight;
+  }
+}

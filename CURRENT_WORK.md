@@ -5,10 +5,10 @@
 
 ## Task
 
-Screen2 UI pass complete; next: integrate real bill actions; keep create-bill form.
-Screen2 compares independent populated/empty bills; empty uses Receipt vignette.
-People drawer: button morph, retained drafts/repeat entry, studio's 240ms row reveal.
-User owns remaining real-device/screen-reader/full keyboard/Firefox checks.
+Screen2 UI checkpoint: drawers/headers/Quiet bar done; next real bill actions.
+Keep create-bill form; independent populated/empty previews; Receipt vignette.
+People drawer: soft feather, five-row cap, add/copy row; blank resets/drafts restore.
+User owns real-phone keyboard/device/screen-reader/full keyboard/Firefox checks.
 Stage 2 skipped; Stage 3 migration user-reported applied; Stage 5 readiness done.
 
 ## Latest hosted evidence (Oct 25; not refreshed)
@@ -43,7 +43,7 @@ Stage 2 skipped; Stage 3 migration user-reported applied; Stage 5 readiness done
 - Collect safe provider HTTP status/classification on recurrence; no proven fix.
 - Local UI work changes /screen2 and design-system previews, with no hosted-data
   writes or migrations. Hosted deployment/cleanup status has not been refreshed.
-- Nov 1: 381 offline tests and 15 latest affected browser checks pass; 8 hosted skipped.
-  Inline entry/row reveal screenshots reviewed; lint/format/webpack build pass.
+- Nov 3: 387 offline/117 affected browser checks pass; eight hosted checks skipped.
+  Receipt lines start together (400/600ms); 27 browser checks + lint/format/build pass.
 - Preview shares Production; no isolated backend. QR-orphan retry limit remains.
   Privacy/Help content stays off to-do list.

@@ -172,8 +172,29 @@
   justify-self: center;
   gap: inherit;
   transition:
+    gap var(--ds-motion-reveal) var(--ds-motion-ease),
     opacity 160ms ease,
     transform 200ms var(--ds-motion-ease);
+}
+.copyLabelText {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 1fr;
+  transition:
+    grid-template-columns var(--ds-motion-reveal) var(--ds-motion-ease),
+    opacity 140ms ease;
+}
+.copyLabelText > span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.copyButton[data-icon-only] .copyLabels > span {
+  gap: 0;
+}
+.copyButton[data-icon-only] .copyLabelText {
+  grid-template-columns: 0fr;
+  opacity: 0;
 }
 
 .copySuccessLabel {
@@ -204,7 +225,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .button,
-  .copyLabels > span {
+  .copyLabels > span,
+  .copyLabelText {
     transition: none;
   }
   .button:active:not(:disabled) {

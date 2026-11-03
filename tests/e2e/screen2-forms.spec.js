@@ -275,7 +275,9 @@ test("people entry morphs in place and respects reduced motion", async ({
       const submit = node.querySelector('button[type="submit"]');
       const animations = node.getAnimations({ subtree: true });
       const layout = animations.find(
-        (animation) => animation.transitionProperty === "grid-template-columns",
+        (animation) =>
+          animation.transitionProperty === "grid-template-columns" &&
+          animation.effect.target === input.parentElement.parentElement,
       );
       let widthChange = 0;
       let duration = 0;
@@ -300,7 +302,9 @@ test("people entry morphs in place and respects reduced motion", async ({
     if (reducedMotion === "reduce") expect(result.duration).toBe(0);
     else {
       expect(result.duration).toBe(240);
-      expect(result.widthChange).toBeGreaterThan(45);
+      // The copy label contracts as the submit action appears, leaving the
+      // editable field eight pixels wider than the collapsed Add person button.
+      expect(result.widthChange).toBeCloseTo(-8, 0);
     }
     expect(result.inputHeight).toBe(48);
     expect(result.submitWidth).toBe(48);
@@ -373,6 +377,9 @@ test("new people use the studio list reveal without replaying on drawer reopen",
     await page.getByRole("button", { name: /2 people, one bill/ }).click();
     // Existing rows should be fully visible as soon as the drawer mounts.
     expect(await measure()).toEqual({ height: 70, opacity: 1 });
+    await people
+      .getByRole("button", { name: "Add person", exact: true })
+      .click();
     await name.fill("Mali");
     await name.press("Enter");
     await name.fill("Kosal");

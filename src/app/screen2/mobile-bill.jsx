@@ -27,6 +27,10 @@ import {
   motionTransition,
 } from "@/components/design-system/motion-tokens";
 import { DesignCopyButton } from "@/components/design-system/copy-button";
+import {
+  BillNavigation,
+  billNavigationItems,
+} from "@/components/design-system/bill-navigation";
 import { Coffee } from "@/components/design-system/icons/animate-ui/coffee";
 import { Route } from "@/components/design-system/icons/animate-ui/route";
 import { ShoppingBag } from "@/components/design-system/icons/animate-ui/shopping-bag";
@@ -43,12 +47,8 @@ import {
   exampleReceipt,
 } from "./example-ledger";
 import styles from "./mobile-bill.module.css";
+import { PeopleList } from "./people-list";
 
-const tabs = [
-  ["overview", "Overview", "home"],
-  ["expenses", "Expenses", "copy"],
-  ["settle", "Settle", "wallet"],
-];
 const money = (value) => formatMoney(Math.abs(value), "USD");
 function previewMinor(value) {
   try {
@@ -198,6 +198,10 @@ function Sheet({
   returnFocusRef,
   restoreFocus,
   kind,
+  description,
+  bodyClassName = "",
+  footer,
+  viewportAware = false,
 }) {
   return (
     <DialogPanel
@@ -206,6 +210,8 @@ function Sheet({
         if (!next) onDismiss();
       }}
       title={title}
+      description={description}
+      viewportAware={viewportAware}
       kind={kind}
       closeLabel="Close menu"
       className={styles.sheet}
@@ -215,9 +221,12 @@ function Sheet({
           returnFocusRef.current.focus({ preventScroll: true });
       }}
     >
-      <div className={`${dialogStyles.body} ${dialogStyles.optionsBody}`}>
+      <div
+        className={`${dialogStyles.body} ${dialogStyles.optionsBody} ${bodyClassName}`}
+      >
         {children}
       </div>
+      {footer}
     </DialogPanel>
   );
 }
@@ -238,6 +247,7 @@ function InlinePersonForm({
   onValueChange,
   people,
   onSave,
+  copyAction,
 }) {
   const id = useId();
   const input = useRef(null);
@@ -245,7 +255,7 @@ function InlinePersonForm({
   const [addedName, setAddedName] = useState("");
 
   useEffect(() => {
-    if (expanded) input.current?.focus();
+    if (expanded) input.current?.focus({ preventScroll: true });
   }, [expanded]);
 
   function submit(event) {
@@ -264,7 +274,7 @@ function InlinePersonForm({
       onSave(name);
       setAddedName(name);
     }
-    input.current?.focus();
+    input.current?.focus({ preventScroll: true });
   }
 
   return (
@@ -274,6 +284,7 @@ function InlinePersonForm({
       className={styles.inlinePersonForm}
       aria-label="Add a person"
       data-expanded={expanded}
+      data-has-copy={Boolean(copyAction)}
     >
       <div className={styles.personComposer}>
         <div className={styles.personEntry}>
@@ -320,6 +331,7 @@ function InlinePersonForm({
             disabled={!expanded}
           />
         </div>
+        {copyAction && <div className={styles.personCopy}>{copyAction}</div>}
       </div>
       <div className={styles.personDetails} aria-hidden={!expanded}>
         <div>
@@ -416,6 +428,7 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
   const retainedOverlay = sheetOpen ? overlay : lastSheetOverlay;
   const sheetOverlay =
     retainedOverlay === "person" ? "people" : retainedOverlay;
+  const peopleOpen = sheetOpen && sheetOverlay === "people";
 
   const [role, setRole] = useState("owner");
   const [settlerId, setSettlerId] = useState("sokha");
@@ -445,6 +458,21 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
   const [paymentNote, setPaymentNote] = useState("");
   const [newPerson, setNewPerson] = useState("");
   const [addingPerson, setAddingPerson] = useState(false);
+  const [peopleSession, setPeopleSession] = useState({ open: false, id: 0 });
+  if (peopleSession.open !== peopleOpen) {
+    setPeopleSession({
+      open: peopleOpen,
+      id: peopleSession.id + (peopleOpen ? 1 : 0),
+    });
+    if (peopleOpen) {
+      const hasDraft = Boolean(newPerson.trim());
+      setAddingPerson(hasDraft || overlay === "person");
+      if (!hasDraft && newPerson) setNewPerson("");
+    }
+  }
+  // Reset on the next opening, preserving the outgoing form through its exit.
+  const personEntryExpanded = addingPerson || retainedOverlay === "person";
+  const [personToReveal, setPersonToReveal] = useState(null);
   const [joinedName, setJoinedName] = useState("");
   const [deleted, setDeleted] = useState(false);
   const heading = useRef(null);
@@ -474,7 +502,8 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
       : view === "settle" || view.startsWith("pay-")
         ? "settle"
         : "expenses";
-  const fullScreen = !tabs.some(([id]) => id === view) || deleted;
+  const fullScreen =
+    !billNavigationItems.some(({ id }) => id === view) || deleted;
   const detail = view.startsWith("detail-")
     ? expenses.find((item) => item.id === view.slice(7))
     : null;
@@ -733,10 +762,11 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
   }
 
   function addPerson(name) {
+    const id = `person_${crypto.randomUUID()}`;
     setPeople((current) => [
       ...current,
       {
-        id: `person_${crypto.randomUUID()}`,
+        id,
         display_name: name,
         initials: name
           .split(/\s+/)
@@ -748,6 +778,7 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
         waiting: true,
       },
     ]);
+    setPersonToReveal(id);
     setNewPerson("");
     addActivity(`Added ${name} to the bill`);
     setNotice(`${name} can claim their name from the shared link.`);
@@ -844,25 +875,34 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
               <span aria-hidden="true">←</span> Back to {activeTab}
             </button>
           ) : null}
-          <div className={styles.pageTitle}>
+          <div
+            className={styles.pageTitle}
+            data-overview={(view === "overview" && !deleted) || undefined}
+            data-page-title
+          >
             <p className={styles.eyebrow}>
               {view === "overview"
                 ? "A little shared, a little simpler"
                 : "Weekend dinner"}
             </p>
-            <div className={styles.titleRow}>
-              <h1 ref={heading} tabIndex={-1}>
-                {title}
-              </h1>
-              {view === "overview" && !deleted ? (
+            <h1 ref={heading} tabIndex={-1}>
+              {title}
+            </h1>
+            {view === "overview" && !deleted ? (
+              <>
+                <p className={styles.subtitle}>
+                  {hasLedger
+                    ? "Good food. Great company. Fair shares."
+                    : "Your bill is ready. Start sharing."}
+                </p>
                 <DesignCopyButton
                   onCopy={copyLink}
                   className={styles.shareButton}
                 >
                   Share bill
                 </DesignCopyButton>
-              ) : null}
-            </div>
+              </>
+            ) : null}
           </div>
 
           {deleted ? (
@@ -874,11 +914,6 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
             </section>
           ) : view === "overview" ? (
             <>
-              <p className={styles.subtitle}>
-                {hasLedger
-                  ? "Good food. Great company. Fair shares."
-                  : "Your bill is ready. Start sharing."}
-              </p>
               <BalanceCard balanceMinor={myBalance.netMinor}>
                 <div className={styles.balanceTop}>
                   <span className={styles.balanceLabel}>
@@ -1675,20 +1710,11 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
         </div>
 
         {!fullScreen ? (
-          <nav className={styles.bottomNav} aria-label="Bill sections">
-            {tabs.map(([id, label, icon]) => (
-              <Button
-                key={id}
-                icon={icon}
-                variant="ghost"
-                className={styles.tabButton}
-                aria-current={activeTab === id ? "page" : undefined}
-                onClick={() => navigate(id)}
-              >
-                {label}
-              </Button>
-            ))}
-          </nav>
+          <BillNavigation
+            className={styles.bottomNav}
+            value={activeTab}
+            onValueChange={(id) => navigate(id)}
+          />
         ) : (view === "receipt" && receiptStage === "review") || transfer ? (
           <div className={styles.actionBar}>
             <Button
@@ -1760,6 +1786,43 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
             }[sheetOverlay] ?? "Bill options"
           }
           onDismiss={dismiss}
+          viewportAware={sheetOverlay === "people"}
+          description={
+            sheetOverlay === "people"
+              ? "One private link keeps everyone together."
+              : undefined
+          }
+          bodyClassName={sheetOverlay === "people" ? styles.peopleBody : ""}
+          footer={
+            sheetOverlay === "people" ? (
+              <div className={styles.peopleFooter} data-panel-footer>
+                <InlinePersonForm
+                  key={peopleSession.id}
+                  expanded={personEntryExpanded}
+                  onExpand={() => setAddingPerson(true)}
+                  value={newPerson}
+                  onValueChange={setNewPerson}
+                  people={people}
+                  onSave={addPerson}
+                  copyAction={
+                    <DesignCopyButton
+                      onCopy={copyLink}
+                      variant="secondary"
+                      className={styles.peopleCopy}
+                      iconOnly={personEntryExpanded}
+                      aria-label={
+                        personEntryExpanded
+                          ? "Copy invitation link"
+                          : "Copy link to invite people"
+                      }
+                    >
+                      Copy link
+                    </DesignCopyButton>
+                  }
+                />
+              </div>
+            ) : undefined
+          }
         >
           {sheetOverlay === "add" ? (
             <>
@@ -1853,14 +1916,15 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
           ) : null}
           {sheetOverlay === "people" ? (
             <>
-              <p className={styles.sheetDescription}>
-                One private link keeps everyone together.
+              <p className={styles.peopleCount}>
+                {people.length} {people.length === 1 ? "person" : "people"}
               </p>
-              <ul className={styles.peopleList}>
+              <PeopleList open={sheetOpen} revealPersonId={personToReveal}>
                 <AnimatePresence initial={false}>
                   {people.map((item) => (
                     <motion.li
                       key={item.id}
+                      data-person-id={item.id}
                       layout="position"
                       initial={
                         reducedMotion !== false
@@ -1894,20 +1958,7 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
                     </motion.li>
                   ))}
                 </AnimatePresence>
-              </ul>
-              <DesignCopyButton onCopy={copyLink} className={styles.fullButton}>
-                Copy invitation link
-              </DesignCopyButton>
-              <div className={styles.inviteAction}>
-                <InlinePersonForm
-                  expanded={addingPerson || overlay === "person"}
-                  onExpand={() => setAddingPerson(true)}
-                  value={newPerson}
-                  onValueChange={setNewPerson}
-                  people={people}
-                  onSave={addPerson}
-                />
-              </div>
+              </PeopleList>
             </>
           ) : null}
           {sheetOverlay === "qr" ? (

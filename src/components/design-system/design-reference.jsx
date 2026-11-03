@@ -17,6 +17,7 @@ import { FormShowcase } from "./form-showcase";
 import { DatePickerShowcase } from "./date-picker-showcase";
 import { DesignCopyButton } from "./copy-button";
 import { IconComparison } from "./icon-comparison";
+import { NavigationShowcase } from "./navigation-showcase";
 import { AnimatedTabs, AnimatedTabPanels } from "./animated-tabs";
 import { MotionShowcase } from "./motion-showcase";
 import { motionTiming } from "./motion-tokens";
@@ -264,6 +265,7 @@ export function DesignReference() {
           <a href="#date-picker">Calendar</a>
           <a href="#motion">Motion</a>
           <a href="#materials">Materials</a>
+          <a href="#navigation">Navigation</a>
           <a href="#patterns">In context</a>
           <a href="#forms">Drawers & forms</a>
           <span className={styles.navCaption}>
@@ -503,9 +505,18 @@ export function DesignReference() {
               </DesignSurface>
             </section>
 
-            <section id="patterns" className={styles.section}>
+            <section id="navigation" className={styles.section}>
               <SectionHeading
                 number="05"
+                title="Navigation options"
+                description="Three directions for moving around a bill."
+              />
+              <NavigationShowcase />
+            </section>
+
+            <section id="patterns" className={styles.section}>
+              <SectionHeading
+                number="06"
                 title="See it come together"
                 description="A few familiar moments, with the same visual language."
               />
@@ -640,7 +651,7 @@ export function DesignReference() {
             </section>
             <section id="forms" className={styles.section}>
               <SectionHeading
-                number="06"
+                number="07"
                 title="A place for every task"
                 description="Drawers for quick changes. Focused forms for details. Clear confirmations."
               />

@@ -13,11 +13,16 @@ export function DesignCopyButton({
   className,
   disabled,
   variant = "secondary",
+  iconOnly = false,
+  "aria-label": ariaLabel,
+  title,
 }) {
   const [state, setState] = useState("idle");
   const resetTimer = useRef(null);
   const mounted = useRef(false);
   const copying = useRef(false);
+  const compactLabel =
+    ariaLabel ?? (typeof children === "string" ? children : "Copy link");
 
   useEffect(() => {
     mounted.current = true;
@@ -60,7 +65,19 @@ export function DesignCopyButton({
       variant={variant}
       className={cn(styles.copyButton, className)}
       data-copy-state={state}
+      data-icon-only={iconOnly || undefined}
       disabled={disabled}
+      aria-label={
+        iconOnly ? compactLabel : state === "copied" ? undefined : ariaLabel
+      }
+      title={
+        title ??
+        (iconOnly
+          ? state === "copied"
+            ? copiedLabel
+            : compactLabel
+          : undefined)
+      }
       aria-busy={state === "copying" || undefined}
       icon={state === "copied" ? "check" : "copy"}
       iconAnimate={state === "copied"}
@@ -77,14 +94,18 @@ export function DesignCopyButton({
             aria-hidden={state === "copied"}
           >
             {state !== "copied" ? icon : iconPlaceholder}
-            <span>{children}</span>
+            <span className={styles.copyLabelText}>
+              <span>{children}</span>
+            </span>
           </span>
           <span
             className={styles.copySuccessLabel}
             aria-hidden={state !== "copied"}
           >
             {state === "copied" ? icon : iconPlaceholder}
-            <span>{copiedLabel}</span>
+            <span className={styles.copyLabelText}>
+              <span>{copiedLabel}</span>
+            </span>
           </span>
         </span>
       )}

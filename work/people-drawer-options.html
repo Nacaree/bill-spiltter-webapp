@@ -1,0 +1,584 @@
+<div
+  id="people-drawer-options"
+  class="viz-carousel viz-dotted-background"
+  aria-label="People drawer options"
+>
+  <section data-variant="Pinned actions" aria-label="Pinned actions drawer">
+    <div class="pd-stage">
+      <div class="pd-sheet" data-mode="pinned">
+        <div class="pd-handle"></div>
+        <header class="pd-header">
+          <div class="pd-eyebrow">WEEKEND DINNER</div>
+          <div class="pd-title-row">
+            <h2>The people at your table</h2>
+            <span class="pd-close" aria-hidden="true">×</span>
+          </div>
+          <p>Add names or share an invitation link.</p>
+          <div class="pd-count">8 people</div>
+        </header>
+        <div class="pd-list" role="region" aria-label="People list">
+          <ul></ul>
+        </div>
+        <footer class="pd-footer">
+          <button type="button" class="pd-copy cursor-interaction">
+            <i data-lucide="copy" aria-hidden="true"></i>Copy invitation link
+          </button>
+          <form class="pd-entry">
+            <label class="pd-sr" for="pd-name-pinned">Person’s name</label
+            ><input
+              id="pd-name-pinned"
+              placeholder="Add a person’s name"
+              autocomplete="off"
+              required
+            /><button
+              type="submit"
+              class="cursor-interaction"
+              aria-label="Add person"
+            >
+              +
+            </button>
+          </form>
+          <div class="pd-status" aria-live="polite"></div>
+        </footer>
+      </div>
+    </div>
+  </section>
+  <section
+    data-variant="Preview and expand"
+    aria-label="Preview and expand drawer"
+    hidden
+  >
+    <div class="pd-stage">
+      <div class="pd-sheet pd-summary" data-mode="preview">
+        <div class="pd-handle"></div>
+        <header class="pd-header">
+          <div class="pd-eyebrow">WEEKEND DINNER</div>
+          <div class="pd-title-row">
+            <h2>The people at your table</h2>
+            <span class="pd-close" aria-hidden="true">×</span>
+          </div>
+          <p>Add names or share an invitation link.</p>
+          <div class="pd-count">8 people</div>
+        </header>
+        <div class="pd-list" role="region" aria-label="People list">
+          <ul></ul>
+        </div>
+        <button
+          class="pd-expand cursor-interaction"
+          type="button"
+          aria-expanded="false"
+        >
+          View all 8 people ↓
+        </button>
+        <footer class="pd-footer">
+          <button type="button" class="pd-copy cursor-interaction">
+            <i data-lucide="copy" aria-hidden="true"></i>Copy invitation link
+          </button>
+          <form class="pd-entry">
+            <label class="pd-sr" for="pd-name-preview">Person’s name</label
+            ><input
+              id="pd-name-preview"
+              placeholder="Add a person’s name"
+              autocomplete="off"
+              required
+            /><button
+              type="submit"
+              class="cursor-interaction"
+              aria-label="Add person"
+            >
+              +
+            </button>
+          </form>
+          <div class="pd-status" aria-live="polite"></div>
+        </footer>
+      </div>
+    </div>
+  </section>
+  <section
+    data-variant="Full-height people"
+    aria-label="Full-height people drawer"
+    hidden
+  >
+    <div class="pd-stage">
+      <div class="pd-sheet pd-full" data-mode="full">
+        <header class="pd-header">
+          <div class="pd-eyebrow">WEEKEND DINNER</div>
+          <div class="pd-title-row">
+            <h2>People <span class="pd-title-count">8</span></h2>
+            <span class="pd-close" aria-hidden="true">×</span>
+          </div>
+          <button type="button" class="pd-copy cursor-interaction">
+            <i data-lucide="copy" aria-hidden="true"></i>Copy invitation link
+          </button>
+        </header>
+        <div class="pd-list" role="region" aria-label="People list">
+          <ul></ul>
+        </div>
+        <footer class="pd-footer">
+          <form class="pd-entry">
+            <label class="pd-sr" for="pd-name-full">Person’s name</label
+            ><input
+              id="pd-name-full"
+              placeholder="Add a person’s name"
+              autocomplete="off"
+              required
+            /><button
+              type="submit"
+              class="cursor-interaction"
+              aria-label="Add person"
+            >
+              +
+            </button>
+          </form>
+          <div class="pd-status" aria-live="polite"></div>
+        </footer>
+      </div>
+    </div>
+  </section>
+</div>
+<style>
+  #people-drawer-options {
+    --pd-paper: light-dark(#fff, #24202c);
+    --pd-ink: light-dark(#292333, #f6f0ff);
+    --pd-soft: light-dark(#756b80, #c4b8cf);
+    --pd-purple: light-dark(#7135a2, #d6b1f6);
+    --pd-action: light-dark(#7135a2, #b77ee4);
+    --pd-action-text: light-dark(#fff, #21112e);
+    --pd-line: light-dark(#e9e0ef, #483a53);
+    --pd-avatar: light-dark(#f4eef9, #44314f);
+    --pd-avatar2: light-dark(#fbe5d8, #513b32);
+    --pd-avatar3: light-dark(#e2eee6, #2e463a);
+    font-family: Helvetica, Arial, sans-serif;
+    color: var(--pd-ink);
+  }
+  #people-drawer-options * {
+    box-sizing: border-box;
+  }
+  #people-drawer-options [hidden] {
+    display: none !important;
+  }
+  #people-drawer-options .pd-stage {
+    height: 650px;
+    padding: 20px 12px 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  #people-drawer-options .pd-sheet {
+    width: 100%;
+    max-width: 393px;
+    height: 588px;
+    border: 1px solid var(--pd-line);
+    border-radius: 30px 30px 22px 22px;
+    background: var(--pd-paper);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 12px 30px light-dark(#38204912, #0003);
+  }
+  #people-drawer-options .pd-handle {
+    height: 4px;
+    width: 44px;
+    background: var(--pd-line);
+    margin: 12px auto 0;
+    flex-shrink: 0;
+    border-radius: 5px;
+  }
+  #people-drawer-options .pd-header {
+    padding: 22px 24px 10px;
+    flex-shrink: 0;
+  }
+  #people-drawer-options .pd-eyebrow {
+    color: var(--pd-purple);
+    font-size: 11px;
+    letter-spacing: 1.4px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  #people-drawer-options .pd-title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    justify-content: space-between;
+  }
+  #people-drawer-options h2 {
+    font-size: 25px;
+    line-height: 1.15;
+    letter-spacing: -0.7px;
+    font-weight: 700;
+    margin: 0;
+    max-width: 260px;
+    color: var(--pd-ink);
+  }
+  #people-drawer-options .pd-close {
+    color: var(--pd-purple);
+    font-size: 28px;
+    line-height: 1;
+  }
+  #people-drawer-options .pd-header p {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--pd-soft);
+    margin: 14px 0;
+  }
+  #people-drawer-options .pd-count {
+    font-size: 12px;
+    color: var(--pd-soft);
+    padding-top: 2px;
+  }
+  #people-drawer-options .pd-list {
+    margin: 0 24px;
+    min-height: 0;
+    flex: 1;
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--pd-line) transparent;
+  }
+  #people-drawer-options ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  #people-drawer-options .pd-person {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 70px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--pd-line);
+  }
+  #people-drawer-options .pd-avatar {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--pd-avatar);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--pd-purple);
+  }
+  #people-drawer-options .pd-person:nth-child(3n + 2) .pd-avatar {
+    background: var(--pd-avatar2);
+  }
+  #people-drawer-options .pd-person:nth-child(3n + 3) .pd-avatar {
+    background: var(--pd-avatar3);
+  }
+  #people-drawer-options .pd-person-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--pd-purple);
+    overflow-wrap: anywhere;
+  }
+  #people-drawer-options .pd-person-role {
+    font-size: 12px;
+    color: var(--pd-soft);
+    margin-top: 4px;
+  }
+  #people-drawer-options .pd-footer {
+    flex-shrink: 0;
+    padding: 12px 24px 12px;
+    border-top: 1px solid var(--pd-line);
+    background: var(--pd-paper);
+  }
+  #people-drawer-options button,
+  #people-drawer-options input {
+    font: inherit;
+  }
+  #people-drawer-options button {
+    touch-action: manipulation;
+  }
+  #people-drawer-options .pd-copy {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 0;
+    background: transparent;
+    color: var(--pd-purple);
+    font-size: 13px;
+    min-height: 44px;
+    padding: 8px 0;
+    width: 100%;
+  }
+  #people-drawer-options .pd-copy svg {
+    width: 16px;
+    height: 16px;
+  }
+  #people-drawer-options .pd-entry {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    border: 1px solid var(--pd-line);
+    border-radius: 20px;
+    padding: 4px 4px 4px 16px;
+    margin: 4px 0 0;
+    min-height: 54px;
+  }
+  #people-drawer-options .pd-entry input {
+    border: 0;
+    background: transparent;
+    min-width: 0;
+    width: 100%;
+    color: var(--pd-ink);
+    font-size: 16px;
+    padding: 8px 0;
+  }
+  #people-drawer-options input::placeholder {
+    color: var(--pd-soft);
+    opacity: 1;
+  }
+  #people-drawer-options .pd-entry button {
+    width: 44px;
+    height: 44px;
+    border-radius: 16px;
+    border: 0;
+    background: var(--pd-action);
+    color: var(--pd-action-text);
+    flex-shrink: 0;
+    font-size: 26px;
+  }
+  #people-drawer-options .pd-status {
+    min-height: 19px;
+    font-size: 11px;
+    color: var(--pd-soft);
+    margin-top: 6px;
+  }
+  #people-drawer-options .pd-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+  #people-drawer-options .pd-expand {
+    flex-shrink: 0;
+    min-height: 44px;
+    margin: 0 24px 4px;
+    background: transparent;
+    border: 0;
+    color: var(--pd-purple);
+    font-size: 13px;
+    font-weight: 700;
+  }
+  #people-drawer-options .pd-summary {
+    height: 588px;
+  }
+  #people-drawer-options .pd-summary:not(.pd-expanded) .pd-list {
+    flex: none;
+  }
+  #people-drawer-options
+    .pd-summary:not(.pd-expanded)
+    .pd-person:nth-child(n + 4) {
+    display: none;
+  }
+  #people-drawer-options .pd-summary .pd-footer {
+    margin-top: auto;
+  }
+  #people-drawer-options .pd-full {
+    height: 630px;
+    border-radius: 22px;
+  }
+  #people-drawer-options .pd-full .pd-header {
+    padding-top: 24px;
+    border-bottom: 1px solid var(--pd-line);
+  }
+  #people-drawer-options .pd-full h2 {
+    font-size: 25px;
+  }
+  #people-drawer-options .pd-title-count {
+    font-weight: 400;
+    color: var(--pd-soft);
+    font-size: 20px;
+    margin-left: 6px;
+  }
+  #people-drawer-options .pd-full .pd-copy {
+    justify-content: flex-start;
+    margin-top: 10px;
+  }
+  #people-drawer-options .pd-full .pd-person {
+    min-height: 62px;
+    padding: 9px 0;
+  }
+  #people-drawer-options .pd-new {
+    animation: pd-reveal 240ms ease-out;
+  }
+  @keyframes pd-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(7px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #people-drawer-options .pd-new {
+      animation: none;
+    }
+  }
+  @media (max-width: 360px) {
+    #people-drawer-options .pd-header {
+      padding-left: 18px;
+      padding-right: 18px;
+    }
+    #people-drawer-options .pd-list {
+      margin-left: 18px;
+      margin-right: 18px;
+    }
+    #people-drawer-options .pd-footer {
+      padding-left: 18px;
+      padding-right: 18px;
+    }
+    #people-drawer-options h2 {
+      font-size: 23px;
+    }
+  }
+</style>
+<script>
+  (() => {
+    const root = document.getElementById("people-drawer-options");
+    const initial = [
+      "Nary",
+      "Sokha",
+      "Mali",
+      "Dara",
+      "Sophea",
+      "Vanna",
+      "Rith",
+      "Lina",
+    ];
+    const saved = window.openai?.widgetState?.modelContent;
+    const names =
+      Array.isArray(saved?.people) &&
+      saved.people.every((n) => typeof n === "string")
+        ? saved.people.slice(0, 50)
+        : initial.slice();
+    const expanded = { preview: false };
+    function persist() {
+      window.openai
+        ?.setWidgetState?.({
+          modelContent: { people: names.slice() },
+          privateContent: null,
+        })
+        ?.catch(() => {});
+    }
+    function render(added) {
+      root.querySelectorAll(".pd-sheet").forEach((sheet) => {
+        const mode = sheet.dataset.mode;
+        const list = sheet.querySelector("ul");
+        list.replaceChildren();
+        const shown =
+          mode === "preview" && !expanded.preview && names.length > 3
+            ? [names[0], ...names.slice(-2)]
+            : names;
+        shown.forEach((name) => {
+          const li = document.createElement("li");
+          li.className = "pd-person" + (name === added ? " pd-new" : "");
+          const avatar = document.createElement("span");
+          avatar.className = "pd-avatar";
+          avatar.setAttribute("aria-hidden", "true");
+          avatar.textContent = name.slice(0, 2).toUpperCase();
+          const details = document.createElement("div");
+          const label = document.createElement("div");
+          label.className = "pd-person-name";
+          label.textContent = name + (name === names[0] ? " (you)" : "");
+          const role = document.createElement("div");
+          role.className = "pd-person-role";
+          role.textContent =
+            name === names[0]
+              ? "Bill owner"
+              : initial.includes(name)
+                ? "Joined"
+                : "Added by you";
+          details.append(label, role);
+          li.append(avatar, details);
+          list.append(li);
+        });
+        const count = sheet.querySelector(".pd-count");
+        if (count) count.textContent = names.length + " people";
+        const titleCount = sheet.querySelector(".pd-title-count");
+        if (titleCount) titleCount.textContent = names.length;
+        const expand = sheet.querySelector(".pd-expand");
+        if (expand) {
+          expand.textContent = expanded.preview
+            ? "Show fewer ↑"
+            : "View all " + names.length + " people ↓";
+          expand.setAttribute("aria-expanded", String(expanded.preview));
+          sheet.classList.toggle("pd-expanded", expanded.preview);
+        }
+      });
+    }
+    root.querySelectorAll(".pd-entry").forEach((form) =>
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const input = form.querySelector("input");
+        const name = input.value.trim();
+        const sheet = form.closest(".pd-sheet");
+        const status = sheet.querySelector(".pd-status");
+        if (!name) return;
+        if (names.some((n) => n.toLowerCase() === name.toLowerCase())) {
+          status.textContent = "That name is already on the list.";
+          input.focus();
+          return;
+        }
+        names.push(name);
+        render(name);
+        input.value = "";
+        input.focus();
+        status.textContent = name + " added. Add another name.";
+        const list = sheet.querySelector(".pd-list");
+        if (sheet.dataset.mode !== "preview" || expanded.preview)
+          list.scrollTop = list.scrollHeight;
+        persist();
+      }),
+    );
+    root.querySelector(".pd-expand").addEventListener("click", () => {
+      expanded.preview = !expanded.preview;
+      render();
+    });
+    root.querySelectorAll(".pd-copy").forEach((button) =>
+      button.addEventListener("click", () => {
+        button.textContent = "Invitation link copied";
+      }),
+    );
+    window.addEventListener("openai:set_globals", (event) => {
+      const updated = event.detail?.globals?.widgetState?.modelContent?.people;
+      if (
+        Array.isArray(updated) &&
+        updated.every((n) => typeof n === "string")
+      ) {
+        names.splice(0, names.length, ...updated.slice(0, 50));
+        render();
+      }
+    });
+    render();
+    if (globalThis.Tweak) {
+      const settings = { rowHeight: 70 };
+      const tweak = new Tweak({
+        container: root.querySelector('[data-mode="pinned"]'),
+        onChange: () => {
+          root
+            .querySelectorAll('[data-mode="pinned"] .pd-person')
+            .forEach(
+              (row) => (row.style.minHeight = settings.rowHeight + "px"),
+            );
+        },
+      });
+      tweak.addSlider(settings, "rowHeight", {
+        label: "Person row height",
+        min: 60,
+        max: 80,
+        step: 2,
+        unit: "px",
+      });
+    }
+  })();
+</script>

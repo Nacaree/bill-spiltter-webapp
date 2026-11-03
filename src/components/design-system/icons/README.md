@@ -25,6 +25,14 @@ their default animation definitions and a shared interaction wrapper.
 - **Lucide Animated:** check, copy and upload components were fetched from
   `https://lucide-animated.com/r/{name}.json` on October 26, 2026.
   Original license: [MIT](lucide-animated/LICENSE.txt).
+- **Expenses receipt:** the official Lucide `receipt-text` SVG was fetched from
+  `https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/receipt-text.svg`
+  on November 3, 2026. [ISC license](lucide-LICENSE.txt). Its outline is preserved;
+  two detail lines are spaced centrally. The local ReceiptText component adds a
+  simultaneous write-on with Motion and honors reduced motion. Both lines draw
+  left to right together: the top finishes in 400ms and the bottom in 600ms.
+  The outline stays still and the strokes use full ink opacity. This is a
+  custom animation, separate from the unchanged library animation definitions.
 
 Adaptations: TypeScript annotations were removed with esbuild, files are formatted
 with the project formatter, and Lucide's `@/lib/utils` import points to the existing
