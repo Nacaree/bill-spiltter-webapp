@@ -1,0 +1,281 @@
+.showcase {
+  min-width: 0;
+}
+
+.intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 24px;
+  color: var(--ds-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.intro > span {
+  font-size: 10px;
+}
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 32px 20px;
+}
+
+.option {
+  min-width: 0;
+  margin: 0;
+}
+
+.caption {
+  min-height: 90px;
+  padding-bottom: 16px;
+}
+
+.captionTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.captionTitle h3 {
+  font-size: 16px;
+  font-weight: var(--ds-weight-heading);
+  letter-spacing: -0.3px;
+}
+
+.number {
+  color: var(--ds-brand-ink);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pick {
+  padding: 3px 8px;
+  border-radius: 99px;
+  color: var(--ds-brand-ink);
+  background: var(--ds-tint);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.caption p,
+.optionFooter p {
+  margin-top: 8px !important;
+  color: var(--ds-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.stage {
+  display: flex;
+  min-height: 410px;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-card-radius);
+  background: color-mix(in srgb, var(--ds-text) 32%, var(--ds-canvas));
+}
+
+.billContext {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 24px 24px 40px;
+  color: var(--ds-text);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.billContext span:last-child {
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.specimen {
+  border: 1px solid var(--ds-line);
+  border-bottom: 0;
+  border-radius: var(--ds-card-radius) var(--ds-card-radius) 0 0;
+  background: var(--ds-surface);
+}
+
+.handle {
+  display: block;
+  width: 36px;
+  height: 4px;
+  margin: 10px auto 0;
+  border-radius: 99px;
+  background: var(--ds-line);
+}
+
+.specimenHeader {
+  padding: 22px 24px 20px;
+}
+
+.specimen .eyebrow {
+  color: var(--ds-brand-ink);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 1.2px;
+}
+
+.titleRow {
+  position: relative;
+  margin-top: 8px;
+  padding-right: 48px;
+}
+
+.titleRow h4 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: var(--ds-weight-heading);
+  line-height: 1.2;
+  letter-spacing: -0.7px;
+}
+
+.closeIcon {
+  position: absolute;
+  top: calc((24px * 1.2 - 48px) / 2);
+  right: -6px;
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  color: var(--ds-brand-ink);
+}
+
+.specimen .description {
+  margin-top: 12px;
+  color: var(--ds-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.specimenBody {
+  padding: 0 24px 28px;
+}
+
+.receiptControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.receiptControls > button {
+  font-size: 12px;
+}
+
+.receiptFooter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.receiptFooter .previewStatus {
+  flex: 1;
+  min-height: 0;
+  margin-top: 0;
+}
+
+.receiptFooter button {
+  min-height: 44px;
+  padding-inline: 8px;
+  flex-shrink: 0;
+  font-size: 11px;
+}
+
+.optionFooter {
+  display: grid;
+  gap: 14px;
+  padding-top: 8px;
+}
+
+.optionFooter p {
+  min-height: 38px;
+}
+
+.guidance {
+  margin-top: 28px !important;
+  padding: 18px 20px;
+  border-left: 2px solid var(--ds-brand);
+  border-radius: 0 16px 16px 0;
+  color: var(--ds-muted);
+  background: var(--ds-tint);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.guidance strong {
+  color: var(--ds-text);
+}
+
+.livePanel {
+  width: min(460px, calc(100% - 32px));
+}
+
+.liveBody {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px var(--ds-panel-padding) max(24px, env(safe-area-inset-bottom));
+}
+
+.previewStatus {
+  min-height: 36px;
+  margin: 18px 0 0;
+  color: var(--ds-muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+@media (max-width: 1100px) and (min-width: 851px), (max-width: 700px) {
+  .gallery {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .caption {
+    min-height: 0;
+  }
+
+  .stage {
+    width: 100%;
+    max-width: 393px;
+    margin-inline: auto;
+  }
+
+  .optionFooter p {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 374px) {
+  .specimenHeader {
+    padding-inline: 18px;
+  }
+
+  .specimenBody {
+    padding-inline: 18px;
+  }
+
+  .titleRow h4 {
+    font-size: 22px;
+  }
+
+  .closeIcon {
+    top: calc((22px * 1.2 - 48px) / 2);
+  }
+}
+
+@media (forced-colors: active) {
+  .pick {
+    border: 1px solid CanvasText;
+  }
+}

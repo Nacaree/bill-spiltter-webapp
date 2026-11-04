@@ -13,7 +13,104 @@ Latest approved people UX: one drawer, button-to-field morph with a compact purp
 studio's smooth list-entry reveal. Preserve this direction when
 integrating real bill actions; keep the existing main-app create-bill form.
 
-## Latest local UI work — Nov 3
+## Latest Screen 2 chooser integration — Nov 4
+
+- `/design-system#add-to-bill` compares four Add to the bill directions: Quiet
+  list, Receipt spotlight, Equal tiles and Compact actions. The studio jump nav
+  links to the gallery. Receipt spotlight is approved and now used in Screen 2;
+  the other three remain comparison concepts. The four later premium pair
+  experiments were removed at the user’s request.
+- Each direction has a phone-sized specimen and a full-size interactive preview
+  using the existing DialogPanel header, responsive positioning and motion.
+  Choices announce sample-only feedback; they do not upload receipts, open real
+  forms or write bill data. Escape, close and backdrop return focus to its trigger;
+  the selected contents remain mounted during exit. Foundations stay unchanged.
+- `bill-entry-choices.jsx` and its CSS module now supply BillEntryChoices to
+  both Screen 2 and the studio. ReceiptArt shares that
+  CSS; gallery-only layout stays in add-bill-showcase.module.css. Screen 2 opens
+  its existing receipt picker or expense form, preserving drafts, history and
+  return focus. The shared header holds the description; desktop add panels are
+  460px wide and phone drawers keep full width. Closing stops receipt playback
+  through the exit; each bill preview has independent motion. Screen 2 has only
+  Close, Scan a receipt and Enter manually: animation toggles stay in the studio.
+  No sample-preview status copy is shown in Screen 2. Keep the main create-bill
+  form; real bill action integration remains the next feature phase.
+  Integration validation: 56 browser checks pass across Chromium/WebKit/iPhone
+  emulation (nine new entry checks plus 47 form/header/preview/studio regressions).
+  Includes both bill presets, 1280/393/320px fit, a short viewport, plain hover
+  surfaces, centered icons, motion cleanup/reduced motion, receipt/manual routing,
+  draft retention, cleanup, independent frames and axe. Desktop/phone production
+  smoke, lint, full formatting, diff checks and webpack build pass. Temporary
+  production server stopped; no hosted data changed. Deployment status has not
+  been refreshed as part of the local UI checks.
+- Receipt spotlight floats continuously through a gentle 7px rise/return every
+  2.4 seconds, independently of a scan pass every 4.5 seconds. There is no held
+  position between passes: lavender light moves down the floating paper and
+  briefly highlights its visible detail lines. Hover/activation do not restart
+  either motion. `receipt-art.jsx` owns them; `receiptSpotlightTiming` separates
+  `floatDuration` from the scan's `duration`.
+- The larger 82×112px artwork (65px wide on narrow phones), separated back sheet,
+  soft shadows, faint glow, steady card surface and centered manual icons remain.
+  Forced colors hide the decorative scan light and glow.
+- Pause/Play controls in the studio gallery and its preview drawer share one
+  preference; Screen 2 intentionally has no animation control.
+  Pausing or enabling reduced motion cancels the cycle and restores complete,
+  still artwork; reduced motion disables playback controls. IntersectionObserver
+  watches the stationary card and pauses when less than 25% is visible; hidden
+  tabs pause too. Background specimens stop while a drawer is open. Visibility
+  pauses retain their phase; user Play starts a fresh cycle. Observers/listeners
+  and infinite Web Animations clean up on unmount. Other icons stay interaction-led.
+  Chromium/WebKit checks verify continuous floating between the scan passes,
+  scan/highlights, visibility pauses, user controls, reduced motion,
+  modal isolation/cleanup, 1280/393/320px layout, actions, axe and backend isolation.
+  Eight studio regressions, lint, full formatting, diff checks and webpack build pass.
+- Receipt spotlight's Enter manually action now uses the official Animate UI
+  PencilLine icon: a 500ms pencil lift and 300ms line draw after 120ms. Source,
+  license and native animation definitions are retained under icons/. DesignButton
+  exposes `pencil`, replaying on fresh pointer entry even while focused, plus its
+  existing focus/click/keyboard/touch triggers. Reduced motion and specimens stay
+  still. The pencil's background is now transparent, with its icon space retained;
+  the other chooser directions retain Plus.
+  Spotlight's manual row now renders the pencil at a true 22px (the shared 18px
+  wrapper previously shrank it), paired with a 20px chevron at 1.8 stroke width.
+  A three-column grid vertically centers both icons beside the title/subtitle
+  text block. The 42px leading slot, labels, full-row target
+  and both animations stay; the miniature specimen uses the same sizing/alignment.
+  Manual entry stays background/border-free on hover and press as well as idle;
+  it overrides the generic chooser hover fill/border. Keyboard focus stays visible.
+  The receipt card also retains its resting lavender surface and pale border
+  on hover/press, without the generic purple hover outline or extra fill.
+  Its chevron now nudges right 3px and returns over 420ms on the same row's
+  hover/focus/press/activation. It reuses AnimatedChoiceButton's replay and cleanup,
+  stays still for reduced motion/specimens and preserves its outline and spacing.
+  `drawerChevronTiming` controls the gesture separately from pencil/receipt timing.
+  Chromium/WebKit checks pass for its measured nudge/settling, replay, keyboard
+  Enter/Space, touch, cancellation, reduced motion, layout and receipt regression.
+  Lint, full formatting, diff checks and webpack build pass.
+  Pencil verification passes in Chromium/WebKit (measured lift and line drawing,
+  focused-hover replay, keyboard/click/touch, reduced motion, axe and phone fit);
+  eight shared button/copy tests, lint, formatting and webpack build pass.
+- Validation: 48 drawer/viewport combinations pass in Chromium/WebKit at
+  1280/1024/880/768/393/320px, including actions, Escape and focus restoration.
+  Axe, reduced motion, X/backdrop dismissal, console and backend isolation pass;
+  eight existing studio checks, lint, formatting and webpack build pass.
+  Desktop/phone screenshots reviewed. No hosted status was refreshed.
+
+## Earlier local UI refinement — Nov 4
+
+- ReceiptText now adds paper lift in both Screen 2 and the shared design-system
+  specimen. The whole SVG rises 1.5px, peaks at 40% of its 600ms gesture, and
+  settles with ease-in-out while both lines retain their synchronized 550ms draw.
+  The icon's dimensions and geometry stay intact; it does not rotate or overshoot.
+  Initial/reduced-motion states stay at rest. The existing highlight-first gate,
+  deselection cancellation and replay behavior are preserved. receiptLift in
+  navigationIconTiming controls the height. This refinement follows checkpoint
+  0a6f86f and is included with the approved Screen 2 chooser checkpoint.
+  Validation: 15 targeted browser checks pass in Chromium/WebKit/iPhone, including
+  measured lift/settling, synchronized strokes, replay, highlight sequencing and
+  reduced motion. Lint, formatting, diff checks and webpack build pass.
+
+## UI checkpoint and earlier refinements — Nov 3
 
 - This checkpoint includes the approved people drawer, header alignment and
   Quiet bar refinements. README documents the current behavior;
@@ -40,11 +137,11 @@ integrating real bill actions; keep the existing main-app create-bill form.
   forced colors outlines the chip and underlines the selected label.
 - Expenses uses the official Lucide receipt-text outline with two centered detail
   lines in every navigation specimen and Screen 2. ReceiptText is a local Motion
-  component with simultaneous write-on: both strokes begin together after the
-  highlight lands, with the top finishing in 400ms and the bottom in 600ms.
+  component with synchronized write-on after the highlight lands: both lines
+  start together, draw at the same normalized pace, and finish together at 550ms.
   Both paths start at x=8 and draw left to right at full ink opacity; the outline
-  stays still. navigationIconTiming.topLineSpeed is 1.5; the old linePause was
-  removed because there is no delay between the strokes.
+  geometry stays fixed. navigationIconTiming.receiptLineDuration controls both strokes;
+  the cascade delay was removed. House/Wallet keep the 600ms duration token.
   Reduced motion and initial/resting states show both lines fully drawn.
   Animate UI receipt URLs returned 404;
   official Lucide SVG artwork and ISC license are recorded under icons/.
@@ -61,11 +158,13 @@ integrating real bill actions; keep the existing main-app create-bill form.
   configured Chromium/WebKit/iPhone targets, and one additional Chromium check
   passes against the webpack production build. Lint, full formatting, diff checks
   and webpack build pass. The temporary production smoke server was stopped.
-  Latest write-on validation: 27 affected navigation browser checks pass across
+  Prior cascade validation: 27 affected navigation browser checks passed across
   Chromium/WebKit/iPhone; the stroke check samples actual progress on both
   /screen2 and /design-system and verifies direction, overlapping drawing, the
-  top leading/finishing first, and complete resting lines. Lint/format/diff/webpack
-  build pass.
+  top starting/finishing first, and complete resting lines. The current stroke
+  check instead requires matching progress throughout and complete resting lines.
+  Synchronized write-on: 12 targeted receipt/reduced-motion/sequence browser
+  checks pass across Chromium/WebKit/iPhone. Lint/format/diff/webpack build pass.
 - Overview eyebrow/title/subtitle now form one grid group with 8px vertical gaps.
   Eyebrow and subtitle span the full width; Share bill has its own column with a
   16px gap, centered on the first title line even when the title wraps. The action

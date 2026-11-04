@@ -141,10 +141,33 @@ The [navigation gallery](http://localhost:3000/design-system#navigation) compare
 three directions. Its approved **Quiet bar** and Screen 2 use the same
 `BillNavigation` component: a flat surface, visible labels and a small lavender
 icon highlight. The highlight and label move for 240ms, then the selected icon
-plays once. Receipt lines write left to right together, with the top finishing
-in 400ms and the bottom in 600ms; the outline stays still. Initial and reduced-motion
-states show complete icons. Timing lives in `motion-tokens.js`.
+plays once. Receipt lines write left to right together over 550ms, with matching
+progress and a shared finish. The whole receipt gently rises 1.5px and settles
+over 600ms, keeping its shape intact.
+Initial and reduced-motion states show complete icons. Timing lives in `motion-tokens.js`.
 Keep new design experiments in the design studio so they can be tested in context.
+
+The [Add to the bill gallery](http://localhost:3000/design-system#add-to-bill)
+compares **Quiet list**, **Receipt spotlight**, **Equal tiles** and **Compact
+actions**. Each has a phone-sized specimen and a working drawer preview using the
+shared panel. Choice buttons provide sample feedback without uploading a receipt
+or changing a bill. **Receipt spotlight** is approved and shared with Screen 2;
+the other three remain comparison concepts.
+
+Receipt spotlight's larger paper illustration has separated sheets, soft shadows
+and a faint lavender glow. The paper continuously floats up and down 7px on a
+2.4-second rhythm, while lavender light scans its detail lines every 4.5 seconds.
+The lines remain visible. Pause/Play controls are limited to the design studio
+specimen and preview drawer; offscreen cards and hidden tabs pause automatically, and
+background specimens stop while a drawer is open. Reduced motion keeps the
+artwork still. The pencil and chevron retain their interaction gestures. Cycle
+phases live in `receiptSpotlightTiming` in `motion-tokens.js`.
+Screen 2 uses the same `BillEntryChoices` component from `bill-entry-choices.jsx`,
+including the transparent, vertically centered
+pencil/chevron row and steady hover surfaces. Scan a receipt opens its receipt
+picker; Enter manually opens the existing expense form with retained drafts.
+Screen 2 has no animation toggle; the loop runs automatically while visible and
+respects reduced motion. Closing stops it through the drawer exit.
 
 The [calendar preview](http://localhost:3000/design-system#date-picker) combines
 DayPicker with Animate UI: a rounded glass panel, bold Helvetica month headings,

@@ -1481,27 +1481,13 @@
   font-size: 14px;
   line-height: 1.7;
 }
-.addOption {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 14px;
-  margin: 10px 0;
-  padding: 17px;
-  text-align: left;
+.entryBody {
+  padding-top: 4px;
 }
-.addOption > span:nth-child(2) {
-  display: grid;
-  gap: 4px;
-}
-.addOption strong {
-  font-size: 16px;
-  font-weight: 600;
-}
-.addOption small {
-  color: var(--ds-muted);
-  font-size: 12px;
+@media (min-width: 640px) {
+  .sheet.entrySheet {
+    width: min(460px, calc(100% - 32px));
+  }
 }
 .menuIdentity {
   display: flex;

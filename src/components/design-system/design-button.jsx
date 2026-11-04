@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { useDesignReducedMotion } from "./use-design-reduced-motion";
 import { Plus } from "./icons/animate-ui/plus";
+import { PencilLine } from "./icons/animate-ui/pencil-line";
 import { Upload } from "./icons/animate-ui/upload";
 import { Copy } from "./icons/animate-ui/copy";
 import { Check } from "./icons/animate-ui/check";
@@ -18,6 +19,7 @@ import styles from "./system.module.css";
 
 const icons = {
   plus: Plus,
+  pencil: PencilLine,
   upload: Upload,
   copy: Copy,
   check: Check,
@@ -129,9 +131,13 @@ export function DesignButton({
       onPointerEnter={(event) => {
         if (event.pointerType !== "touch") {
           setHovered(true);
-          // A focused button may still be in its animated state. Remount Copy
-          // to replay the library preset on every fresh pointer entry.
-          if (icon === "copy" && !props.disabled && reducedMotion === false) {
+          // A focused button may still be in its animated state. Remount these
+          // gestures to replay the library preset on every fresh pointer entry.
+          if (
+            (icon === "copy" || icon === "pencil") &&
+            !props.disabled &&
+            reducedMotion === false
+          ) {
             setPressCycle((cycle) => cycle + 1);
           }
         }

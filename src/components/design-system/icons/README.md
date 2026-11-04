@@ -22,6 +22,12 @@ their default animation definitions and a shared interaction wrapper.
   Animate UI registry on November 1, 2026. They use the same license and
   TypeScript-only adaptation. The receipt vignette and empty activity line
   keep these decorative icons still.
+- **Manual-entry pencil:** pencil-line was fetched from the official Animate UI
+  registry at `https://animate-ui.com/r/icons-lucide-pencil-line.json` on
+  November 4, 2026. The same license and TypeScript-only adaptation apply.
+  Receipt spotlight uses its unchanged 500ms pencil lift and 300ms line draw
+  (120ms delay), triggered through DesignButton on hover, focus, click and touch.
+  Fresh pointer entry replays it even while focused; reduced motion stays still.
 - **Lucide Animated:** check, copy and upload components were fetched from
   `https://lucide-animated.com/r/{name}.json` on October 26, 2026.
   Original license: [MIT](lucide-animated/LICENSE.txt).
@@ -29,9 +35,10 @@ their default animation definitions and a shared interaction wrapper.
   `https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/receipt-text.svg`
   on November 3, 2026. [ISC license](lucide-LICENSE.txt). Its outline is preserved;
   two detail lines are spaced centrally. The local ReceiptText component adds a
-  simultaneous write-on with Motion and honors reduced motion. Both lines draw
-  left to right together: the top finishes in 400ms and the bottom in 600ms.
-  The outline stays still and the strokes use full ink opacity. This is a
+  synchronized write-on with Motion and honors reduced motion. Both lines draw
+  left to right over 550ms, starting and finishing together at the same pace.
+  The whole icon lifts 1.5px and settles over 600ms while its shape stays intact;
+  the strokes use full ink opacity. This is a
   custom animation, separate from the unchanged library animation definitions.
 
 Adaptations: TypeScript annotations were removed with esbuild, files are formatted

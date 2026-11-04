@@ -73,7 +73,7 @@ test("Quiet bar fits both bill states and preserves routes, keyboard use and his
   ).toEqual([]);
 });
 
-test("Screen 2 waits for the highlight before playing the 600ms receipt icon", async ({
+test("Screen 2 waits for the highlight before playing the receipt icon", async ({
   page,
 }) => {
   const errors = [];

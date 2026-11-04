@@ -12,6 +12,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { DialogPanel } from "@/components/design-system/form-dialog";
 import dialogStyles from "@/components/design-system/form-dialog.module.css";
 import { ExpenseFormDialog } from "@/components/design-system/bill-form-dialogs";
+import { BillEntryChoices } from "@/components/design-system/bill-entry-choices";
 import systemStyles from "@/components/design-system/system.module.css";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -200,6 +201,7 @@ function Sheet({
   kind,
   description,
   bodyClassName = "",
+  panelClassName = "",
   footer,
   viewportAware = false,
 }) {
@@ -214,7 +216,7 @@ function Sheet({
       viewportAware={viewportAware}
       kind={kind}
       closeLabel="Close menu"
-      className={styles.sheet}
+      className={`${styles.sheet} ${panelClassName}`}
       onCloseAutoFocus={(event) => {
         event.preventDefault();
         if (restoreFocus && returnFocusRef.current?.isConnected)
@@ -1790,9 +1792,18 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
           description={
             sheetOverlay === "people"
               ? "One private link keeps everyone together."
-              : undefined
+              : sheetOverlay === "add"
+                ? "Choose what’s easiest. We’ll handle the math."
+                : undefined
           }
-          bodyClassName={sheetOverlay === "people" ? styles.peopleBody : ""}
+          bodyClassName={
+            sheetOverlay === "people"
+              ? styles.peopleBody
+              : sheetOverlay === "add"
+                ? styles.entryBody
+                : ""
+          }
+          panelClassName={sheetOverlay === "add" ? styles.entrySheet : ""}
           footer={
             sheetOverlay === "people" ? (
               <div className={styles.peopleFooter} data-panel-footer>
@@ -1825,38 +1836,17 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
           }
         >
           {sheetOverlay === "add" ? (
-            <>
-              <p className={styles.sheetDescription}>
-                Choose what’s easiest. We’ll handle the math.
-              </p>
-              <Button
-                icon="upload"
-                variant="secondary"
-                className={styles.addOption}
-                onClick={() => {
+            <BillEntryChoices
+              receiptPlaying={sheetOpen}
+              onSelect={(action) => {
+                if (action === "receipt") {
                   setReceiptStage("choose");
                   navigate("receipt", true);
-                }}
-              >
-                <span>
-                  <strong>Scan a receipt</strong>
-                  <small>Review the items, then split them</small>
-                </span>
-                <span className={styles.chevron}>›</span>
-              </Button>
-              <Button
-                icon="plus"
-                variant="secondary"
-                className={styles.addOption}
-                onClick={openManual}
-              >
-                <span>
-                  <strong>Enter manually</strong>
-                  <small>For anything without a receipt</small>
-                </span>
-                <span className={styles.chevron}>›</span>
-              </Button>
-            </>
+                } else {
+                  openManual();
+                }
+              }}
+            />
           ) : null}
           {sheetOverlay === "menu" ? (
             <>

@@ -5,9 +5,10 @@
 
 ## Task
 
-Screen2 UI checkpoint: drawers/headers/Quiet bar done; next real bill actions.
+Screen2 UI: drawers/headers/Quiet bar/receipt chooser done; next real bill actions.
 Keep create-bill form; independent populated/empty previews; Receipt vignette.
 People drawer: soft feather, five-row cap, add/copy row; blank resets/drafts restore.
+Screen2 shares approved Receipt spotlight: 7px/2.4s float, 4.5s scan; centered icons.
 User owns real-phone keyboard/device/screen-reader/full keyboard/Firefox checks.
 Stage 2 skipped; Stage 3 migration user-reported applied; Stage 5 readiness done.
 
@@ -41,9 +42,8 @@ Stage 2 skipped; Stage 3 migration user-reported applied; Stage 5 readiness done
   queue/hash/UI verification is valid even when the detailed log window is missed.
 - User records manual/device outcomes before Stage 7 signoff; Phase 4 remains open.
 - Collect safe provider HTTP status/classification on recurrence; no proven fix.
-- Local UI work changes /screen2 and design-system previews, with no hosted-data
-  writes or migrations. Hosted deployment/cleanup status has not been refreshed.
+- Local UI only; no hosted writes/migrations. Deployment/cleanup not refreshed.
 - Nov 3: 387 offline/117 affected browser checks pass; eight hosted checks skipped.
-  Receipt lines start together (400/600ms); 27 browser checks + lint/format/build pass.
+  Nov 4: receipt lifts 1.5px/600ms with 550ms synchronized lines; device checks remain.
 - Preview shares Production; no isolated backend. QR-orphan retry limit remains.
   Privacy/Help content stays off to-do list.

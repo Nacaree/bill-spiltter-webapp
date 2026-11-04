@@ -4,7 +4,7 @@ import AxeBuilder from "@axe-core/playwright";
 async function captureIconMotion(button) {
   return button.evaluate(async (node) => {
     const moving = () =>
-      Array.from(node.querySelectorAll("svg *")).some((part) => {
+      Array.from(node.querySelectorAll("svg, svg *")).some((part) => {
         const style = getComputedStyle(part);
         const matrix = new DOMMatrixReadOnly(style.transform);
         return (
@@ -190,7 +190,7 @@ test("icon playback waits for the highlight to finish moving", async ({
   await expect(firstLine).toHaveCSS("opacity", "1");
 });
 
-test("receipt writes both lines together with a faster top line in both surfaces", async ({
+test("receipt lifts and settles while both lines write at one pace in both surfaces", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
@@ -215,35 +215,54 @@ test("receipt writes both lines together with a faster top line in both surfaces
             ? 0
             : parseFloat(style.strokeDasharray);
         });
+      const paperPosition = () => {
+        const paper = node.querySelector('svg[data-icon="receipt-text"]');
+        return (
+          paper.getBoundingClientRect().top -
+          paper.parentElement.getBoundingClientRect().top
+        );
+      };
+      const restingPosition = paperPosition();
       node.querySelectorAll("button")[1].click();
       const start = performance.now();
       let started = false;
       let writingTogether = false;
-      let topAhead = false;
-      let bottomFinishesLater = false;
+      let linesInSync = true;
+      let lifted = false;
+      let overshot = false;
+      let greatestLift = 0;
       while (performance.now() - start < 1100) {
         await new Promise(requestAnimationFrame);
         const [first, second] = progress();
+        const rise = restingPosition - paperPosition();
+        lifted ||= rise > 0.5;
+        overshot ||= rise < -0.1;
+        greatestLift = Math.max(greatestLift, rise);
         if (first < 0.99) started = true;
         if (!started) continue;
         writingTogether ||=
           first > 0.01 && first < 0.98 && second > 0.01 && second < 0.98;
-        topAhead ||= first > second + 0.05 && second > 0.01;
-        bottomFinishesLater ||= first >= 0.99 && second > 0.01 && second < 0.98;
+        linesInSync &&= Math.abs(first - second) < 0.03;
       }
       return {
         directions,
         writingTogether,
-        topAhead,
-        bottomFinishesLater,
+        linesInSync,
+        lifted,
+        overshot,
+        gentleLift: greatestLift <= 1.6,
+        settled: Math.abs(paperPosition() - restingPosition) < 0.1,
         final: progress(),
       };
     });
     expect(sequence).toEqual({
       directions: [true, true],
       writingTogether: true,
-      topAhead: true,
-      bottomFinishesLater: true,
+      linesInSync: true,
+      lifted: true,
+      overshot: false,
+      gentleLift: true,
+      settled: true,
       final: [1, 1],
     });
   }

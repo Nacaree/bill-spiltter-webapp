@@ -14,6 +14,7 @@ import {
   DesignSurface,
 } from "./primitives";
 import { FormShowcase } from "./form-showcase";
+import { AddBillShowcase } from "./add-bill-showcase";
 import { DatePickerShowcase } from "./date-picker-showcase";
 import { DesignCopyButton } from "./copy-button";
 import { IconComparison } from "./icon-comparison";
@@ -268,6 +269,7 @@ export function DesignReference() {
           <a href="#navigation">Navigation</a>
           <a href="#patterns">In context</a>
           <a href="#forms">Drawers & forms</a>
+          <a href="#add-to-bill">Add to bill</a>
           <span className={styles.navCaption}>
             Made to be adjusted <span aria-hidden="true">↘</span>
           </span>
@@ -656,6 +658,14 @@ export function DesignReference() {
                 description="Drawers for quick changes. Focused forms for details. Clear confirmations."
               />
               <FormShowcase />
+            </section>
+            <section id="add-to-bill" className={styles.section}>
+              <SectionHeading
+                number="08"
+                title="A friendlier first step"
+                description="The approved Receipt spotlight used in Screen 2, alongside three comparison directions."
+              />
+              <AddBillShowcase />
             </section>
           </div>
 

@@ -11,7 +11,7 @@ export function ReceiptText({ size = 20, animate = false, ...props }) {
   const active = animate && reducedMotion === false;
 
   return (
-    <svg
+    <motion.svg
       width={size}
       height={size}
       viewBox="0 0 24 24"
@@ -21,10 +21,19 @@ export function ReceiptText({ size = 20, animate = false, ...props }) {
       strokeLinecap="round"
       strokeLinejoin="round"
       data-icon="receipt-text"
+      initial={{ y: 0 }}
+      animate={
+        active ? { y: [0, -navigationIconTiming.receiptLift, 0] } : { y: 0 }
+      }
+      transition={{
+        duration: active ? navigationIconTiming.duration : 0,
+        times: [0, 0.4, 1],
+        ease: "easeInOut",
+      }}
       {...props}
     >
       <path d="M4 3a1 1 0 0 1 1-1 1.3 1.3 0 0 1 .7.2l.933.6a1.3 1.3 0 0 0 1.4 0l.934-.6a1.3 1.3 0 0 1 1.4 0l.933.6a1.3 1.3 0 0 0 1.4 0l.933-.6a1.3 1.3 0 0 1 1.4 0l.934.6a1.3 1.3 0 0 0 1.4 0l.933-.6A1.3 1.3 0 0 1 19 2a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1 1.3 1.3 0 0 1-.7-.2l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.934.6a1.3 1.3 0 0 1-1.4 0l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-1.4 0l-.934-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-.7.2 1 1 0 0 1-1-1z" />
-      {["M8 9h6", "M8 14h8"].map((path, index) => (
+      {["M8 9h6", "M8 14h8"].map((path) => (
         <motion.path
           key={path}
           d={path}
@@ -37,19 +46,16 @@ export function ReceiptText({ size = 20, animate = false, ...props }) {
           }
           transition={{
             pathLength: {
-              duration: active
-                ? navigationIconTiming.duration /
-                  (index === 0 ? navigationIconTiming.topLineSpeed : 1)
-                : 0,
+              duration: active ? navigationIconTiming.receiptLineDuration : 0,
               ease: navigationIconTiming.ease,
             },
-            // Start both strokes together at full ink opacity.
+            // Both strokes write together at full ink opacity.
             opacity: {
               duration: 0,
             },
           }}
         />
       ))}
-    </svg>
+    </motion.svg>
   );
 }

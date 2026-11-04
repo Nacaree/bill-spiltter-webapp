@@ -8,6 +8,7 @@ const productionControls = [
   "screen2-forms.spec.js",
   "screen2-people.spec.js",
   "screen2-headers.spec.js",
+  "screen2-entry.spec.js",
   "activity-time.spec.js",
   "date-picker.spec.js",
   "design-rollout.spec.js",
