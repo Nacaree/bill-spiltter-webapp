@@ -5,10 +5,10 @@
 
 ## Task
 
-Screen2 UI: drawers/headers/Quiet bar/receipt chooser done; next real bill actions.
+Expenses page: six studio concepts; new premium trio at #expenses-premium.
 Keep create-bill form; independent populated/empty previews; Receipt vignette.
-People drawer: soft feather, five-row cap, add/copy row; blank resets/drafts restore.
-Screen2 shares approved Receipt spotlight: 7px/2.4s float, 4.5s scan; centered icons.
+Discussed: Daily ledger structure + Atelier polish; recommendation, not approved.
+Screen2 chooser + empty receipt share 7px/2.4s float; scan stays chooser-only.
 User owns real-phone keyboard/device/screen-reader/full keyboard/Firefox checks.
 Stage 2 skipped; Stage 3 migration user-reported applied; Stage 5 readiness done.
 
@@ -44,6 +44,6 @@ Stage 2 skipped; Stage 3 migration user-reported applied; Stage 5 readiness done
 - Collect safe provider HTTP status/classification on recurrence; no proven fix.
 - Local UI only; no hosted writes/migrations. Deployment/cleanup not refreshed.
 - Nov 3: 387 offline/117 affected browser checks pass; eight hosted checks skipped.
-  Nov 4: receipt lifts 1.5px/600ms with 550ms synchronized lines; device checks remain.
+  Nov 4: 17 studio + 18 Screen2 browser checks pass; lint/format/webpack pass.
 - Preview shares Production; no isolated backend. QR-orphan retry limit remains.
   Privacy/Help content stays off to-do list.

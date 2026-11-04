@@ -13,6 +13,70 @@ Latest approved people UX: one drawer, button-to-field morph with a compact purp
 studio's smooth list-entry reveal. Preserve this direction when
 integrating real bill actions; keep the existing main-app create-bill form.
 
+## Expenses page intent discussed — Nov 4
+
+The latest discussion recommends Daily ledger's structure with Atelier's visual
+polish. This is an agent recommendation, not a user-approved selection or a new
+implementation request. Keep all six gallery concepts for comparison and leave
+Screen 2's Expenses page in place until the user chooses the direction.
+
+- Prioritize what was spent, who paid and the current participant's share.
+- Compact header with bill name and Add expense; quiet expense count/bill total.
+- Date-grouped rows: description, payer, total, personal share, receipt indicator.
+  Search plus All/Paid by you/Receipts filters once expenses exist. Filtering must
+  not change the bill total; open rows for splits, notes, receipts and edit/remove.
+- Empty bill: illustration, short copy and one first-expense action; omit search
+  and filters. Keep balance/transfer/payment flows in Overview and Settle.
+
+## Latest premium Expenses comparisons — Nov 4
+
+- Three additional options lead `/design-system#expenses-premium`: Atelier
+  (white editorial layout, oversized total, numbered rows/date groups), Amethyst
+  (layered purple hero, personal share, payer initials/single white ledger) and
+  The Collection (featured expense plus two-column card grid and bottom add action).
+  The original three concepts remain directly below. All six retain the approved
+  Helvetica/brand/control foundations and the shared sample interactions.
+- All premium options have empty states. Amethyst/Collection show the total
+  personal share independently of search/filters. No new direction is approved
+  or applied to Screen 2. No hosted changes, migrations or deployment.
+- Validation: the 17 affected browser checks pass, now exercising all six
+  concepts across Chromium/WebKit/iPhone, axe in both states, 1280/393/320px,
+  filtering/details and sample additions with return focus. Lint, formatting,
+  diff checks and webpack build pass. Desktop/320px phone screenshots reviewed.
+
+## Earlier Expenses page comparisons — Nov 4
+
+- `/design-system#expenses-page` offers Daily ledger (date groups/daily totals),
+  Spending snapshot (category summary/individual cards), and Receipt journal
+  (paper entries/source details). No direction is approved or applied to Screen 2.
+  Existing main-app create-bill form and approved foundations stay in place.
+- Shared populated/empty toggle and reset; independent search, All/Paid by you/
+  Receipts filters, expense-detail dialogs and sample additions through the shared
+  Receipt spotlight chooser. Totals stay independent of filters. All sample data
+  is session-local; no upload/provider/backend call. Decorative navigation only.
+- New `expenses-showcase.jsx`/CSS plus studio section/jump link. The nine new
+  browser checks cover Chromium/WebKit/iPhone, 1280/393/320px, axe in both states,
+  filters/search, unchanged totals, details/focus, isolated additions and reset.
+  All 17 new/affected studio checks pass; lint, formatting and webpack build pass.
+  Existing foundations test now scopes its button to Controls because the gallery
+  adds more Add expense controls. Desktop/phone populated/empty screenshots reviewed.
+  No migration, hosted status refresh or deployment. Next: user chooses direction.
+
+## Latest Screen 2 empty receipt animation — Nov 4
+
+- The empty Recent expenses vignette now uses ReceiptArt's shared continuous
+  7px/2.4-second float with steady lines (scan removed per user), retaining its existing
+  two sheets, FileText icon, line lengths and layout. ReceiptArt accepts custom
+  artwork so the chooser and vignette use one animation implementation/timing.
+  The vignette explicitly disables scanning and has no line-animation hooks.
+  Both sheets sit 8px lower within the card; text and action positions stay fixed.
+- It stops behind drawers, pauses offscreen/in hidden tabs, and stays still for
+  reduced motion. Adding an expense unmounts it. Chooser scanning stays unchanged.
+- Validation: 18 existing Screen 2 entry/preview browser checks pass across
+  Chromium/WebKit/iPhone emulation; direct Chromium/WebKit checks confirm float
+  only, steady lines and reduced motion. Lint/formatting and the later gallery
+  webpack build (including the float-only refinement) pass. No hosted changes.
+
 ## Latest Screen 2 chooser integration — Nov 4
 
 - `/design-system#add-to-bill` compares four Add to the bill directions: Quiet

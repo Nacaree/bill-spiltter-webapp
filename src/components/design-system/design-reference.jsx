@@ -15,6 +15,7 @@ import {
 } from "./primitives";
 import { FormShowcase } from "./form-showcase";
 import { AddBillShowcase } from "./add-bill-showcase";
+import { ExpensesShowcase } from "./expenses-showcase";
 import { DatePickerShowcase } from "./date-picker-showcase";
 import { DesignCopyButton } from "./copy-button";
 import { IconComparison } from "./icon-comparison";
@@ -270,6 +271,7 @@ export function DesignReference() {
           <a href="#patterns">In context</a>
           <a href="#forms">Drawers & forms</a>
           <a href="#add-to-bill">Add to bill</a>
+          <a href="#expenses-page">Expenses page</a>
           <span className={styles.navCaption}>
             Made to be adjusted <span aria-hidden="true">↘</span>
           </span>
@@ -666,6 +668,14 @@ export function DesignReference() {
                 description="The approved Receipt spotlight used in Screen 2, alongside three comparison directions."
               />
               <AddBillShowcase />
+            </section>
+            <section id="expenses-page" className={styles.section}>
+              <SectionHeading
+                number="09"
+                title="Every little cost, a few different ways"
+                description="Six Expenses page directions, including three premium explorations. Compare populated and empty bills, then try the sample controls."
+              />
+              <ExpensesShowcase />
             </section>
           </div>
 

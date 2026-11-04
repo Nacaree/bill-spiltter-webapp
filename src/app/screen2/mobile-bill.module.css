@@ -523,9 +523,12 @@
 }
 .receiptIllustration {
   position: relative;
+  top: 8px;
+  display: block;
   width: 140px;
   height: 112px;
   margin-bottom: 16px;
+  color: color-mix(in srgb, var(--ds-brand) 45%, var(--ds-surface));
 }
 .receiptPaper {
   position: absolute;

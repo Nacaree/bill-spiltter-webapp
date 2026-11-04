@@ -25,7 +25,7 @@ test("approved foundations are locked and confirmations support the keyboard", a
   expect(typography.heading).toBe(typography.body);
   expect(typography.weight).toBe("700");
 
-  const addButton = page.getByRole("button", {
+  const addButton = page.locator("#controls").getByRole("button", {
     name: "Add expense",
     exact: true,
   });

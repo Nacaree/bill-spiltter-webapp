@@ -169,6 +169,25 @@ picker; Enter manually opens the existing expense form with retained drafts.
 Screen 2 has no animation toggle; the loop runs automatically while visible and
 respects reduced motion. Closing stops it through the drawer exit.
 
+The [Expenses page gallery](http://localhost:3000/design-system#expenses-page)
+compares **Daily ledger**, **Spending snapshot** and **Receipt journal**, plus
+the [premium directions](http://localhost:3000/design-system#expenses-premium):
+**Atelier** (editorial ledger), **Amethyst** (layered purple summary) and
+**The Collection** (featured expense/card grid). Switch
+between populated and empty bills, search/filter each list, open expense details,
+or add a local sample through the shared chooser. Reset restores the selected
+starting state. These are comparison concepts awaiting selection; Screen 2's
+Expenses page is unchanged. The gallery uses sample data with no hosted writes.
+
+The current recommendation is Daily ledger's structure with Atelier's visual
+polish; a direction has not yet been selected. The page should prioritize a
+date-grouped ledger showing description, payer, expense total, personal share and
+receipt source, with a compact add action and a quiet count/total summary. Search
+and All/Paid by you/Receipts filters appear once expenses exist. Row details hold
+splits, notes, receipt access and edit/remove actions. An empty bill needs only
+an illustration, short copy and one first-expense action. Balance and payment
+flows remain in Overview and Settle.
+
 The [calendar preview](http://localhost:3000/design-system#date-picker) combines
 DayPicker with Animate UI: a rounded glass panel, bold Helvetica month headings,
 purple selected dates, an outlined today, and Today / Yesterday shortcuts.
@@ -194,7 +213,9 @@ that preview's starting state. Keep the existing main-app create-bill form;
 integration of the polished prototype with the real bill actions is the next phase.
 The empty overview uses the approved receipt-paper vignette with an **Add expense**
 action and a compact clock/activity message. The illustration is decorative and
-still; adding the first expense replaces it with the ledger and activity rows.
+animated with Receipt spotlight's shared 7px/2.4-second float, with steady detail
+lines. It pauses offscreen, in hidden tabs and while a drawer is open;
+reduced motion keeps it still. Adding the first expense replaces it with the ledger and activity rows.
 Screen 2's action buttons use the studio's shared lighting, corners and control
 height across overview, expense/payment, drawer and receipt flows. The receipt
 picker uses the shared upload-icon button with native keyboard file selection.

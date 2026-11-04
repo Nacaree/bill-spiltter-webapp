@@ -13,6 +13,7 @@ import { DialogPanel } from "@/components/design-system/form-dialog";
 import dialogStyles from "@/components/design-system/form-dialog.module.css";
 import { ExpenseFormDialog } from "@/components/design-system/bill-form-dialogs";
 import { BillEntryChoices } from "@/components/design-system/bill-entry-choices";
+import { ReceiptArt } from "@/components/design-system/receipt-art";
 import systemStyles from "@/components/design-system/system.module.css";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -1043,20 +1044,21 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
                   className={styles.receiptEmpty}
                   aria-labelledby="screen2-empty-expenses-title"
                 >
-                  <div
+                  <ReceiptArt
                     className={styles.receiptIllustration}
-                    aria-hidden="true"
+                    playing={!overlay}
+                    scanning={false}
                   >
                     <span
                       className={`${styles.receiptPaper} ${styles.receiptPaperBack}`}
                     />
-                    <span className={styles.receiptPaper}>
+                    <span className={styles.receiptPaper} data-receipt-paper>
                       <FileText size={20} strokeWidth={1.5} animate={false} />
                       <span className={styles.receiptRule} />
                       <span className={styles.receiptRule} />
                       <span className={styles.receiptRule} />
                     </span>
-                  </div>
+                  </ReceiptArt>
                   <h3 id="screen2-empty-expenses-title">
                     A little receipt.
                     <br />A lot less math.
