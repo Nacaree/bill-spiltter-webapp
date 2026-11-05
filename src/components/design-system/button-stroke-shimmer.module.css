@@ -1,0 +1,38 @@
+.border {
+  position: absolute;
+  z-index: 1;
+  inset: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+  overflow: visible;
+  border-radius: inherit;
+  /* Every glow layer comes from the moving stroke's own alpha. */
+  filter: drop-shadow(0 0 2px #c084fcde) drop-shadow(0 0 5px #a855f7de)
+    drop-shadow(0 0 12px #9333eade) drop-shadow(0 0 12px #9333eab3);
+  pointer-events: none;
+}
+.border > g {
+  opacity: 0.65;
+}
+.border rect {
+  width: calc(100% - 1.5px);
+  height: calc(100% - 1.5px);
+  rx: calc(var(--ds-control-radius) - 0.75px);
+  ry: calc(var(--ds-control-radius) - 0.75px);
+  fill: none;
+  stroke: white;
+  stroke-width: 1.5px;
+  stroke-linecap: round;
+  stroke-opacity: 0.09;
+  vector-effect: non-scaling-stroke;
+}
+@media (prefers-reduced-motion: reduce) {
+  .border {
+    display: none;
+  }
+}
+@media (forced-colors: active) {
+  .border {
+    display: none;
+  }
+}

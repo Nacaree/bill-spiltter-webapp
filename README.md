@@ -88,6 +88,8 @@ The approved system is applied across the app and shared with this reference:
 - **Relaxed** spacing: 48px controls, 28px panel padding and 18px ledger rows.
 - Filled and outlined buttons use a faint top highlight and soft bottom shadow.
   Purple highlights are restrained; outlined hover lighting follows the tint.
+- Shared buttons compress to 98.5% over 100ms, gently settle on release and lift
+  1px on hover. Screen2 inherits the same feedback; reduced motion stays still.
 - Selective glass at frost 45 for navigation, balance summaries and picker menus;
   forms, ledger entries, receipt review and QR details retain solid surfaces.
 - One inner focus stroke on fields, accessible keyboard menus, visible validation
@@ -179,14 +181,48 @@ or add a local sample through the shared chooser. Reset restores the selected
 starting state. These are comparison concepts awaiting selection; Screen 2's
 Expenses page is unchanged. The gallery uses sample data with no hosted writes.
 
-The current recommendation is Daily ledger's structure with Atelier's visual
-polish; a direction has not yet been selected. The page should prioritize a
-date-grouped ledger showing description, payer, expense total, personal share and
-receipt source, with a compact add action and a quiet count/total summary. Search
-and All/Paid by you/Receipts filters appear once expenses exist. Row details hold
-splits, notes, receipt access and edit/remove actions. An empty bill needs only
-an illustration, short copy and one first-expense action. Balance and payment
-flows remain in Overview and Settle.
+The user prefers Atelier, now revised with receipt-style expense cards, category
+icons and date/source footers. Its full-width purple **+ Add expense** sits below
+the total/share summary, with a 16px gap before the glass search field.
+Its shimmer keeps the perimeter-light look of the [21st.dev / Magic UI reference](https://21st.dev/@dillionverma/components/shimmer-button),
+with a continuous constant-speed 8-second orbit. The tapered white stroke and broad purple
+glow are one rendered SVG: layered drop shadows generate the bloom directly
+from the moving stroke. The selected Soft satin treatment dims the stroke by
+35% and softens the glow by about half, retaining its length and speed.
+Its softness takes inspiration from the
+[Rainbow Button reference](https://magicui.design/docs/components/rainbow-button).
+Shared design-system buttons have a 1px hover lift, subtle edge brightening,
+98.5% press compression over 100ms and a gentle spring-like release. Screen2's
+action, copy and form buttons inherit the same feedback. Custom surfaces stay
+intact, and disabled/reduced-motion buttons stay still.
+Both effects pause offscreen or behind dialogs and
+hide for reduced motion and forced colors.
+The summary groups Total spent, the rolling amount/currency, and expense
+count/personal share above search. The [expense search gallery](http://localhost:3000/design-system#expense-search)
+compares **Quiet line**, **Liquid glass**, **Paper frame** and **Integrated toolbar**.
+Each has independent sample search, filters and a clear action. **Preview in
+Atelier** changes the search treatment in the full Atelier specimen and brings
+it into view. These choices are local preview state. The shared `ExpenseSearch`
+component owns the input surface and focus styling so global form styles cannot
+add a separate white pill. **Liquid glass** is the chosen treatment: the existing
+16px rounded shape and purple magnifier directly reuse the design system's
+shared frosted material, blur/opacity tokens, highlights and fallbacks.
+Atelier defaults to this option.
+The active filter uses a rounded underline that slides with a gentle spring,
+slightly overshoots and settles. It has no background tint or glow. Reduced
+motion switches the selection immediately.
+Clicking the field or magnifier fades in a purple border, briefly expands a
+lavender halo, and pulses the icon by 8%; Enter replays it from the keyboard.
+The border stays while typing. Clear stays still, and reduced motion makes
+the focus indicator immediate and static.
+Full Screen 2 integration remains pending.
+
+The [receipt card gallery](http://localhost:3000/design-system#expense-cards)
+adds **Fine perforation**, **Ticket stub**, **Layered paper** and **Corner fold**.
+Open a specimen for sample details or use **Preview in Atelier** to try the
+whole list. Switching preserves sample expenses and clears the list filters;
+**Original receipt** restores the existing torn paper treatment. The original
+remains the default while these options are compared.
 
 The [calendar preview](http://localhost:3000/design-system#date-picker) combines
 DayPicker with Animate UI: a rounded glass panel, bold Helvetica month headings,

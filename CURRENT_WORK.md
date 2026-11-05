@@ -5,9 +5,9 @@
 
 ## Task
 
-Expenses page: six studio concepts; new premium trio at #expenses-premium.
+Shared button soft press/release/hover now spans design system + Screen2; Atelier shimmer stays.
 Keep create-bill form; independent populated/empty previews; Receipt vignette.
-Discussed: Daily ledger structure + Atelier polish; recommendation, not approved.
+Chosen search: shared Liquid glass, purple focus border/halo and 8% icon pulse; Screen 2 pending.
 Screen2 chooser + empty receipt share 7px/2.4s float; scan stays chooser-only.
 User owns real-phone keyboard/device/screen-reader/full keyboard/Firefox checks.
 Stage 2 skipped; Stage 3 migration user-reported applied; Stage 5 readiness done.
@@ -44,6 +44,6 @@ Stage 2 skipped; Stage 3 migration user-reported applied; Stage 5 readiness done
 - Collect safe provider HTTP status/classification on recurrence; no proven fix.
 - Local UI only; no hosted writes/migrations. Deployment/cleanup not refreshed.
 - Nov 3: 387 offline/117 affected browser checks pass; eight hosted checks skipped.
-  Nov 4: 17 studio + 18 Screen2 browser checks pass; lint/format/webpack pass.
+  Nov 5: 18 hover/drawer checks pass; shared rollout validated 62 browser/10 unit cases.
 - Preview shares Production; no isolated backend. QR-orphan retry limit remains.
   Privacy/Help content stays off to-do list.

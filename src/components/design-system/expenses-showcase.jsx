@@ -1,7 +1,8 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useId, useImperativeHandle, useRef, useState } from "react";
 import { BrandMark } from "@/components/ui/brand-mark";
+import { AnimatedMoney } from "@/components/ui/animated-money";
 import { formatMoney } from "@/lib/money";
 import { DesignButton } from "./primitives";
 import { DialogPanel } from "./form-dialog";
@@ -10,6 +11,15 @@ import { billNavigationItems } from "./bill-navigation";
 import { Coffee } from "./icons/animate-ui/coffee";
 import { Route } from "./icons/animate-ui/route";
 import { ReceiptText } from "./icons/receipt-text";
+import {
+  ExpenseSearch,
+  ExpenseSearchIcon as SearchIcon,
+} from "./expense-search";
+import { ExpenseSearchShowcase } from "./expense-search-showcase";
+import { ExpenseReceiptCard } from "./expense-receipt-card";
+import { ExpenseReceiptShowcase } from "./expense-receipt-showcase";
+import { ButtonStrokeShimmer } from "./button-stroke-shimmer";
+import { sampleExpenses } from "./expense-preview-data";
 import styles from "./expenses-showcase.module.css";
 
 const directions = [
@@ -35,7 +45,7 @@ const directions = [
     id: "atelier",
     name: "Atelier",
     description: "An editorial ledger. Generous space. Beautifully quiet.",
-    note: "Oversized totals, numbered entries and fine rules. The most restrained premium direction.",
+    note: "An oversized total above roomy, paper-edged expense cards.",
     premium: true,
     emptyTitle: "Make room for a good time.",
   },
@@ -56,56 +66,15 @@ const directions = [
     emptyTitle: "Your next memory starts here.",
   },
 ];
-const sampleExpenses = [
-  {
-    id: "dinner",
-    name: "Dinner at Malis",
-    amount: 7200,
-    payer: "Nary",
-    share: 2400,
-    date: "29 OCT",
-    receipt: true,
-    category: "Food & drinks",
-  },
-  {
-    id: "ride",
-    name: "Tuk-tuk home",
-    amount: 1200,
-    payer: "Sokha",
-    share: 400,
-    date: "29 OCT",
-    category: "Transport",
-  },
-  {
-    id: "coffee",
-    name: "Afternoon coffees",
-    amount: 1800,
-    payer: "Nary",
-    share: 900,
-    date: "28 OCT",
-    category: "Food & drinks",
-  },
-];
 const money = (amount) => formatMoney(amount, "USD");
 
-function SearchIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      aria-hidden="true"
-    >
-      <circle cx="10.5" cy="10.5" r="6.5" />
-      <path d="m16 16 4.5 4.5" />
-    </svg>
-  );
-}
-
-function ExpenseConcept({ direction, empty }) {
+function ExpenseConcept({
+  direction,
+  empty,
+  searchDesign,
+  receiptDesign,
+  ref,
+}) {
   const id = useId();
   const [expenses, setExpenses] = useState(empty ? [] : sampleExpenses);
   const [query, setQuery] = useState("");
@@ -134,6 +103,17 @@ function ExpenseConcept({ direction, empty }) {
   );
   const dates = [...new Set(visible.map((item) => item.date))];
 
+  useImperativeHandle(
+    ref,
+    () => ({
+      revealExpenses() {
+        setQuery("");
+        setFilter("All");
+      },
+    }),
+    [],
+  );
+
   function openAdd(event) {
     returnFocus.current = event.currentTarget;
     setAdding(true);
@@ -161,6 +141,20 @@ function ExpenseConcept({ direction, empty }) {
   }
 
   function row(item) {
+    if (isEditorial && receiptDesign !== "classic")
+      return (
+        <li key={item.id} className={styles.receiptItem}>
+          <ExpenseReceiptCard
+            expense={item}
+            design={receiptDesign}
+            onOpen={(expense, event) => {
+              returnFocus.current = event.currentTarget;
+              setDetail(expense);
+              setDetailOpen(true);
+            }}
+          />
+        </li>
+      );
     const Icon = item.category === "Transport" ? Route : Coffee;
     return (
       <li key={item.id} className={styles.entry}>
@@ -174,9 +168,7 @@ function ExpenseConcept({ direction, empty }) {
           }}
         >
           <span className={styles.categoryIcon} aria-hidden="true">
-            {isEditorial ? (
-              String(expenses.indexOf(item) + 1).padStart(2, "0")
-            ) : isAmethyst ? (
+            {isAmethyst ? (
               <span className={styles.payerInitial}>
                 {item.payer.slice(0, 2).toUpperCase()}
               </span>
@@ -195,7 +187,7 @@ function ExpenseConcept({ direction, empty }) {
             <strong>{money(item.amount)}</strong>
             <span>Your share {money(item.share)}</span>
           </span>
-          {direction.id === "journal" && (
+          {(direction.id === "journal" || isEditorial) && (
             <span className={styles.paperFooter}>
               <span>{item.date} 2026</span>
               <span>
@@ -233,7 +225,7 @@ function ExpenseConcept({ direction, empty }) {
         </div>
         <div className={styles.pageBody}>
           <div className={styles.pageHeading}>
-            <div>
+            <div className={styles.headingCopy}>
               <p className={styles.eyebrow}>WEEKEND DINNER</p>
               <h4>
                 Expenses<span className={styles.headingDot}>.</span>
@@ -269,18 +261,26 @@ function ExpenseConcept({ direction, empty }) {
               <div className={styles.premiumKicker}>
                 <span>
                   {isEditorial
-                    ? "THE SHARED TOTAL"
+                    ? "Total spent"
                     : isAmethyst
                       ? "A WEEKEND, WELL SHARED"
                       : "THE SHARED EDIT"}
                 </span>
-                <span>
-                  {String(expenses.length).padStart(2, "0")}{" "}
-                  {isCollection ? "moments" : "expenses"}
-                </span>
+                {!isEditorial && (
+                  <span>
+                    {String(expenses.length).padStart(2, "0")}{" "}
+                    {isCollection ? "moments" : "expenses"}
+                  </span>
+                )}
               </div>
               <div className={styles.premiumAmount}>
-                <strong>{money(total)}</strong>
+                <strong>
+                  {isEditorial ? (
+                    <AnimatedMoney amountMinor={total} />
+                  ) : (
+                    money(total)
+                  )}
+                </strong>
                 <span>USD</span>
               </div>
               {isAmethyst ? (
@@ -297,21 +297,29 @@ function ExpenseConcept({ direction, empty }) {
                 </div>
               ) : (
                 <div className={styles.personalLine}>
-                  <span>
-                    {isEditorial
-                      ? "Good company. Every cost accounted for."
-                      : "Your part of the good times"}
-                  </span>
-                  {isCollection && <strong>{money(personalShare)}</strong>}
+                  {isEditorial ? (
+                    <>
+                      <span>
+                        Your share <strong>{money(personalShare)}</strong>
+                      </span>
+                      <span>
+                        {expenses.length}{" "}
+                        {expenses.length === 1 ? "expense" : "expenses"}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Your part of the good times</span>
+                      <strong>{money(personalShare)}</strong>
+                    </>
+                  )}
                 </div>
               )}
-              {!isCollection && (
+              {!isCollection && !isEditorial && (
                 <DesignButton
                   ref={addButton}
-                  icon={isEditorial ? "arrow" : "plus"}
-                  iconPosition={isEditorial ? "end" : "start"}
+                  icon="plus"
                   onClick={openAdd}
-                  variant={isEditorial ? "secondary" : "primary"}
                   className={styles.premiumAdd}
                 >
                   Add expense
@@ -366,7 +374,35 @@ function ExpenseConcept({ direction, empty }) {
               Add expense
             </DesignButton>
           )}
-          {expenses.length > 0 && (
+          {isEditorial && (
+            <div className={styles.atelierTools}>
+              <DesignButton
+                ref={addButton}
+                icon="plus"
+                onClick={openAdd}
+                className={styles.stackAdd}
+              >
+                {(icon) => (
+                  <>
+                    <ButtonStrokeShimmer playing={!adding && !detailOpen} />
+                    {icon}
+                    <span>Add expense</span>
+                  </>
+                )}
+              </DesignButton>
+              {expenses.length > 0 && (
+                <ExpenseSearch
+                  id="atelier-expense-search"
+                  design={searchDesign}
+                  value={query}
+                  onValueChange={setQuery}
+                  filter={filter}
+                  onFilterChange={setFilter}
+                />
+              )}
+            </div>
+          )}
+          {expenses.length > 0 && !isEditorial && (
             <>
               <label className={styles.search} htmlFor={`${id}-search`}>
                 <SearchIcon />
@@ -400,8 +436,11 @@ function ExpenseConcept({ direction, empty }) {
             </>
           )}
           {visible.length > 0 ? (
-            <div className={styles.ledger}>
-              {direction.id === "daily" || isEditorial ? (
+            <div
+              className={styles.ledger}
+              id={isEditorial ? "atelier-expense-list" : undefined}
+            >
+              {direction.id === "daily" ? (
                 dates.map((date) => (
                   <div key={date} className={styles.day}>
                     <div className={styles.dayHeading}>
@@ -422,16 +461,22 @@ function ExpenseConcept({ direction, empty }) {
               ) : (
                 <>
                   <div className={styles.listHeading}>
-                    <span>
-                      {query || filter !== "All"
-                        ? `${visible.length} matching expenses`
-                        : isCollection
-                          ? "IN THE COLLECTION"
-                          : isAmethyst
-                            ? "THE DETAILS"
-                            : "THE LITTLE DETAILS"}
-                    </span>
-                    <span>OCT 2026</span>
+                    {isEditorial ? (
+                      <time dateTime="2026-10">OCTOBER 2026</time>
+                    ) : (
+                      <>
+                        <span>
+                          {query || filter !== "All"
+                            ? `${visible.length} matching expenses`
+                            : isCollection
+                              ? "IN THE COLLECTION"
+                              : isAmethyst
+                                ? "THE DETAILS"
+                                : "THE LITTLE DETAILS"}
+                        </span>
+                        <span>OCT 2026</span>
+                      </>
+                    )}
                   </div>
                   <ul>{visible.map(row)}</ul>
                 </>
@@ -563,6 +608,30 @@ function ExpenseConcept({ direction, empty }) {
 export function ExpensesShowcase() {
   const [mode, setMode] = useState("populated");
   const [reset, setReset] = useState(0);
+  const [searchDesign, setSearchDesign] = useState("tint");
+  const [receiptDesign, setReceiptDesign] = useState("classic");
+  const atelier = useRef(null);
+
+  function previewReceipt(design) {
+    setMode("populated");
+    setReceiptDesign(design);
+    atelier.current?.revealExpenses();
+    requestAnimationFrame(() => {
+      const receipt = document.querySelector("#atelier-expense-list button");
+      receipt?.focus({ preventScroll: true });
+      receipt?.scrollIntoView({ block: "center" });
+    });
+  }
+
+  function previewSearch(design) {
+    setMode("populated");
+    setSearchDesign(design);
+    requestAnimationFrame(() => {
+      const search = document.getElementById("atelier-expense-search");
+      search?.focus({ preventScroll: true });
+      search?.scrollIntoView({ block: "center" });
+    });
+  }
   return (
     <div className={styles.showcase}>
       <div className={styles.toolbar}>
@@ -596,6 +665,29 @@ export function ExpensesShowcase() {
           </DesignButton>
         </div>
       </div>
+      <div id="expense-cards" className={styles.galleryHeading}>
+        <span className={styles.premiumLabel}>THE PAPER DETAILS</span>
+        <p>Four receipt card directions</p>
+        <span>
+          Compare the edges, spacing and detail layouts inside Atelier.
+        </span>
+      </div>
+      <ExpenseReceiptShowcase
+        activeDesign={receiptDesign}
+        onPreview={previewReceipt}
+      />
+      <div id="expense-search" className={styles.galleryHeading}>
+        <span className={styles.premiumLabel}>THE SEARCH DETAILS</span>
+        <p>Four ways to find an expense</p>
+        <span>
+          Compare the search bars, then preview your favorite in Atelier.
+        </span>
+      </div>
+      <ExpenseSearchShowcase
+        key={reset}
+        activeDesign={searchDesign}
+        onPreview={previewSearch}
+      />
       <div id="expenses-premium" className={styles.galleryHeading}>
         <span className={styles.premiumLabel}>A LITTLE MORE CONSIDERED</span>
         <p>Three premium directions</p>
@@ -608,9 +700,12 @@ export function ExpensesShowcase() {
           .filter((direction) => direction.premium)
           .map((direction) => (
             <ExpenseConcept
+              ref={direction.id === "atelier" ? atelier : undefined}
               key={`${direction.id}-${mode}-${reset}`}
               direction={direction}
               empty={mode === "empty"}
+              searchDesign={searchDesign}
+              receiptDesign={receiptDesign}
             />
           ))}
       </div>

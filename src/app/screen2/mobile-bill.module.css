@@ -1680,7 +1680,9 @@
   position: absolute;
   inset: 0;
   width: 100%;
-  transition: opacity 100ms ease;
+  transition:
+    var(--ds-button-transitions),
+    opacity 100ms ease;
 }
 .personEntry .personNameInput {
   display: block;

@@ -51,7 +51,6 @@ export function DesignButton({
   ...props
 }) {
   const reducedMotion = useDesignReducedMotion();
-  const animations = useRef([]);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const [pressed, setPressed] = useState(false);
@@ -60,12 +59,6 @@ export function DesignButton({
   const Icon = icons[icon];
 
   useEffect(() => () => clearTimeout(pressTimer.current), []);
-
-  useEffect(() => {
-    if (reducedMotion)
-      animations.current.forEach((animation) => animation.cancel());
-    return () => animations.current.forEach((animation) => animation.cancel());
-  }, [reducedMotion]);
 
   function replayIcon(restart = true) {
     if (!Icon || props.disabled || reducedMotion !== false) return;
@@ -76,25 +69,7 @@ export function DesignButton({
   }
 
   function handleClick(event) {
-    const button = event.currentTarget;
     replayIcon();
-    if (!props.disabled && reducedMotion === false && button.animate) {
-      animations.current.forEach((animation) => animation.cancel());
-      const timing = {
-        duration: 340,
-        easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-      };
-      animations.current = [
-        button.animate(
-          [
-            { transform: "scale(0.975)" },
-            { transform: "scale(1.008)", offset: 0.65 },
-            { transform: "scale(1)" },
-          ],
-          timing,
-        ),
-      ];
-    }
     onClick?.(event);
   }
 
@@ -127,6 +102,7 @@ export function DesignButton({
         className,
       )}
       {...props}
+      data-button-feedback="soft"
       onClick={handleClick}
       onPointerEnter={(event) => {
         if (event.pointerType !== "touch") {

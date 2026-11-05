@@ -1,0 +1,250 @@
+.control {
+  min-width: 0;
+  margin-top: 22px;
+  scroll-margin-block: 180px;
+}
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 50px;
+  border-width: 1px;
+  border-style: solid;
+  color: var(--ds-muted);
+}
+.bar:not([data-search-material="glass"]) {
+  border-color: transparent;
+}
+.icon {
+  display: grid;
+  flex: 0 0 20px;
+  place-items: center;
+  cursor: text;
+}
+/* The shell owns the surface and focus, overriding standalone field defaults. */
+.control[data-search-design] .bar input.field[type="search"] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ds-text);
+  font: inherit;
+  font-size: 16px;
+}
+.field::placeholder {
+  color: var(--ds-muted);
+  opacity: 1;
+}
+.field::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+.clear {
+  display: grid;
+  flex: 0 0 44px;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ds-muted);
+  cursor: pointer;
+}
+.clear:hover {
+  background: var(--ds-tint);
+  color: var(--ds-brand-ink);
+}
+.bar:focus-within,
+.control:focus-visible .bar {
+  outline: 2px solid var(--ds-brand-ink);
+  outline-offset: 3px;
+}
+.control:focus-visible {
+  outline: none;
+}
+.clear:focus-visible,
+.filters button:focus-visible {
+  outline: 2px solid var(--ds-brand-ink);
+  outline-offset: 2px;
+}
+.filters {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+}
+.filters button {
+  min-width: 0;
+  min-height: 48px;
+  padding: 8px 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--ds-muted);
+  font: inherit;
+  font-size: 11px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.filters button[aria-pressed="true"] {
+  border-bottom-color: var(--ds-brand-ink);
+  color: var(--ds-brand-ink);
+  font-weight: 700;
+}
+.control[data-search-design="line"] .bar {
+  border-width: 0 0 1px;
+  border-bottom-color: var(--ds-line);
+}
+.control[data-search-design="tint"] .bar {
+  padding-inline: 14px 5px;
+  border-radius: 16px;
+  color: var(--ds-brand-ink);
+  transition:
+    border-color 200ms ease-out,
+    box-shadow 200ms ease-out;
+}
+.control[data-search-design="tint"] .bar:focus-within,
+.control[data-search-design="tint"]:focus-visible .bar {
+  border-color: var(--ds-brand-ink);
+  outline: none;
+  box-shadow:
+    0 0 0 1px var(--ds-brand-ink),
+    0 0 0 3px color-mix(in srgb, var(--ds-brand-ink) 6%, transparent);
+}
+.control[data-search-design="tint"] .filters {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+}
+.control[data-search-design="tint"] .filters button {
+  position: relative;
+  min-width: 0;
+  min-height: 48px;
+  padding-inline: 4px;
+  border-bottom: 0;
+  font-size: 13px;
+  transition: color 180ms ease-out;
+}
+.control[data-search-design="tint"] .filters button[aria-pressed="true"] {
+  --filter-label-y: -1px;
+  --filter-label-scale: 1.02;
+  font-weight: 600;
+}
+.filterLabel {
+  display: inline-block;
+}
+.control[data-search-design="tint"] .filterLabel {
+  transform: translateY(var(--filter-label-y, 0))
+    scale(var(--filter-label-scale, 1));
+  transition: transform var(--filter-duration) var(--filter-easing);
+}
+.indicatorRail {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.filterIndicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: calc(100% / 3);
+  height: 100%;
+  pointer-events: none;
+}
+.filterStroke {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--ds-brand-ink);
+}
+.control[data-search-design="frame"] .bar {
+  padding-inline: 14px 5px;
+  border: 1px solid var(--ds-line);
+  border-radius: 12px;
+  background: var(--ds-surface);
+  box-shadow: 0 4px 12px -9px #39234f38;
+}
+.control[data-search-design="toolbar"] {
+  padding: 6px;
+  border: 1px solid var(--ds-line);
+  border-radius: 20px;
+  background: var(--ds-surface);
+  box-shadow: 0 6px 16px -12px #39234f38;
+}
+.control[data-search-design="toolbar"] .bar {
+  padding-inline: 8px 0;
+  border-radius: 13px;
+  color: var(--ds-brand-ink);
+}
+.control[data-search-design="toolbar"] .filters {
+  gap: 4px;
+  padding-top: 6px;
+  margin-top: 0;
+  border-top: 1px solid var(--ds-line);
+}
+.control[data-search-design="toolbar"] .filters button {
+  flex: 1;
+  min-height: 44px;
+  padding-inline: 4px;
+  border: 0;
+  border-radius: 12px;
+}
+.control[data-search-design="toolbar"] .filters button[aria-pressed="true"] {
+  background: var(--ds-tint);
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+@media (forced-colors: active) {
+  .bar {
+    border: 1px solid CanvasText;
+  }
+  .filters button[aria-pressed="true"] {
+    outline: 1px solid Highlight;
+    outline-offset: -2px;
+  }
+  .filterStroke {
+    background: Highlight;
+    forced-color-adjust: none;
+  }
+  .control[data-search-design="tint"] .bar:focus-within,
+  .control[data-search-design="tint"]:focus-visible .bar {
+    outline: 2px solid Highlight;
+    outline-offset: 3px;
+    box-shadow: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .control[data-search-design="tint"] .bar,
+  .control[data-search-design="tint"] .filters button,
+  .filterIndicator {
+    transition: none;
+  }
+  .control[data-search-design="tint"] .filterLabel {
+    transform: none;
+    transition: none;
+  }
+}

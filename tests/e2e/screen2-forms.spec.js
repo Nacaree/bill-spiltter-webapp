@@ -25,6 +25,11 @@ test("the first add drawer shares the form motion and retains its content throug
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.setViewportSize({ width: 393, height: 852 });
   await page.goto("/screen2?preview=empty");
+  // Freeze before mounting so fast/composited Safari animations cannot finish
+  // before this test explicitly inspects their start, end and retained content.
+  const pausedMotion = await page.addStyleTag({
+    content: '[role="dialog"] { animation-play-state: paused !important; }',
+  });
   const trigger = page.getByRole("button", { name: "Add your first expense" });
   await trigger.click();
   const chooser = page.getByRole("dialog", {
@@ -63,6 +68,7 @@ test("the first add drawer shares the form motion and retains its content throug
   );
   await expect(chooser).toHaveCount(0);
   await expect(trigger).toBeFocused();
+  await pausedMotion.evaluate((element) => element.remove());
   await trigger.click();
   await page.getByRole("button", { name: /Enter manually/ }).click();
   const form = page.getByRole("dialog", {

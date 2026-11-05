@@ -33,6 +33,32 @@ export const drawerChevronTiming = {
   easing: "ease-in-out",
 };
 
+export const searchIconTiming = {
+  duration: 300,
+  easing: "ease-out",
+};
+
+export const searchFocusTiming = {
+  duration: 400,
+  easing: "ease-out",
+};
+
+export const expenseFilterTiming = {
+  duration: 240,
+  easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+};
+
+export const expenseFilterSpring = {
+  type: "spring",
+  stiffness: 420,
+  damping: 24,
+  mass: 0.8,
+};
+
+export const addExpenseStrokeTiming = {
+  duration: 8000,
+};
+
 export function motionTransition(
   reducedMotion,
   duration = motionTiming.standard,

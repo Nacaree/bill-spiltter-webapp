@@ -272,6 +272,8 @@ export function DesignReference() {
           <a href="#forms">Drawers & forms</a>
           <a href="#add-to-bill">Add to bill</a>
           <a href="#expenses-page">Expenses page</a>
+          <a href="#expense-search">Expense search</a>
+          <a href="#expense-cards">Receipt cards</a>
           <span className={styles.navCaption}>
             Made to be adjusted <span aria-hidden="true">↘</span>
           </span>
@@ -673,7 +675,7 @@ export function DesignReference() {
               <SectionHeading
                 number="09"
                 title="Every little cost, a few different ways"
-                description="Six Expenses page directions, including three premium explorations. Compare populated and empty bills, then try the sample controls."
+                description="Compare receipt cards and search bars in Atelier, alongside six Expenses page layouts. Try the sample controls in context."
               />
               <ExpensesShowcase />
             </section>

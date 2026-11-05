@@ -13,12 +13,147 @@ Latest approved people UX: one drawer, button-to-field morph with a compact purp
 studio's smooth list-entry reveal. Preserve this direction when
 integrating real bill actions; keep the existing main-app create-bill form.
 
-## Expenses page intent discussed — Nov 4
+## Expense search alternatives — Nov 5
 
-The latest discussion recommends Daily ledger's structure with Atelier's visual
-polish. This is an agent recommendation, not a user-approved selection or a new
-implementation request. Keep all six gallery concepts for comparison and leave
-Screen 2's Expenses page in place until the user chooses the direction.
+`/design-system#expense-cards` now compares four additional receipt treatments:
+Fine perforation, Ticket stub, Layered paper and Corner fold. Their shared
+`ExpenseReceiptCard` renders the actual gallery specimens and Atelier rows.
+Cards open sample details with return focus. Preview in Atelier clears search
+and filters, shows populated mode if needed, and focuses the first receipt.
+Existing sample additions are retained when switching designs. Original receipt
+restores the earlier torn cards and remains the initial default. Choices are
+session-local; no new receipt direction has been approved for integration.
+Small cards move the amount below the title to keep text readable.
+
+Atelier's hierarchy uses the bill name above a 32px title. A full-width purple
+**+ Add expense** action sits below the total/share summary, followed by the
+glass search field with exactly 16px between the button and search. The button
+uses 16px text and a 48px target. The summary reads Total spent (14px), amount
+(44px) with currency (14px), then personal share on the left and expense count
+on the right (both 14px). A fine bottom divider groups the summary above the
+Add/search controls. The black top rule and promotional sentence were removed.
+The title-to-summary gap is 16px (tightened by 8px); the Total spent label sits
+4px above the amount (tightened by 4px). Font sizes and share/count alignment stay.
+Search and filters do not change either the total or the total personal share.
+All `DesignButton` actions now share the soft feedback: 98.5% compression over
+100ms, a gentle 280ms overshoot-and-settle release, and 1px lift with subtle edge
+brightening on fine-pointer hover. Existing primary/secondary shadows tighten
+on press. There is no added inner edge highlight on primary actions. The old
+340ms click bounce and Atelier-only opt-in were removed. `Button` and
+`DesignCopyButton` already wrap this shared component, so Screen2 actions,
+headers, forms and dialogs inherit it. Custom glass/chooser surfaces retain
+their fill, border and shadow overrides. Touch avoids hover styles; disabled
+and reduced-motion buttons stay still, with native keyboard/submit behavior.
+Outlined-button hover fills the top inset edge with the same lavender tint as
+the surface, removing the white inner arc while retaining the outer outline.
+The people drawer's Add person reveal now composes its 100ms opacity fade with
+`--ds-button-transitions` from the shared button. Its former opacity-only
+transition overrode transform/color/shadow transitions and made hover snap.
+The regression samples actual intermediate lift positions and checks that the
+inline name field still reveals and receives focus.
+All 18 targeted hover/people-drawer browser checks pass across Chrome, Safari
+and iPhone emulation, including reduced motion and repeated entry.
+`tests/e2e/button-feedback.spec.js` exercises studio/Screen2 variants, release
+settling, drawer activation and disabled/reduced-motion behavior across browsers.
+Validation: 10 button/copy unit checks and 62 distinct browser cases verified.
+The first broad run passed 59/62; the home-navigation and metadata/axe checks
+passed isolated reruns. The drawer-motion test now freezes CSS animation before
+mounting for deterministic inspection; its Chrome/Safari/iPhone reruns pass.
+All six new shared-feedback cases passed in the initial run. No dialog behavior
+was changed for that test fix.
+The Add button keeps the perimeter-light look of the user's
+[21st.dev / Magic UI reference](https://21st.dev/@dillionverma/components/shimmer-button),
+now with the requested constant speed and a following purple glow. An SVG
+rounded rectangle normalizes the entire perimeter with `pathLength=100`.
+A single linear stroke-dashoffset animation continuously advances one orbit
+every 8 seconds, with no resting interval, fade or angular holds.
+Twenty-four translucent 1.5px strokes
+form a smoothly tapered white glint over 12% of the path. Stroke and purple glow
+are now one rendered object: the SVG's own painted alpha generates four purple
+drop-shadow layers (2px, 5px, 12px and 12px), providing a visible broad bloom.
+The selected Soft satin treatment sets the combined stroke group to 65%
+opacity (35% dimmer) and lowers the glow alphas to soften the overall bloom
+by about half. The 12% path length and active travel speed stay.
+The leading edge uses the same thin tapered stroke as the rest of the shimmer;
+the separate rounded hotspot was removed to keep it subtle and uniform.
+The glow inherits the shimmer's exact shape and motion, including corners.
+There is one SVG, one moving stroke group and one animation. The separate HTML glow
+blob, position follower, resize observer and animation-frame loop were removed.
+Filtering the outer SVG renders correctly in Safari. CSS geometry adapts to
+the button dimensions and radius on resize. The broad softness was inspired by
+the user's [Rainbow Button reference](https://magicui.design/docs/components/rainbow-button).
+The purple surface and label stay steady.
+`ButtonStrokeShimmer` observes visibility and document
+visibility, and pauses for its dialogs plus Radix scroll locks. Pauses preserve
+the animation phase for both stroke and following halo. Observers/listeners and animations clean up on unmount;
+reduced motion and forced colors hide the artwork, leaving a plain purple button.
+`addExpenseStrokeTiming` owns the loop timing.
+The list heading reads OCTOBER 2026 on the left, matching Screen 2's `.listDate`:
+10px/600, 0.09em tracking, #68606d and 10px bottom spacing. The former decorative
+title and abbreviated date pair were removed.
+The total uses Overview's shared `AnimatedMoney` component and 1.1-second
+NumberFlow timing. Expense additions update the rolling value; search and
+filter changes retain the same total. Initial rendering is still, and reduced
+motion updates immediately. Formatting and USD precision stay shared.
+
+Approved search: Liquid glass (internal design id `tint`) keeps the 16px rounded
+shape and purple magnifier. The bar directly reuses `system.glass`: the shared
+frosted fill, blur/opacity tokens, edge highlights, shadow and hover sheen.
+It inherits the material's opaque/reduced-transparency and forced-colors
+fallbacks. The field stays transparent inside the shell; focus retains its
+purple border/halo and icon pulse, and blur restores the shared glass shadow.
+Atelier defaults to this design. Its filters now use
+three equal-width columns, centered 13px labels and 48px targets. A single 2px
+purple underline with rounded ends spans the selected column. Motion animates
+its horizontal position with a spring (stiffness 420, damping 24, mass 0.8):
+a small overshoot followed by a quick settle replaces the earlier stroke stretch.
+Rapid changes preserve the current position and velocity. Percentage translation
+keeps it aligned when resized; initial rendering stays still. The selected label
+rises 1px and scales to 1.02 over 240ms, matching the main navbar's duration.
+The stroke is clipped to the tab row.
+The selected tab has no background tint or glow.
+There is no gray baseline. Reduced motion moves the underline immediately,
+keeps labels still; forced colors uses a system highlight for the underline.
+Timing is in `expenseFilterSpring` and `expenseFilterTiming`. Clicking the input
+or its icon fades the border to purple over 200ms, plays a 400ms lavender halo
+that expands to 6px and settles to 3px, and enlarges the magnifier by 8% before
+returning over 300ms. Repeat clicks and Enter replay the effect. The border and
+a faint halo stay while typing. Clicking the icon focuses the field through
+its label. Clear does not replay the effect. Blur, design changes, reduced
+motion and unmount cancel playback. Timing is in `searchIconTiming` and
+`searchFocusTiming`. Reduced motion keeps a static focus indicator; forced
+colors restores a system outline. Focus does not delay caret placement.
+
+The user prefers Atelier and requested its list use the receipt-card reference.
+Atelier now has category icons, separate date/source footers, dashed rules and
+torn paper edges. Its expense count is 14px, increased from 9px for readability.
+Its active filters use brand purple. Search input styling
+must override the global input defaults: native appearance alone did not remove
+the white background and 22px radius because the global selector was stronger.
+
+`/design-system#expense-search` compares Quiet line, Liquid glass, Paper frame and
+Integrated toolbar. Each filters independent sample expenses and clears search
+with focus returned to the input. Preview in Atelier selects the shared
+`ExpenseSearch` design, switches to populated mode if needed, and focuses/scrolls
+to that search control. Preview choices are session-local; Screen 2 integration
+remains pending. All 18 expense browser checks pass on the main localhost
+server. Chromium, WebKit and iPhone emulation cover click/touch/Enter animation,
+replay and reduced motion, search/filter independence, input clearing, focus,
+receipt details and switching without losing additions, preview selection,
+empty-mode transitions, 320/393px fit and axe.
+Lint, formatting and diff checks pass; desktop/phone screenshots reviewed.
+
+The main development server was restarted with webpack. Use
+`http://localhost:3000` with this default host: Next 16.4.3 blocks the HMR request
+from `127.0.0.1` as a different development origin, which prevented hydration
+in earlier checks. Those failures were caused by the check's hostname, not the
+gallery. The isolated server used `-H 127.0.0.1` and worked with that hostname.
+
+## Earlier Expenses page discussion — Nov 4
+
+The earlier agent recommendation was Daily ledger's structure with Atelier's
+visual polish. The user's later preference and gallery changes are recorded
+above. Keep all six concepts available for comparison.
 
 - Prioritize what was spent, who paid and the current participant's share.
 - Compact header with bill name and Add expense; quiet expense count/bill total.

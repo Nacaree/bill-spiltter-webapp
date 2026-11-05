@@ -515,7 +515,8 @@
   background: var(--ds-surface);
   box-shadow: 0 2px 8px #39234f0c;
 }
-.journal .entry {
+.journal .entry,
+.atelier .entry {
   position: relative;
   margin-top: 16px;
   border: 1px solid var(--ds-line);
@@ -523,7 +524,8 @@
   background: var(--ds-surface);
   box-shadow: 0 6px 16px -12px #39234f38;
 }
-.journal .entry::after {
+.journal .entry::after,
+.atelier .entry::after {
   position: absolute;
   right: 0;
   bottom: -5px;
@@ -558,14 +560,17 @@
   content: "";
   pointer-events: none;
 }
-.journal .entryButton {
+.journal .entryButton,
+.atelier .entryButton {
   padding: 16px 14px 10px;
   gap: 14px 9px;
 }
-.journal .categoryIcon {
+.journal .categoryIcon,
+.atelier .categoryIcon {
   color: var(--ds-brand-ink);
 }
-.journal .entryCopy strong {
+.journal .entryCopy strong,
+.atelier .entryCopy strong {
   font-size: 13px;
 }
 .paperFooter {
@@ -737,7 +742,8 @@
   .breakdown {
     border: 1px solid CanvasText;
   }
-  .journal .entry::after {
+  .journal .entry::after,
+  .atelier .entry::after {
     display: none;
   }
 }
@@ -823,7 +829,7 @@
 
 /* Atelier: an editorial page, with the ledger as the central object. */
 .atelier {
-  background: var(--ds-surface);
+  background: var(--ds-canvas);
 }
 .atelier .appHeader {
   border-bottom-color: transparent;
@@ -832,111 +838,142 @@
   background: transparent;
 }
 .atelier .pageBody {
-  padding: 20px 24px 28px;
+  padding: 6px 24px 28px;
 }
 .atelier .pageHeading {
-  padding-top: 10px;
-  border-top: 1px solid var(--ds-text);
+  display: block;
+}
+.atelier .headingCopy {
+  display: grid;
+  gap: 8px;
 }
 .atelier .eyebrow {
-  margin-top: 8px;
-  font-size: 9px;
-  letter-spacing: 1.8px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
 }
 .atelier .pageHeading h4 {
-  margin-top: 14px;
-  font-size: 40px;
-  letter-spacing: -2px;
+  margin: 0;
+  font-size: 32px;
+  letter-spacing: -1.2px;
+  white-space: nowrap;
+}
+.atelierTools {
+  margin-top: 20px;
+}
+.atelier .stackAdd {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  min-height: 48px;
+  font-size: 16px;
+}
+.atelierTools > [data-search-design] {
+  margin-top: 16px;
 }
 .atelier .subtitle {
   display: none;
 }
 .atelier .premiumSummary {
-  margin-top: 34px;
+  margin-top: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--ds-line);
 }
 .atelier .premiumKicker {
   color: var(--ds-muted);
+  font-size: 14px;
+  letter-spacing: 0;
+}
+.atelier .premiumKicker > span {
+  font-weight: 500;
+  line-height: 1.4;
 }
 .atelier .premiumAmount {
-  margin-top: 15px;
+  margin-top: 4px;
 }
 .atelier .premiumAmount > strong {
-  font-size: 56px;
-  letter-spacing: -3.5px;
+  font-size: 44px;
+  letter-spacing: -2px;
 }
 .atelier .premiumAmount > span {
   color: var(--ds-muted);
+  font-size: 14px;
+  font-weight: 500;
 }
 .atelier .personalLine {
-  max-width: 200px;
-  font-size: 12px;
+  margin-top: 14px;
+  font-size: 14px;
+  line-height: 1.4;
 }
-.atelier .premiumAdd {
-  justify-content: space-between;
-  margin-top: 20px;
-  border-radius: var(--ds-control-radius);
-  border-color: var(--ds-line);
-  box-shadow: none;
-}
-.atelier .search {
-  padding-inline: 0;
-  margin-top: 22px;
-  border-width: 0 0 1px;
-  border-radius: 0;
-  background: transparent;
-}
-.atelier .search input {
-  font-size: 16px;
-}
-.atelier .filters {
-  justify-content: space-between;
-  gap: 16px;
-  margin-top: 4px;
-  border: 0;
-}
-.atelier .filters button {
-  flex: initial;
-  padding-inline: 0;
-  font-size: 11px;
-}
-.atelier .filters button[aria-pressed="true"] {
+.atelier .personalLine strong {
   color: var(--ds-text);
-  border-bottom-color: var(--ds-text);
+  font-weight: 600;
 }
 .atelier .ledger {
-  margin-top: 28px;
+  margin-top: 16px;
 }
-.atelier .dayHeading {
-  margin-bottom: 8px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--ds-line);
-  font-size: 9px;
-}
-.atelier .categoryIcon {
-  align-self: start;
-  margin-top: 2px;
-  color: var(--ds-brand-ink);
+.atelier .listHeading {
+  justify-content: flex-start;
+  margin-bottom: 10px;
+  color: #68606d;
   font-size: 10px;
   font-weight: 600;
-  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.09em;
+}
+.receiptItem {
+  min-width: 0;
+}
+.receiptItem + .receiptItem {
+  margin-top: 18px;
+}
+.atelier .entry {
+  margin-top: 18px;
+  border-radius: 24px 24px 5px 5px;
+  box-shadow: 0 7px 18px -13px #39234f42;
+}
+.atelier .entry:first-child {
+  margin-top: 0;
+}
+.atelier .entry + .entry {
+  border-top: 0;
+  margin-top: 18px;
 }
 .atelier .entryButton {
-  grid-template-columns: 18px minmax(0, 1fr) auto;
-  min-height: 84px;
-  gap: 9px;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  min-height: 120px;
+  gap: 12px 9px;
+  padding: 17px 15px 12px;
+}
+.atelier .categoryIcon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+}
+.atelier .categoryIcon svg {
+  width: 28px;
+  height: 28px;
 }
 .atelier .entryCopy strong {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.25px;
 }
 .atelier .entryCopy > span {
-  font-size: 10px;
+  font-size: 12px;
+}
+.atelier .entryAmount {
+  gap: 5px;
 }
 .atelier .entryAmount strong {
-  font-size: 15px;
+  font-size: 16px;
 }
 .atelier .entryAmount > span {
+  font-size: 11px;
+}
+.atelier .paperFooter {
+  padding-top: 12px;
   font-size: 10px;
 }
 .atelier .empty {
@@ -1321,9 +1358,6 @@
 @media (max-width: 420px) {
   .atelier .pageBody {
     padding-inline: 18px;
-  }
-  .atelier .premiumAmount > strong {
-    font-size: 50px;
   }
   .amethyst .premiumSummary {
     padding-inline: 16px;

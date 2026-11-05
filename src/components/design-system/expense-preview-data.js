@@ -1,0 +1,30 @@
+export const sampleExpenses = [
+  {
+    id: "dinner",
+    name: "Dinner at Malis",
+    amount: 7200,
+    payer: "Nary",
+    share: 2400,
+    date: "29 OCT",
+    receipt: true,
+    category: "Food & drinks",
+  },
+  {
+    id: "ride",
+    name: "Tuk-tuk home",
+    amount: 1200,
+    payer: "Sokha",
+    share: 400,
+    date: "29 OCT",
+    category: "Transport",
+  },
+  {
+    id: "coffee",
+    name: "Afternoon coffees",
+    amount: 1800,
+    payer: "Nary",
+    share: 900,
+    date: "28 OCT",
+    category: "Food & drinks",
+  },
+];
