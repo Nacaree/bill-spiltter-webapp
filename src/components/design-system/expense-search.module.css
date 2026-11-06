@@ -4,6 +4,8 @@
   scroll-margin-block: 180px;
 }
 .bar {
+  position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -12,6 +14,47 @@
   border-width: 1px;
   border-style: solid;
   color: var(--ds-muted);
+}
+.searchRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 0px;
+  gap: 0;
+  transition:
+    grid-template-columns 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    gap 240ms ease-out;
+}
+.searchRow[data-search-mode="open"] {
+  grid-template-columns: minmax(0, 1fr) 64px;
+  gap: 10px;
+}
+.cancelSlot {
+  min-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 160ms ease-out;
+}
+.searchRow[data-search-mode="open"] .cancelSlot {
+  overflow: visible;
+  opacity: 1;
+  visibility: visible;
+}
+.cancel {
+  width: 64px;
+  min-height: 50px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ds-brand-ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cancel:focus-visible {
+  outline: 2px solid var(--ds-brand-ink);
+  outline-offset: -2px;
 }
 .bar:not([data-search-material="glass"]) {
   border-color: transparent;
@@ -101,10 +144,6 @@
   color: var(--ds-brand-ink);
   font-weight: 700;
 }
-.control[data-search-design="line"] .bar {
-  border-width: 0 0 1px;
-  border-bottom-color: var(--ds-line);
-}
 .control[data-search-design="tint"] .bar {
   padding-inline: 14px 5px;
   border-radius: 16px;
@@ -120,6 +159,12 @@
   box-shadow:
     0 0 0 1px var(--ds-brand-ink),
     0 0 0 3px color-mix(in srgb, var(--ds-brand-ink) 6%, transparent);
+}
+.control[data-search-design="tint"]:where(
+    [data-search-effect]:not([data-search-effect="none"])
+  )
+  .bar:focus-within {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ds-brand-ink) 6%, transparent);
 }
 .control[data-search-design="tint"] .filters {
   position: relative;
@@ -173,40 +218,77 @@
   border-radius: 999px;
   background: var(--ds-brand-ink);
 }
-.control[data-search-design="frame"] .bar {
-  padding-inline: 14px 5px;
-  border: 1px solid var(--ds-line);
-  border-radius: 12px;
-  background: var(--ds-surface);
-  box-shadow: 0 4px 12px -9px #39234f38;
+/* These comparisons use one edge; all focus styles stay on the surface. */
+.control[data-search-design="tint"]:where([data-search-surface="quiet"]) .bar {
+  border-color: #52416026;
+  box-shadow: none;
 }
-.control[data-search-design="toolbar"] {
-  padding: 6px;
-  border: 1px solid var(--ds-line);
-  border-radius: 20px;
-  background: var(--ds-surface);
-  box-shadow: 0 6px 16px -12px #39234f38;
+.control[data-search-design="tint"]:where([data-search-surface="quiet"])
+  .bar:focus-within,
+.control[data-search-design="tint"]:where(
+    [data-search-surface="quiet"]
+  ):focus-visible
+  .bar {
+  border-color: var(--ds-brand-ink);
+  outline: none;
+  box-shadow: none;
 }
-.control[data-search-design="toolbar"] .bar {
-  padding-inline: 8px 0;
-  border-radius: 13px;
-  color: var(--ds-brand-ink);
+.control[data-search-design="tint"]:where([data-search-surface="borderless"])
+  .bar {
+  --search-press-inset: -2px;
+  --search-press-shadow: inset 0 2px 5px #49236814;
+  border-width: 0;
+  border-color: transparent;
+  box-shadow: 0 3px 9px -5px #39234f26;
 }
-.control[data-search-design="toolbar"] .filters {
-  gap: 4px;
-  padding-top: 6px;
-  margin-top: 0;
-  border-top: 1px solid var(--ds-line);
+.control[data-search-surface="borderless"] .field::placeholder {
+  color: color-mix(in srgb, var(--ds-muted) 92%, var(--ds-surface));
 }
-.control[data-search-design="toolbar"] .filters button {
-  flex: 1;
-  min-height: 44px;
-  padding-inline: 4px;
-  border: 0;
-  border-radius: 12px;
+.control[data-search-design="tint"]:where([data-search-surface="borderless"])
+  .bar:focus-within,
+.control[data-search-design="tint"]:where(
+    [data-search-surface="borderless"]
+  ):focus-visible
+  .bar {
+  border-color: transparent;
+  outline: none;
+  background: color-mix(in srgb, var(--ds-brand-ink) 3%, var(--ds-surface));
+  box-shadow: 0 3px 9px -5px #39234f26;
 }
-.control[data-search-design="toolbar"] .filters button[aria-pressed="true"] {
-  background: var(--ds-tint);
+.control[data-search-design="tint"]:where([data-search-surface="borderless"])
+  .bar:has(input:focus) {
+  box-shadow:
+    0 3px 9px -5px #39234f26,
+    0 12px 20px -12px color-mix(in srgb, var(--ds-brand-ink) 24%, transparent);
+}
+.control[data-search-design="tint"]:where(
+    [data-search-surface="borderless"]:not([data-pointer-focus])
+  )
+  .bar:has(input:focus-visible),
+.control[data-search-design="tint"]:where(
+    [data-search-surface="borderless"]
+  ):focus-visible
+  .bar {
+  outline: 2px solid var(--ds-brand-ink);
+  outline-offset: -2px;
+}
+.control[data-search-design="tint"]:where([data-search-surface="underline"])
+  .bar {
+  border-width: 0 0 1px;
+  border-color: var(--ds-line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.control[data-search-design="tint"]:where([data-search-surface="underline"])
+  .bar:focus-within,
+.control[data-search-design="tint"]:where(
+    [data-search-surface="underline"]
+  ):focus-visible
+  .bar {
+  border-color: var(--ds-brand-ink);
+  outline: none;
+  box-shadow: none;
 }
 .srOnly {
   position: absolute;
@@ -219,6 +301,10 @@
   white-space: nowrap;
 }
 @media (forced-colors: active) {
+  .control[data-search-design="tint"]:where([data-search-surface="borderless"])
+    .bar {
+    box-shadow: none;
+  }
   .bar {
     border: 1px solid CanvasText;
   }
@@ -231,13 +317,18 @@
     forced-color-adjust: none;
   }
   .control[data-search-design="tint"] .bar:focus-within,
-  .control[data-search-design="tint"]:focus-visible .bar {
+  .control[data-search-design="tint"]:focus-visible .bar,
+  .control[data-search-design="tint"] .bar:has(input:focus-visible) {
     outline: 2px solid Highlight;
     outline-offset: 3px;
     box-shadow: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .searchRow,
+  .cancelSlot {
+    transition: none;
+  }
   .control[data-search-design="tint"] .bar,
   .control[data-search-design="tint"] .filters button,
   .filterIndicator {

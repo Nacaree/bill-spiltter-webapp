@@ -1,0 +1,122 @@
+.showcase {
+  margin-bottom: 36px;
+}
+.hint {
+  margin: 0 0 20px;
+  color: var(--ds-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+.option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-width: 0;
+  min-height: 128px;
+  padding: 18px 12px;
+  border: 1px solid var(--ds-line);
+  border-radius: 18px;
+  background: var(--ds-surface);
+  color: var(--ds-text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+  cursor: pointer;
+}
+.option[aria-pressed="true"] {
+  border-color: var(--ds-brand-ink);
+  background: color-mix(in srgb, var(--ds-brand-ink) 4%, var(--ds-surface));
+}
+.icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  color: var(--ds-brand-ink);
+}
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 20px;
+}
+.footer > span {
+  color: var(--ds-muted);
+  font-size: 14px;
+}
+.transportGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.transportGrid .option {
+  min-height: 116px;
+  padding-inline: 8px;
+}
+.transportInput {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.5fr);
+  align-items: start;
+  gap: 20px;
+  margin-top: 24px;
+}
+.transportPreview {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 90px;
+  padding: 18px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--ds-tint);
+  color: var(--ds-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.transportPreview > span:last-child {
+  display: grid;
+  gap: 4px;
+}
+.transportPreview > span > span,
+.transportPreview small {
+  color: var(--ds-muted);
+  font-size: 12px;
+}
+.transportPreview strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .transportInput {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .footer > button {
+    width: 100%;
+  }
+}
+@media (forced-colors: active) {
+  .option[aria-pressed="true"] {
+    outline: 2px solid Highlight;
+    outline-offset: -3px;
+  }
+}

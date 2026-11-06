@@ -33,14 +33,22 @@ export const drawerChevronTiming = {
   easing: "ease-in-out",
 };
 
-export const searchIconTiming = {
-  duration: 300,
-  easing: "ease-out",
+export const searchTraceTiming = {
+  circle: 0.28,
+  handle: 0.12,
 };
 
-export const searchFocusTiming = {
-  duration: 400,
-  easing: "ease-out",
+export const mobileSearchTiming = {
+  ripple: 480,
+  press: 100,
+  release: 280,
+};
+
+export const searchClearTiming = {
+  enter: 0.16,
+  exit: 0.22,
+  erase: 180,
+  twistSpeed: 2.5,
 };
 
 export const expenseFilterTiming = {

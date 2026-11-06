@@ -16,8 +16,28 @@ their default animation definitions and a shared interaction wrapper.
   license and TypeScript-only adaptations.
 - **Expense category icons:** coffee, route, shopping-bag, and tag were fetched
   from the official Animate UI registry on October 29, 2026. They use the same
-  license and TypeScript-only adaptation; category icons animate on row hover
-  and keyboard focus, with reduced-motion support.
+  license and TypeScript-only adaptation. The design-system expense/receipt cards
+  use their native steam/draw presets on view entry, card hover, focus and press
+  through `ExpenseCategoryIcon`. Playback stops offscreen, on hidden pages or
+  open dialogs, and with reduced motion or forced colors; gestures preserve the
+  pressed SVG and replay without a continuous idle loop.
+- **Expanded expense categories (November 6, 2026):** cross and gift were fetched
+  from `https://animate-ui.com/r/icons-lucide-{name}.json`, retaining their native
+  presets and the same TypeScript-only adaptation/license. The official catalog
+  does not provide the other nine requested shapes. `expense-categories.jsx`
+  uses utensils, shopping-basket, car, fuel, wine, bed-double, ticket, plane and
+  plug SVGs from `https://github.com/lucide-icons/lucide/tree/main/icons`, with
+  local 700ms Motion presets via the Animate UI runtime. These are local motion
+  adaptations, not official Animate UI presets. Lucide's ISC/Feather MIT license
+  is preserved in [lucide-LICENSE.txt](lucide-LICENSE.txt). Coffee, ShoppingBag,
+  House and Tag reuse the existing official components. The complete set maps
+  through `expense-categories.js`, with unknown categories falling back to Tag.
+- **Name-aware transport (November 6, 2026):** TukTuk and Motorbike in
+  `expense-categories.jsx` are original vector drawings on the same 24px grid,
+  with rounded 2px strokes and local 700ms ride motion through the Animate UI
+  runtime. They are not downloaded Lucide or official Animate UI geometries.
+  Transport descriptions choose between these drawings and the existing Car;
+  the 15 category choices stay the same.
 - **Empty-state icons:** file-text and clock-3 were fetched from the official
   Animate UI registry on November 1, 2026. They use the same license and
   TypeScript-only adaptation. The receipt vignette and empty activity line
@@ -28,6 +48,18 @@ their default animation definitions and a shared interaction wrapper.
   Receipt spotlight uses its unchanged 500ms pencil lift and 300ms line draw
   (120ms delay), triggered through DesignButton on hover, focus, click and touch.
   Fresh pointer entry replays it even while focused; reduced motion stays still.
+- **Search:** search was fetched from the official Animate UI registry at
+  `https://animate-ui.com/r/icons-lucide-search.json` on November 6, 2026.
+  TypeScript annotations were removed with esbuild; its Lucide geometry,
+  variants and timing definitions are unchanged. The shared search control
+  retains Animate UI's built-in `path` draw preset (800ms) in its comparisons.
+  The approved borderless variant uses `search-trace.jsx`: the same 8px lens and
+  handle geometry with a staged reveal. Custom Motion playback draws the circle
+  over 280ms, then reveals and draws the handle outward over 120ms. The lens
+  starts at its lower-right junction; both strokes remain complete at rest.
+  This is a local animation adaptation, separate from
+  the preserved library presets. Replays never replace the pressed SVG, and
+  reduced motion shows the complete icon. The same license applies.
 - **Lucide Animated:** check, copy and upload components were fetched from
   `https://lucide-animated.com/r/{name}.json` on October 26, 2026.
   Original license: [MIT](lucide-animated/LICENSE.txt).

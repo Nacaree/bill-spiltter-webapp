@@ -273,7 +273,6 @@ export function DesignReference() {
           <a href="#add-to-bill">Add to bill</a>
           <a href="#expenses-page">Expenses page</a>
           <a href="#expense-search">Expense search</a>
-          <a href="#expense-cards">Receipt cards</a>
           <span className={styles.navCaption}>
             Made to be adjusted <span aria-hidden="true">↘</span>
           </span>
@@ -675,7 +674,7 @@ export function DesignReference() {
               <SectionHeading
                 number="09"
                 title="Every little cost, a few different ways"
-                description="Compare receipt cards and search bars in Atelier, alongside six Expenses page layouts. Try the sample controls in context."
+                description="Explore Atelier’s expense drawer, category icons and search bars, alongside six Expenses page layouts. Try the sample controls in context."
               />
               <ExpensesShowcase />
             </section>

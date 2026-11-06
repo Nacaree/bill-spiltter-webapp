@@ -1,43 +1,51 @@
 "use client";
 
-import { useEffect, useId, useRef, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useCallback,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/cn";
-import {
-  expenseFilterSpring,
-  expenseFilterTiming,
-  searchFocusTiming,
-  searchIconTiming,
-} from "./motion-tokens";
+import { expenseFilterSpring, expenseFilterTiming } from "./motion-tokens";
 import { useDesignReducedMotion } from "./use-design-reduced-motion";
 import system from "./system.module.css";
 import styles from "./expense-search.module.css";
+import { ExpenseSearchClear } from "./expense-search-clear";
+import { Search } from "./icons/animate-ui/search";
+import { SearchTrace } from "./icons/search-trace";
+import {
+  ExpenseSearchMobileEffect,
+  mobileSearchEffects,
+} from "./expense-search-mobile-effect";
 
 const subscribe = () => () => {};
 const clientReady = () => true;
 const serverReady = () => false;
 const filters = ["All", "Paid by you", "Receipts"];
 
-export function ExpenseSearchIcon() {
+export function ExpenseSearchIcon({ animate = false, customTrace = false }) {
+  if (customTrace) return <SearchTrace animate={animate} />;
   return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      strokeLinecap="round"
+    <Search
+      size={18}
+      animate={animate}
+      animation="path"
       aria-hidden="true"
-    >
-      <circle cx="10.5" cy="10.5" r="6.5" />
-      <path d="m16 16 4.5 4.5" />
-    </svg>
+      data-icon-library="animate-ui"
+      data-icon="search"
+    />
   );
 }
 
 export function ExpenseSearch({
   design = "tint",
+  effect = "none",
+  surface = "original",
+  clearMotion = "none",
   value,
   onValueChange,
   filter,
@@ -47,120 +55,149 @@ export function ExpenseSearch({
 }) {
   const inputId = useId();
   const input = useRef(null);
-  const icon = useRef(null);
-  const bar = useRef(null);
-  const animations = useRef([]);
+  const control = useRef(null);
+  const iconFrames = useRef([]);
+  const [iconPlaying, setIconPlaying] = useState(false);
+  const [searchMode, setSearchMode] = useState(false);
   const reducedMotion = useDesignReducedMotion();
   // Avoid discarding early typing before React attaches the event handlers.
   const ready = useSyncExternalStore(subscribe, clientReady, serverReady);
-
-  useEffect(() => {
-    if (reducedMotion !== false)
-      animations.current.forEach((animation) => animation.cancel());
-    return () => {
-      animations.current.forEach((animation) => animation.cancel());
-    };
-  }, [design, reducedMotion]);
-
-  function replayFocusEffect() {
-    animations.current.forEach((animation) => animation.cancel());
-    if (
-      design !== "tint" ||
-      reducedMotion !== false ||
-      !icon.current?.animate ||
-      !bar.current?.animate
-    )
-      return;
-    const currentStyle = getComputedStyle(bar.current);
-    const ink = currentStyle.color;
-    const halo = `color-mix(in srgb, ${ink} 10%, transparent)`;
-    const settledHalo = `color-mix(in srgb, ${ink} 6%, transparent)`;
-    animations.current = [
-      icon.current.animate(
-        [
-          { transform: "scale(1)" },
-          { transform: "scale(1.08)", offset: 0.45 },
-          { transform: "scale(1)" },
-        ],
-        searchIconTiming,
-      ),
-      bar.current.animate(
-        [
-          {
-            boxShadow:
-              currentStyle.boxShadow === "none"
-                ? "0 0 0 0 transparent, 0 0 0 0 transparent"
-                : currentStyle.boxShadow,
-          },
-          {
-            boxShadow: `0 0 0 1px ${ink}, 0 0 0 6px ${halo}`,
-            offset: 0.5,
-          },
-          { boxShadow: `0 0 0 1px ${ink}, 0 0 0 3px ${settledHalo}` },
-        ],
-        searchFocusTiming,
-      ),
+  const morphing =
+    design === "tint" && ["morph", "morph-press"].includes(effect);
+  const mobileEffect = effect === "morph-press" ? "press" : effect;
+  const stopIcon = useCallback(() => {
+    iconFrames.current.forEach(cancelAnimationFrame);
+    iconFrames.current = [];
+    setIconPlaying(false);
+  }, []);
+  const playIcon = useCallback(() => {
+    iconFrames.current.forEach(cancelAnimationFrame);
+    setIconPlaying(false);
+    // Reset the library controller between replays without replacing a pressed SVG.
+    iconFrames.current = [
+      requestAnimationFrame(() => {
+        iconFrames.current = [
+          requestAnimationFrame(() => {
+            iconFrames.current = [];
+            setIconPlaying(true);
+          }),
+        ];
+      }),
     ];
+  }, []);
+  useEffect(() => () => iconFrames.current.forEach(cancelAnimationFrame), []);
+
+  function closeSearchMode() {
+    onValueChange("");
+    setSearchMode(false);
+    input.current?.blur();
+    control.current?.focus({ preventScroll: true });
   }
 
   return (
     <div
+      ref={control}
       id={id}
-      tabIndex={id ? -1 : undefined}
+      tabIndex={id || morphing ? -1 : undefined}
       className={styles.control}
       data-search-design={design}
-      role={id ? "group" : undefined}
-      aria-label={id ? "Expense search and filters" : undefined}
+      data-search-effect={effect}
+      data-search-surface={surface}
+      data-search-clear={clearMotion}
+      role={id || morphing ? "group" : undefined}
+      aria-label={id || morphing ? "Expense search and filters" : undefined}
+      onPointerDownCapture={(event) => {
+        event.currentTarget.dataset.pointerFocus = "true";
+      }}
+      onKeyDownCapture={(event) => {
+        if (event.key === "Tab")
+          delete event.currentTarget.dataset.pointerFocus;
+      }}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget))
+          delete event.currentTarget.dataset.pointerFocus;
+      }}
     >
       <div
-        ref={bar}
-        className={cn(styles.bar, design === "tint" && system.glass)}
-        data-search-material={design === "tint" ? "glass" : undefined}
+        className={styles.searchRow}
+        data-search-mode={morphing && searchMode ? "open" : "closed"}
       >
-        <label ref={icon} className={styles.icon} htmlFor={inputId}>
-          <ExpenseSearchIcon />
-          <span className={styles.srOnly}>{label}</span>
-        </label>
-        <input
-          ref={input}
-          id={inputId}
-          className={styles.field}
-          type="search"
-          placeholder="Find an expense"
-          value={value}
-          readOnly={!ready}
-          onClick={replayFocusEffect}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.repeat) replayFocusEffect();
-          }}
-          onBlur={() =>
-            animations.current.forEach((animation) => animation.cancel())
-          }
-          onChange={(event) => onValueChange(event.target.value)}
-        />
-        {value && (
-          <button
-            type="button"
-            className={styles.clear}
-            aria-label="Clear search"
-            onClick={() => {
-              onValueChange("");
+        <div
+          onPointerDown={(event) => {
+            if (event.button === 0 && event.target === event.currentTarget) {
+              event.preventDefault();
               input.current?.focus();
+            }
+          }}
+          className={cn(
+            styles.bar,
+            design === "tint" && surface !== "underline" && system.glass,
+          )}
+          data-search-material={
+            design === "tint" && surface !== "underline" ? "glass" : undefined
+          }
+        >
+          {design === "tint" && mobileSearchEffects.includes(mobileEffect) && (
+            <ExpenseSearchMobileEffect
+              key={effect}
+              effect={mobileEffect}
+              drawOnPress={surface === "borderless" && effect === "morph-press"}
+              onIconPlay={playIcon}
+              onIconStop={stopIcon}
+            />
+          )}
+          <label className={styles.icon} htmlFor={inputId}>
+            <ExpenseSearchIcon
+              animate={iconPlaying && reducedMotion === false}
+              customTrace={surface === "borderless" && effect === "morph-press"}
+            />
+            <span className={styles.srOnly}>{label}</span>
+          </label>
+          <input
+            ref={input}
+            id={inputId}
+            className={styles.field}
+            type="search"
+            placeholder="Find an expense"
+            value={value}
+            readOnly={!ready}
+            onFocus={() => {
+              if (morphing) setSearchMode(true);
             }}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              strokeLinecap="round"
-              aria-hidden="true"
+            onClick={() => {
+              if (morphing) setSearchMode(true);
+            }}
+            onKeyDown={(event) => {
+              if (morphing && event.key === "Escape") {
+                event.preventDefault();
+                closeSearchMode();
+              }
+            }}
+            onChange={(event) => onValueChange(event.target.value)}
+          />
+          <ExpenseSearchClear
+            visible={Boolean(value)}
+            variant={clearMotion}
+            className={styles.clear}
+            onClear={() => {
+              onValueChange("");
+              input.current?.setAttribute("data-search-clear-focus", "");
+              input.current?.focus();
+              input.current?.removeAttribute("data-search-clear-focus");
+            }}
+          />
+        </div>
+        {morphing && (
+          <div className={styles.cancelSlot} inert={!searchMode}>
+            <button
+              type="button"
+              className={styles.cancel}
+              onClick={closeSearchMode}
+              tabIndex={searchMode ? 0 : -1}
             >
-              <path d="m6 6 12 12M18 6 6 18" />
-            </svg>
-          </button>
+              Cancel
+            </button>
+          </div>
         )}
       </div>
       <div

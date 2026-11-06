@@ -10,17 +10,22 @@ import styles from "./animated-money.module.css";
 export function AnimatedMoney({ amountMinor, currency = "USD", className }) {
   const reducedMotion = useDesignReducedMotion();
   const digits = currencyFractionDigits(currency);
+  const format = {
+    style: "currency",
+    currency,
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  };
 
   return (
     <NumberFlow
       value={amountMinor / 10 ** digits}
       locales="en-US"
-      format={{
-        style: "currency",
-        currency,
-        minimumFractionDigits: digits,
-        maximumFractionDigits: digits,
-      }}
+      format={format}
+      role="img"
+      aria-label={new Intl.NumberFormat("en-US", format).format(
+        amountMinor / 10 ** digits,
+      )}
       transformTiming={balanceChangeTiming}
       spinTiming={balanceChangeTiming}
       opacityTiming={{ duration: 200, easing: "ease-out" }}

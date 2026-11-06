@@ -21,6 +21,7 @@ export function DialogPanel({
   onCloseAutoFocus,
   className = "",
   viewportAware = false,
+  layoutKey,
 }) {
   const panelRef = useRef(null);
   const [mounted, setMounted] = useState(false);
@@ -106,7 +107,7 @@ export function DialogPanel({
       scroll.removeEventListener("focusin", schedule);
       cancelAnimationFrame(frame);
     };
-  }, [open, mounted, viewportAware]);
+  }, [open, mounted, viewportAware, layoutKey]);
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>

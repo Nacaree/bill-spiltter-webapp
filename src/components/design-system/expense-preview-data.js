@@ -7,7 +7,7 @@ export const sampleExpenses = [
     share: 2400,
     date: "29 OCT",
     receipt: true,
-    category: "Food & drinks",
+    category: "Meals & restaurants",
   },
   {
     id: "ride",
@@ -16,7 +16,7 @@ export const sampleExpenses = [
     payer: "Sokha",
     share: 400,
     date: "29 OCT",
-    category: "Transport",
+    category: "Transport & taxis",
   },
   {
     id: "coffee",
@@ -25,6 +25,6 @@ export const sampleExpenses = [
     payer: "Nary",
     share: 900,
     date: "28 OCT",
-    category: "Food & drinks",
+    category: "Coffee & snacks",
   },
 ];

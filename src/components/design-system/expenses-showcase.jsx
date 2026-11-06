@@ -1,6 +1,12 @@
 "use client";
 
-import { useId, useImperativeHandle, useRef, useState } from "react";
+import {
+  useId,
+  useImperativeHandle,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { BrandMark } from "@/components/ui/brand-mark";
 import { AnimatedMoney } from "@/components/ui/animated-money";
 import { formatMoney } from "@/lib/money";
@@ -8,16 +14,17 @@ import { DesignButton } from "./primitives";
 import { DialogPanel } from "./form-dialog";
 import { BillEntryChoices } from "./bill-entry-choices";
 import { billNavigationItems } from "./bill-navigation";
-import { Coffee } from "./icons/animate-ui/coffee";
-import { Route } from "./icons/animate-ui/route";
+import { ExpenseCategoryIcon } from "./expense-category-icon";
+import { ExpenseCategoryShowcase } from "./expense-category-showcase";
+import { ExpenseTransportShowcase } from "./expense-transport-showcase";
+import { ExpenseDetailDrawer } from "./expense-detail-drawer";
+import { getExpenseCategory } from "./expense-categories";
 import { ReceiptText } from "./icons/receipt-text";
 import {
   ExpenseSearch,
   ExpenseSearchIcon as SearchIcon,
 } from "./expense-search";
 import { ExpenseSearchShowcase } from "./expense-search-showcase";
-import { ExpenseReceiptCard } from "./expense-receipt-card";
-import { ExpenseReceiptShowcase } from "./expense-receipt-showcase";
 import { ButtonStrokeShimmer } from "./button-stroke-shimmer";
 import { sampleExpenses } from "./expense-preview-data";
 import styles from "./expenses-showcase.module.css";
@@ -67,12 +74,17 @@ const directions = [
   },
 ];
 const money = (amount) => formatMoney(amount, "USD");
+const subscribe = () => () => {};
+const clientReady = () => true;
+const serverReady = () => false;
 
 function ExpenseConcept({
   direction,
   empty,
   searchDesign,
-  receiptDesign,
+  searchEffect,
+  searchSurface,
+  searchClearMotion,
   ref,
 }) {
   const id = useId();
@@ -82,6 +94,7 @@ function ExpenseConcept({
   const [adding, setAdding] = useState(false);
   const [detail, setDetail] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [detailSession, setDetailSession] = useState(0);
   const [notice, setNotice] = useState("");
   const returnFocus = useRef(null);
   const addButton = useRef(null);
@@ -91,7 +104,7 @@ function ExpenseConcept({
   const isAmethyst = direction.id === "amethyst";
   const isCollection = direction.id === "collection";
   const food = expenses
-    .filter((item) => item.category === "Food & drinks")
+    .filter((item) => getExpenseCategory(item.category).food)
     .reduce((sum, item) => sum + item.amount, 0);
   const visible = expenses.filter(
     (item) =>
@@ -102,16 +115,45 @@ function ExpenseConcept({
         .includes(query.trim().toLowerCase()),
   );
   const dates = [...new Set(visible.map((item) => item.date))];
+  const months = [
+    ...new Set(expenses.map((item) => item.dateISO?.slice(0, 7) ?? "2026-10")),
+  ];
+  const periodLabel =
+    months.length === 1
+      ? new Intl.DateTimeFormat("en-GB", {
+          month: "long",
+          year: "numeric",
+          timeZone: "UTC",
+        })
+          .format(new Date(`${months[0]}-01T12:00:00Z`))
+          .toUpperCase()
+      : "ALL EXPENSES";
 
   useImperativeHandle(
     ref,
     () => ({
-      revealExpenses() {
-        setQuery("");
+      showClearExample() {
+        setQuery("coffee");
         setFilter("All");
       },
+      showCategory(category) {
+        setQuery("");
+        setFilter("All");
+        setExpenses((items) =>
+          items.map((item, index) =>
+            index === 0 ? { ...item, category: category.label } : item,
+          ),
+        );
+      },
+      showDetails(trigger) {
+        returnFocus.current = trigger;
+        if (!expenses.length) setExpenses(sampleExpenses);
+        setDetail(expenses[0] ?? sampleExpenses[0]);
+        setDetailSession((value) => value + 1);
+        setDetailOpen(true);
+      },
     }),
-    [],
+    [expenses],
   );
 
   function openAdd(event) {
@@ -129,7 +171,7 @@ function ExpenseConcept({
         share: receipt ? 800 : 300,
         payer: "Nary",
         date: "30 OCT",
-        category: "Food & drinks",
+        category: receipt ? "Groceries" : "Coffee & snacks",
         receipt,
       },
       ...items,
@@ -141,21 +183,6 @@ function ExpenseConcept({
   }
 
   function row(item) {
-    if (isEditorial && receiptDesign !== "classic")
-      return (
-        <li key={item.id} className={styles.receiptItem}>
-          <ExpenseReceiptCard
-            expense={item}
-            design={receiptDesign}
-            onOpen={(expense, event) => {
-              returnFocus.current = event.currentTarget;
-              setDetail(expense);
-              setDetailOpen(true);
-            }}
-          />
-        </li>
-      );
-    const Icon = item.category === "Transport" ? Route : Coffee;
     return (
       <li key={item.id} className={styles.entry}>
         <button
@@ -164,18 +191,24 @@ function ExpenseConcept({
           onClick={(event) => {
             returnFocus.current = event.currentTarget;
             setDetail(item);
+            setDetailSession((value) => value + 1);
             setDetailOpen(true);
           }}
         >
-          <span className={styles.categoryIcon} aria-hidden="true">
-            {isAmethyst ? (
+          {isAmethyst ? (
+            <span className={styles.categoryIcon} aria-hidden="true">
               <span className={styles.payerInitial}>
                 {item.payer.slice(0, 2).toUpperCase()}
               </span>
-            ) : (
-              <Icon size={20} animate={false} />
-            )}
-          </span>
+            </span>
+          ) : (
+            <ExpenseCategoryIcon
+              category={item.category}
+              name={item.name}
+              size={20}
+              className={styles.categoryIcon}
+            />
+          )}
           <span className={styles.entryCopy}>
             <strong>{item.name}</strong>
             <span>
@@ -189,7 +222,9 @@ function ExpenseConcept({
           </span>
           {(direction.id === "journal" || isEditorial) && (
             <span className={styles.paperFooter}>
-              <span>{item.date} 2026</span>
+              <span>
+                {item.date} {item.year ?? 2026}
+              </span>
               <span>
                 {item.receipt ? "Receipt attached" : "Added manually"}
               </span>
@@ -392,8 +427,12 @@ function ExpenseConcept({
               </DesignButton>
               {expenses.length > 0 && (
                 <ExpenseSearch
+                  key={`${searchDesign}-${searchEffect}-${searchSurface}-${searchClearMotion}`}
                   id="atelier-expense-search"
                   design={searchDesign}
+                  effect={searchEffect}
+                  surface={searchSurface}
+                  clearMotion={searchClearMotion}
                   value={query}
                   onValueChange={setQuery}
                   filter={filter}
@@ -462,7 +501,11 @@ function ExpenseConcept({
                 <>
                   <div className={styles.listHeading}>
                     {isEditorial ? (
-                      <time dateTime="2026-10">OCTOBER 2026</time>
+                      months.length === 1 ? (
+                        <time dateTime={months[0]}>{periodLabel}</time>
+                      ) : (
+                        <span>{periodLabel}</span>
+                      )
                     ) : (
                       <>
                         <span>
@@ -566,67 +609,107 @@ function ExpenseConcept({
           <BillEntryChoices onSelect={addSample} receiptPlaying={adding} />
         </div>
       </DialogPanel>
-      <DialogPanel
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-        title={detail?.name ?? "Expense details"}
-        description="A closer look at this sample expense."
-        closeLabel="Close expense details"
-        returnFocusRef={returnFocus}
-      >
-        {detail && (
-          <div className={styles.dialogBody}>
-            <dl className={styles.details}>
-              <div>
-                <dt>Total</dt>
-                <dd>{money(detail.amount)}</dd>
-              </div>
-              <div>
-                <dt>Paid by</dt>
-                <dd>{detail.payer}</dd>
-              </div>
-              <div>
-                <dt>Your share</dt>
-                <dd>{money(detail.share)}</dd>
-              </div>
-              <div>
-                <dt>Category</dt>
-                <dd>{detail.category}</dd>
-              </div>
-              <div>
-                <dt>Source</dt>
-                <dd>{detail.receipt ? "Receipt" : "Manual entry"}</dd>
-              </div>
-            </dl>
-          </div>
-        )}
-      </DialogPanel>
+      {isEditorial && detail ? (
+        <ExpenseDetailDrawer
+          key={`${detail.id}-${detailSession}`}
+          expense={detail}
+          open={detailOpen}
+          onOpenChange={setDetailOpen}
+          returnFocusRef={returnFocus}
+          fallbackFocusRef={addButton}
+          onSave={(expense) => {
+            setExpenses((items) =>
+              items.map((item) => (item.id === expense.id ? expense : item)),
+            );
+            setDetail(expense);
+            setNotice("Expense updated in this preview.");
+          }}
+          onRemove={(expense) => {
+            setExpenses((items) =>
+              items.filter((item) => item.id !== expense.id),
+            );
+            setNotice(`${expense.name} removed from this preview.`);
+          }}
+        />
+      ) : (
+        <DialogPanel
+          open={detailOpen}
+          onOpenChange={setDetailOpen}
+          title={detail?.name ?? "Expense details"}
+          description="A closer look at this sample expense."
+          closeLabel="Close expense details"
+          returnFocusRef={returnFocus}
+        >
+          {detail && (
+            <div className={styles.dialogBody}>
+              <dl className={styles.details}>
+                <div>
+                  <dt>Total</dt>
+                  <dd>{money(detail.amount)}</dd>
+                </div>
+                <div>
+                  <dt>Paid by</dt>
+                  <dd>{detail.payer}</dd>
+                </div>
+                <div>
+                  <dt>Your share</dt>
+                  <dd>{money(detail.share)}</dd>
+                </div>
+                <div>
+                  <dt>Category</dt>
+                  <dd>{detail.category}</dd>
+                </div>
+                <div>
+                  <dt>Source</dt>
+                  <dd>{detail.receipt ? "Receipt" : "Manual entry"}</dd>
+                </div>
+              </dl>
+            </div>
+          )}
+        </DialogPanel>
+      )}
     </figure>
   );
 }
 
 export function ExpensesShowcase() {
+  const ready = useSyncExternalStore(subscribe, clientReady, serverReady);
   const [mode, setMode] = useState("populated");
   const [reset, setReset] = useState(0);
   const [searchDesign, setSearchDesign] = useState("tint");
-  const [receiptDesign, setReceiptDesign] = useState("classic");
+  const [searchEffect, setSearchEffect] = useState("morph-press");
+  const [searchSurface, setSearchSurface] = useState("borderless");
+  const [searchClearMotion, setSearchClearMotion] = useState("pop");
   const atelier = useRef(null);
 
-  function previewReceipt(design) {
+  function previewDetails(trigger) {
     setMode("populated");
-    setReceiptDesign(design);
-    atelier.current?.revealExpenses();
+    requestAnimationFrame(() => atelier.current?.showDetails(trigger));
+  }
+
+  function previewCategory(category) {
+    setMode("populated");
     requestAnimationFrame(() => {
-      const receipt = document.querySelector("#atelier-expense-list button");
-      receipt?.focus({ preventScroll: true });
-      receipt?.scrollIntoView({ block: "center" });
+      atelier.current?.showCategory(category);
+      const expense = document.querySelector("#atelier-expense-list button");
+      expense?.focus({ preventScroll: true });
+      expense?.scrollIntoView({ block: "center" });
     });
   }
 
-  function previewSearch(design) {
+  function previewSearch(
+    design,
+    effect = "none",
+    surface = "original",
+    clearMotion = "none",
+  ) {
     setMode("populated");
     setSearchDesign(design);
+    setSearchEffect(effect);
+    setSearchSurface(surface);
+    setSearchClearMotion(clearMotion);
     requestAnimationFrame(() => {
+      if (clearMotion !== "none") atelier.current?.showClearExample();
       const search = document.getElementById("atelier-expense-search");
       search?.focus({ preventScroll: true });
       search?.scrollIntoView({ block: "center" });
@@ -665,27 +748,59 @@ export function ExpensesShowcase() {
           </DesignButton>
         </div>
       </div>
-      <div id="expense-cards" className={styles.galleryHeading}>
-        <span className={styles.premiumLabel}>THE PAPER DETAILS</span>
-        <p>Four receipt card directions</p>
+      <div id="expense-drawer" className={styles.galleryHeading}>
+        <span className={styles.premiumLabel}>A CLOSER LOOK</span>
+        <p>One expense, all in one place</p>
         <span>
-          Compare the edges, spacing and detail layouts inside Atelier.
+          View the details, make an edit, or remove an expense. Your place in
+          the bill stays.
         </span>
       </div>
-      <ExpenseReceiptShowcase
-        activeDesign={receiptDesign}
-        onPreview={previewReceipt}
+      <div className={styles.toolbar}>
+        <div>
+          <p>Details → Edit → Save. Or remove, with a moment to confirm.</p>
+          <span>Try any Atelier card, or open the sample below.</span>
+        </div>
+        <DesignButton
+          icon="arrow"
+          iconPosition="end"
+          aria-label="Preview expense drawer in Atelier"
+          disabled={!ready}
+          onClick={(event) => previewDetails(event.currentTarget)}
+        >
+          Preview expense drawer
+        </DesignButton>
+      </div>
+      <div id="expense-categories" className={styles.galleryHeading}>
+        <span className={styles.premiumLabel}>THE LITTLE DETAILS</span>
+        <p>An icon for every expense</p>
+        <span>Fifteen categories, with a little movement in each.</span>
+      </div>
+      <ExpenseCategoryShowcase
+        key={`categories-${reset}`}
+        onPreview={previewCategory}
       />
+      <div id="expense-transport-icons" className={styles.galleryHeading}>
+        <span className={styles.premiumLabel}>MADE FOR THE RIDE</span>
+        <p>A little more local</p>
+        <span>
+          Car, tuk-tuk or motorbike—matched to what you named the expense.
+        </span>
+      </div>
+      <ExpenseTransportShowcase key={`transport-${reset}`} />
       <div id="expense-search" className={styles.galleryHeading}>
         <span className={styles.premiumLabel}>THE SEARCH DETAILS</span>
-        <p>Four ways to find an expense</p>
+        <p>Search, shaped for mobile</p>
         <span>
-          Compare the search bars, then preview your favorite in Atelier.
+          Try touch effects, surfaces and clear animations inside Atelier.
         </span>
       </div>
       <ExpenseSearchShowcase
         key={reset}
         activeDesign={searchDesign}
+        activeEffect={searchEffect}
+        activeSurface={searchSurface}
+        activeClearMotion={searchClearMotion}
         onPreview={previewSearch}
       />
       <div id="expenses-premium" className={styles.galleryHeading}>
@@ -705,7 +820,9 @@ export function ExpensesShowcase() {
               direction={direction}
               empty={mode === "empty"}
               searchDesign={searchDesign}
-              receiptDesign={receiptDesign}
+              searchEffect={searchEffect}
+              searchSurface={searchSurface}
+              searchClearMotion={searchClearMotion}
             />
           ))}
       </div>

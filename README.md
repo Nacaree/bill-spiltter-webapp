@@ -182,7 +182,41 @@ starting state. These are comparison concepts awaiting selection; Screen 2's
 Expenses page is unchanged. The gallery uses sample data with no hosted writes.
 
 The user prefers Atelier, now revised with receipt-style expense cards, category
-icons and date/source footers. Its full-width purple **+ Add expense** sits below
+icons and date/source footers. Its original receipt cards have no outer border.
+One masked paper surface forms the rounded top and irregular torn bottom;
+the shadow follows that silhouette, and the dashed footer divider remains.
+The [animated expense categories](http://localhost:3000/design-system#expense-categories)
+include all 15 choices: meals, coffee, groceries, transport, fuel, drinks,
+accommodation, shopping, activities, flights, household bills, utilities,
+health, gifts and other. Tap a category to replay its icon, then use **Preview
+category in Atelier** to apply it to the first sample expense without changing
+amounts. Dinner uses utensils, coffee uses a cup and transport uses a car.
+Icons use the Animate UI runtime, with native presets where available and local
+Motion presets for the additional Lucide shapes. Each plays once on view entry,
+card hover, focus and press; offscreen, hidden-page, open-dialog, reduced-motion
+and forced-color states stop playback. Screen 2's category form is unchanged.
+
+The [transport icon preview](http://localhost:3000/design-system#expense-transport-icons)
+adds animated car, tuk-tuk and motorbike variants within **Transport & taxis**.
+The expense name chooses the vehicle: tuk-tuk/tuktuk/rickshaw, or
+motorbike/motorcycle/motobike/moto/motodop/scooter/GrabBike/bike taxi. Other
+names keep the car. Matching ignores case, punctuation and common hyphen/space
+variations, and applies only to the transport category. Cards and the details
+drawer agree; editing a transport description shows the match
+before save. The preview includes example buttons and a live name field.
+
+The [expense drawer preview](http://localhost:3000/design-system#expense-drawer)
+opens the Atelier details drawer; tapping any Atelier expense opens the same
+flow. Its header and actions stay pinned while the body scrolls. View the payer,
+date, category, split and a sample receipt; **Edit expense** switches the same
+drawer to an editable form with all 15 categories, equal-split choices, notes,
+validation, Save and Cancel. **Remove expense** switches to a confirmation
+naming the expense and amount, with Keep expense as the safe focus target.
+Save/remove update only the local preview, including totals and personal share;
+the list's query/filter and return focus are preserved. Reset restores examples.
+The rolling total has an explicit current-value accessible label. This drawer
+does not change Screen 2 or the existing main-app create-expense form.
+Its full-width purple **+ Add expense** sits below
 the total/share summary, with a 16px gap before the glass search field.
 Its shimmer keeps the perimeter-light look of the [21st.dev / Magic UI reference](https://21st.dev/@dillionverma/components/shimmer-button),
 with a continuous constant-speed 8-second orbit. The tapered white stroke and broad purple
@@ -198,31 +232,63 @@ intact, and disabled/reduced-motion buttons stay still.
 Both effects pause offscreen or behind dialogs and
 hide for reduced motion and forced colors.
 The summary groups Total spent, the rolling amount/currency, and expense
-count/personal share above search. The [expense search gallery](http://localhost:3000/design-system#expense-search)
-compares **Quiet line**, **Liquid glass**, **Paper frame** and **Integrated toolbar**.
-Each has independent sample search, filters and a clear action. **Preview in
-Atelier** changes the search treatment in the full Atelier specimen and brings
-it into view. These choices are local preview state. The shared `ExpenseSearch`
-component owns the input surface and focus styling so global form styles cannot
-add a separate white pill. **Liquid glass** is the chosen treatment: the existing
-16px rounded shape and purple magnifier directly reuse the design system's
-shared frosted material, blur/opacity tokens, highlights and fallbacks.
-Atelier defaults to this option.
-The active filter uses a rounded underline that slides with a gentle spring,
-slightly overshoots and settles. It has no background tint or glow. Reduced
-motion switches the selection immediately.
-Clicking the field or magnifier fades in a purple border, briefly expands a
-lavender halo, and pulses the icon by 8%; Enter replays it from the keyboard.
-The border stays while typing. Clear stays still, and reduced motion makes
-the focus indicator immediate and static.
-Full Screen 2 integration remains pending.
+count/personal share above search. The [search gallery](http://localhost:3000/design-system#expense-search)
+retains mobile interactions, surface treatments and clear-button animations,
+with independent sample search/filters and Preview in Atelier.
+Atelier uses the approved **Borderless glass + Search morph + Glass press**.
+The shared `ExpenseSearch` owns its surface/focus so standalone input styles
+cannot add a separate white pill. The selected filter uses a rounded underline
+that slides with a spring, plus a small label lift; reduced motion stays still.
+The original Quiet line, Liquid glass, Paper frame and Integrated toolbar
+comparisons have been retired, together with Focus beam, Soft spotlight and
+Gradient rim. Their gallery controls, decorative layers, old halo/icon pulse
+and unused timing tokens were removed. Full Screen 2 integration stays pending.
 
-The [receipt card gallery](http://localhost:3000/design-system#expense-cards)
-adds **Fine perforation**, **Ticket stub**, **Layered paper** and **Corner fold**.
-Open a specimen for sample details or use **Preview in Atelier** to try the
-whole list. Switching preserves sample expenses and clears the list filters;
-**Original receipt** restores the existing torn paper treatment. The original
-remains the default while these options are compared.
+The [mobile search comparison](http://localhost:3000/design-system#expense-search-mobile)
+adds **Tap ripple**, **Glass press**, **Center-out underline**, **Magnifier draw**
+and **Search morph**, each with working local search/filters and **Preview in
+Atelier**. Ripple starts at the touch position; press leaves text/caret steady;
+underline and icon drawing respond to focus. Search morph reveals Cancel beside
+the field. Cancel or Escape clears the query, restores width and moves focus out
+of the text input; Clear keeps search mode open. Reduced motion keeps controls
+functional and still. The individual treatments remain comparison options.
+The sixth **Search morph + Glass press** option combines the same Cancel reveal
+with the soft press/release, keeping text and caret steady. Preview in Atelier
+uses this combined interaction with the approved Borderless glass surface by default.
+
+The [search surface comparison](http://localhost:3000/design-system#expense-search-surfaces)
+offers **Quiet glass**, **Borderless glass** and **Fine underline**, each with
+Search morph + Glass press and Preview in Atelier. Quiet glass uses one fine
+edge; Borderless glass uses frost, a subtle bottom shadow and a deeper focused
+fill; Fine underline uses a transparent field with one bottom rule. These
+comparisons remove the outer focus halo. Borderless keyboard focus uses a single
+inset stroke, and forced colors retain a system outline. **Borderless glass is
+approved and applied to Atelier by default**; the other surfaces remain comparisons.
+Its soft purple underglow appears below the bar only while the input is focused
+for typing, then fades away on blur. The top and side edges stay quiet. Forced
+colors remove the glow.
+The borderless press tint fills the entire rounded field: its moving layer
+slightly overscans the clipped surface, with no white inset rim.
+The approved bar also draws its magnifier's circle and handle on every press
+of the input, icon or field padding, and on keyboard entry. Drawing continues
+through the glass release; Clear keeps the completed icon. Reduced motion and
+forced colors show the complete icon immediately.
+The approved magnifier keeps Animate UI/Lucide's shape with a custom two-step
+reveal: the circle draws for 280ms, then the handle appears and draws outward
+over 120ms (400ms total). The original Animate UI Search component and its
+built-in 800ms path preset remain in the other comparison previews.
+
+The [clear button comparison](http://localhost:3000/design-system#expense-search-clear)
+shows **Soft twist**, **Stroke erase** and **Soft pop** on the approved search
+bar. Each starts with `coffee`; tap Clear and use **Refill example** to replay.
+The query clears immediately and focus returns to the input while the icon
+finishes its exit. Fast retyping restores the control; reduced motion stays
+immediate. **Preview in Atelier** applies each treatment locally and fills
+`coffee` so Clear is ready to try. **Soft pop is approved and is now Atelier's
+default Clear effect**; Soft twist and Stroke erase remain comparisons.
+
+The four experimental receipt-card comparisons and their preview controls have
+been removed. Atelier keeps the approved borderless torn-paper cards.
 
 The [calendar preview](http://localhost:3000/design-system#date-picker) combines
 DayPicker with Animate UI: a rounded glass panel, bold Helvetica month headings,

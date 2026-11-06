@@ -524,8 +524,7 @@
   background: var(--ds-surface);
   box-shadow: 0 6px 16px -12px #39234f38;
 }
-.journal .entry::after,
-.atelier .entry::after {
+.journal .entry::after {
   position: absolute;
   right: 0;
   bottom: -5px;
@@ -742,8 +741,7 @@
   .breakdown {
     border: 1px solid CanvasText;
   }
-  .journal .entry::after,
-  .atelier .entry::after {
+  .journal .entry::after {
     display: none;
   }
 }
@@ -921,16 +919,28 @@
   font-weight: 600;
   letter-spacing: 0.09em;
 }
-.receiptItem {
-  min-width: 0;
-}
-.receiptItem + .receiptItem {
-  margin-top: 18px;
-}
 .atelier .entry {
+  isolation: isolate;
   margin-top: 18px;
-  border-radius: 24px 24px 5px 5px;
-  box-shadow: 0 7px 18px -13px #39234f42;
+  border: 0;
+  border-radius: 24px 24px 0 0;
+  background: transparent;
+  box-shadow: none;
+  filter: drop-shadow(0 4px 6px #39234f12);
+}
+.atelier .entry::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--ds-surface);
+  /* One paper silhouette; fixed-size tears keep their shape at any width. */
+  mask:
+    linear-gradient(#000 0 0) top / 100% calc(100% - 12px) no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='4' viewBox='0 0 36 4' preserveAspectRatio='none'%3E%3Cpath d='M0 0H36V2.4L33.4 3.2Q33 3.4 32.6 3.1L30 1.6L27.5 3.2Q27 3.5 26.5 3.3L24 2.6L21.5 3.6Q21 3.8 20.5 3.4L18 1.8L15.5 3Q15 3.3 14.5 3L12 2.2L9.5 3.4Q9 3.7 8.5 3.3L6 2L3.4 3Q3 3.2 2.6 3L0 2.4Z'/%3E%3C/svg%3E")
+      left bottom / 90px 12px repeat-x;
+  content: "";
+  pointer-events: none;
 }
 .atelier .entry:first-child {
   margin-top: 0;
@@ -1373,6 +1383,13 @@
   }
 }
 @media (forced-colors: active) {
+  .atelier .entry {
+    filter: none;
+  }
+  .atelier .entry::before {
+    background: Canvas;
+    mask: none;
+  }
   .amethyst .premiumSummary {
     background: Canvas;
     color: CanvasText;

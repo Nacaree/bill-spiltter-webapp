@@ -13,17 +13,317 @@ Latest approved people UX: one drawer, button-to-field morph with a compact purp
 studio's smooth list-entry reveal. Preserve this direction when
 integrating real bill actions; keep the existing main-app create-bill form.
 
+Design-system cleanup (Nov 6): removed Fine perforation, Ticket stub, Layered
+paper and Corner fold, including Original receipt/Preview controls, the Receipt
+cards jump link, retired components/styles and receipt-design switching state.
+Atelier uses the approved borderless torn-paper cards directly. Drawer, category,
+transport and search previews remain. The deleted comparison test is retired;
+layout coverage now expects 21 specimen headings and checks that the retired galleries
+and its navigation/control remnants are absent.
+Cleanup verification: six Chromium/WebKit/iPhone cases pass for populated/empty
+layout and axe at 320/393/1280px, retained expense search/filter/details and
+focus restoration. The drawer launcher's accessible name now includes its
+visible label as a contiguous phrase. Tests wait for hydration; the local dev
+server was restarted after it stopped during the first check. Lint, full
+formatting, diff checks and the production webpack build pass.
+
+Search cleanup also removes the four original search directions (Quiet line,
+Liquid glass, Paper frame, Integrated toolbar) and the Focus beam/Soft spotlight/
+Gradient rim gallery. Their arrays, controls, decorative component/CSS, original
+halo/icon pulse, unused timing tokens and four comparison tests are removed.
+The approved borderless/morph/press/circle-then-handle/Soft pop bar stays, along
+with mobile, surface and Clear galleries. The expense-search heading now names
+the remaining mobile treatments.
+Full-page layout/axe checks pass in Chromium, WebKit and iPhone at 320/393/1280px,
+with 21 retained headings and no retired option controls. The magnifier check
+now uses Playwright's clock, stepping 16ms frames and yielding between steps so
+React renders each phase. This avoids missing the 120ms handle on a low-frame-rate
+iPhone emulator; application timing stays 280ms circle + 120ms handle.
+All three frame-stepped magnifier cases pass, including input/padding/icon
+replays, Clear and keyboard entry, reduced motion and glass release. Combined
+with the three layout/axe cases, six affected browser cases pass. Lint, full
+formatting, diff checks and the production webpack build pass.
+
+Atelier's original receipt cards now omit the outer border. One masked paper
+surface forms the rounded top and a 12px-deep torn bottom with a fixed 90px
+irregular repeat, enlarged at the user's request. The old separate zigzag strip
+is removed for Atelier; a parent drop shadow follows the continuous silhouette.
+Content and focus outlines stay
+outside the mask; forced colors use an unmasked Canvas surface with no shadow.
+The dashed footer divider remains. Journal and the receipt comparison variants
+retain their existing shapes.
+Receipt follow-up verified at 320/393/1280px, with phone screenshots reviewed;
+expense filtering, details and focus restoration pass in Chromium, WebKit and
+iPhone emulation. Formatting and diff checks pass.
+
+Expense category icons use `ExpenseCategoryIcon` in the expense concepts.
+The receipt-card comparison variants have been retired. It keeps the native Animate
+UI runtime and replays once on view entry, pointer
+hover, keyboard focus/activation and primary pointer press. Double-rAF resets
+keep the pressed SVG mounted; pointer release does not cut off the animation.
+Offscreen, hidden-page, open-dialog, forced-color and reduced-motion states
+stop playback; no idle loop or layout motion. Amethyst payer initials stay.
+Icon follow-up: six Chromium/WebKit/iPhone browser cases pass, checking native
+path/opacity changes, view entry, hover/touch/focus replay, offscreen stops,
+reduced motion, forced colors, expense filtering, details and focus restoration.
+Lint, formatting, diff checks and the production webpack build pass.
+
+All 15 expense categories are now available in the design-system chooser at
+`#expense-categories`, with animated icon tiles and Preview category in Atelier.
+The chooser changes the first sample expense's category; amounts/counts stay.
+`expense-categories.js` maps IDs/labels plus legacy Food & drinks / Transport
+aliases; unknown categories use Tag. Samples now distinguish meals, coffee and
+taxis. Meals/coffee/groceries/drinks retain the food summary grouping.
+Cross/Gift use official Animate UI registry presets. Utensils, ShoppingBasket,
+Car, Fuel, Wine, BedDouble, Ticket, Plane and Plug use official Lucide SVGs with
+local 700ms Motion presets through the same Animate UI runtime; license and
+source details are recorded in icons/README.md. No new package or backend
+category schema changes; Screen 2's real category form remains separate.
+Expanded-category validation: nine Chromium/WebKit/iPhone cases pass for all
+15 actual SVG animations, card replay, Atelier category application, unchanged
+totals, details/focus and 320/393/1280px controls; axe passes on the chooser.
+Chromium rerun also verifies no console errors after giving the new chooser a
+distinct reset key. Phone grid screenshot reviewed. Lint, full formatting,
+diff checks and production webpack build pass.
+
+## Expense details drawer — Nov 6
+
+Transport now has three animated vehicle variants, still under the same
+Transport & taxis category. `getTransportIconName` performs local token-based
+matching of explicit tuk-tuk/rickshaw and motorbike/moto/scooter terms (including
+common space/hyphen variants and motobike). Unclear names keep Car; brands alone
+do not imply a subtype, and explicit non-transport categories are never changed.
+`getExpenseCategory(category, name)` supplies the matching Icon without changing
+the category ID/label. Expense rows and details pass the name.
+The edit drawer shows a live name match; Save updates the row/header icon.
+`#expense-transport-icons` provides all three animated examples plus a name field.
+TukTuk/Motorbike are original 24px/2px vector drawings using the existing local
+Motion/Animate UI factory. No provider/model request, new dependency or schema.
+Thirty pure detection cases pass for spellings, boundaries, fallback and priority.
+Name-aware transport validation: six browser cases pass across runs for native
+replay and name-aware previews/cards/edit/save in Chromium, WebKit and iPhone.
+Both new vehicle SVGs visibly animate; reduced motion stops them. Name edits
+update the card and drawer while totals stay, and Groceries overrides a tuk-tuk
+name. The demo fits 320/393/1280px, passes axe after using its visible button
+content as its accessible name, and its 393px screenshot was reviewed. Lint,
+full formatting, diff checks and the production webpack build pass.
+
+Atelier expense details now use `ExpenseDetailDrawer`, launched from cards or
+`#expense-drawer`'s Preview expense drawer in Atelier button. One bottom-aligned
+DialogPanel switches between details, edit, sample receipt and removal
+confirmation. The header/footer stay pinned; body scrolls, including visual
+viewport/short-height fallback. DialogPanel's optional `layoutKey` remeasures
+footer/header when the view changes. Other concept details remain unchanged.
+Edit supports description, USD amount, payer, date, all 15 categories, equal
+split participants and notes. Existing reviewExpenseDraft/money helpers validate
+and calculate shares; save updates the sample row, total and Nary's share.
+Cancel discards changes. Remove names the expense/amount and focuses Keep expense;
+confirmation updates local rows/totals. Focus returns to the card, or the Add
+button when the original row was removed/filtered out. Search/filter stay.
+Receipt content is an illustrative sample, not a hosted receipt image.
+Edited dates carry an ISO value/year; Atelier's month label follows the dates.
+AnimatedMoney now sets an explicit current-value role/aria-label, avoiding stale
+SSR/internal rolling-digit text in assistive output. No backend writes, schema
+changes or changes to Screen 2's existing expense/create form.
+Drawer validation: nine Chromium/WebKit/iPhone cases pass for edit/cancel/save,
+invalid fields, all 15 category choices, split/payer updates, receipt/back,
+same-panel identity, preserved search/filter, Escape/reopen, removal confirmation,
+updated accessible totals and focus fallback. Layout checks cover 320px phones,
+393×500 short viewports and 1280px desktop. Details/edit/removal pass axe; the
+393px screenshots were reviewed and the console is clean. A fresh session key
+resets the view on reopening without changing the closing panel's contents.
+The launcher repopulates its sample when all local expenses were removed.
+Final six focused drawer cases also pass after preventing edit-focus scroll and
+guarding the launcher until hydration; tests wait for actual controls rather
+than the full page load event. Lint, formatting, diff checks and the final
+production webpack build pass.
+
+## Clear button comparisons — Nov 6
+
+`/design-system#expense-search-clear` adds Soft twist, Stroke erase and Soft pop
+above the earlier search galleries. All use the approved borderless / morph /
+press / Animate UI Search combination and begin with `coffee`, so Clear is
+ready to try. Refill example restores that query; search/filter data stays local
+to each specimen. Preview in Atelier carries a new independent `clearMotion`
+choice and fills `coffee` so the selected Clear is ready to try there. Older
+previews reset it to `none`. The user selected **Soft pop**, now Atelier's
+default Clear (`searchClearMotion="pop"`) with the approved borderless surface,
+morph/press and the selected magnifier animation. Soft pop starts selected in the
+gallery. Other effects remain comparisons. No Screen 2 or hosted changes.
+Soft-pop default validation: nine affected Chromium/WebKit/iPhone-emulation
+checks pass, including initial selection, clear exits/retyping, magnifier
+trace replay and surface/Atelier previews. Lint, full formatting and diff checks pass.
+
+`ExpenseSearchClear` keeps the departing control mounted through a 220ms exit,
+clears the query immediately and restores input focus. Departing controls are
+disabled, removed from keyboard/accessibility navigation and cannot clear new
+text. Retyping during exit restores the same control safely. Soft twist uses
+the existing official Animate UI X preset at 2.5x speed plus shrink/fade; Stroke
+erase retracts its native strokes toward the center over 180ms; Soft pop uses a
+spring entrance, touch compression and fade/shrink exit. The 44px target and
+keyboard focus outline remain. Slot width collapses with the animation to make
+room for the input; reduced motion changes immediately. Timings live in
+`searchClearTiming`. No new dependency or migration.
+Validation: 12 distinct affected browser cases pass across the main run and
+focused reruns on Chromium, WebKit and iPhone emulation. New checks cover the
+three previews, ready-to-clear Atelier selection, immediate query clearing,
+focus, 44px targets / 320px fit, reduced motion, keyboard clearing, disabled /
+hidden exit controls, actual exit progress, rapid retyping and axe on populated
+specimens. Short exits are recorded with an in-browser observer to avoid
+missing their 220ms lifetime. Empty phone preview screenshots reviewed. One
+original-glass iPhone gesture timeout passed in isolation. Lint, formatting
+and diff checks pass. No hosted/provider tests were run.
+
+## Search surface comparisons — Nov 6
+
+Latest motion trial: circle first, then handle replaces the earlier 600ms
+continuous trace on the approved Borderless / morph / press search. The same
+Animate UI/Lucide artwork now uses an 8px circle starting at the lower-right
+junction (280ms), followed by an outward handle draw to (21,21) (120ms).
+The handle stays hidden during the circle phase. Both strokes show fully at
+rest, on cancellation and with reduced motion. Timings are
+`searchTraceTiming.circle` / `.handle` in seconds. The original vendor
+component and native 800ms preset remain unchanged for other comparisons.
+This is a documented local Motion adaptation of the same artwork. Existing
+press replay, keyboard, Clear, visibility and reduced-motion behavior stays.
+Both stages derive from one MotionValue clock, preventing a one-frame early
+handle flash seen in the initial iPhone check. Validation: nine distinct affected
+browser cases pass across the main run and focused reruns on Chromium, WebKit
+and iPhone emulation. In-browser frame recording confirms partial circle with
+hidden handle, completed circle before handle progress, replay, full resting
+strokes, quiet Clear and reduced motion. Clear/mobile regressions pass.
+Lint, full formatting and diff checks pass.
+
+`/design-system#expense-search-surfaces` compares Quiet glass, Borderless glass
+and Fine underline, all with the existing Search morph + Glass press. New
+`surface` prop is independent of `design` / `effect`; Preview in Atelier carries
+all three and switching back to an older option restores `surface="original"`.
+The user selected **Borderless glass + Search morph + Glass press**. Atelier now
+opens with `design="tint"`, `surface="borderless"`, `effect="morph-press"`;
+the Borderless glass gallery option starts selected. Other treatments remain
+available for comparison. This selection applies to the studio's Atelier
+Expenses preview; Screen 2 / real bill action integration remains pending.
+Default-selection validation: nine affected Chromium/WebKit/iPhone-emulation
+checks pass, including initial selection, original comparison access, mobile
+reflow and axe. Lint, full formatting and diff checks pass.
+
+Latest icon selection: replaced the custom magnifier with the official Animate
+UI Search component fetched from `https://animate-ui.com/r/icons-lucide-search.json`
+on Nov 6. Its Lucide artwork and library variants are preserved; TypeScript-only
+adaptation and the existing MIT + Commons Clause license are documented in the
+icons README. The shared `ExpenseSearchIcon` now uses this component, including
+other expense concepts. The approved Borderless glass + morph/press draws it
+on each input/icon/padding press, repeated presses while focused and keyboard
+entry, using Animate UI's built-in 800ms `path` preset. The old custom 380ms /
+70ms-stagger drawing was removed. The standalone Magnifier draw comparison also
+uses the official preset. Other surfaces keep their existing interaction choices.
+`ExpenseSearchMobileEffect` signals the library controller via stable callbacks;
+replays reset it across two frames without replacing a pressed SVG. Glass
+release and icon playback are independent.
+Clear retains focus without replay. Blur, scroll cancellation, hidden/offscreen,
+dialogs, forced colors and reduced motion cancel drawing, restoring full ink.
+Tapping field padding focuses the input immediately.
+Clear's synchronous focus restoration is marked so focus-based motion does not
+replay when WebKit temporarily blurs the input. Latest icon-replacement validation:
+12 affected browser cases pass in one run on Chromium, WebKit and iPhone emulation.
+The gesture checks sample the library's actual partial strokes, official geometry,
+repeated input/icon/padding taps, keyboard entry, independent glass release, quiet
+Clear and reduced-motion cleanup. Resting/mid-draw phone screenshots reviewed.
+Lint, full formatting and diff checks pass.
+
+Quiet glass has one neutral 1px edge that turns purple on focus, with no focus
+halo/shadow. Borderless glass has transparent borders and a faint bottom shadow;
+touch focus deepens the fill. Keyboard focus adds one inset stroke.
+Follow-up adds a soft brand-purple underglow using downward shadows with negative spread
+(24% while the input is focused for typing, softened from 42%). The neutral shadow
+stays at its idle strength while focused. Idle keeps only its neutral shadow;
+the purple glow fades in/out through the existing 200ms focus transition.
+Typing-only follow-up verified idle, input focus, Clear, Cancel and blur in
+Chromium, WebKit and iPhone emulation; Chromium forced colors suppress the glow.
+The approved borderless press tint now covers the entire rounded field: its
+border width is zero, the moving tint overscans its clip by 2px, and its inset
+shadow omits the white highlight. The 3% focus tint and 24% typing-only underglow
+stay. Other search surface comparisons keep their existing glass press material.
+Full-field follow-up: all three surface browser cases pass (Chromium, WebKit,
+iPhone); held-press bounds cover every clipped edge, release fades out, and the
+393px pressed screenshot was reviewed. Formatting and diff checks pass.
+The top and side edges stay quiet, with no surrounding halo or border. Forced
+colors remove the shadow. The 3% focused surface tint stays.
+Underglow verification: three surface cases pass across Chromium, WebKit and
+iPhone emulation across runs, including 320/393/1280px fit and axe. The WebKit
+interaction timeout passed after waiting for the input to become editable;
+that readiness guard stays in the existing test. Focused phone screenshot
+reviewed; formatting and diff checks pass.
+Pointer/Tab origin is tracked on the control so native text-input focus-visible heuristics
+do not add a stroke to touch interactions. Fine underline uses a transparent,
+square-edged field with a single 1px bottom line that turns purple on focus.
+It omits the glass material but retains the same press layer and morph layout.
+Forced colors keep a system focus outline. Shared surface overrides remove the
+outer halo; older comparisons are retained. No dependencies, hosted writes,
+migrations or deployment.
+Validation: 18 affected browser cases pass across Chromium, WebKit and iPhone
+emulation, covering all three surfaces at 320/393/1280px, single-edge styling,
+pointer versus keyboard focus, forced colors (Chromium), press/morph behavior,
+Clear/Cancel/Escape, Atelier previews and axe. Phone-sized screenshots reviewed.
+Lint, full formatting and diff checks pass.
+
+## Mobile search comparisons — Nov 6
+
+Follow-up adds a sixth **Search morph + Glass press** specimen. Its
+`morph-press` option composes the existing morph layout/Cancel behavior with
+the unchanged press animation via `mobileEffect="press"`; no timing or separate
+animation implementation was added. Clear keeps the input focused and mode
+open; Cancel/Escape clears search and focuses the surrounding group. The
+combined option is available through Preview in Atelier alongside both original
+directions. Liquid glass remains the default while comparisons continue.
+Combined validation: 15 affected browser checks pass across Chromium, WebKit and
+iPhone emulation, including simultaneous press/release and morph, stable text,
+Cancel/Escape/Clear, Atelier preview, reduced motion, 320/393/1280px fit and axe.
+Phone preview screenshot reviewed; lint, formatting and diff checks pass.
+
+`/design-system#expense-search-mobile` adds five touch-first specimens above the
+earlier light effects and original search designs: Tap ripple (480ms lavender
+wave from the touch position), Glass press (100ms inset depression / 280ms soft
+release with steady text), Center-out underline (240ms focus line), Magnifier
+draw (380ms circle/handle strokes, 70ms handle delay), and Search morph (240ms
+field resize to reveal a 64px Cancel target). Each has independent search,
+filters, clear, inspiration links and Preview in Atelier. Liquid glass remains
+the default; no option is approved for Screen 2 integration yet.
+
+Search morph opens on input focus; Cancel/Escape clears the query, restores
+width and focuses the surrounding group so the input/phone keyboard can close.
+Clear retains input focus and the open mode. Collapsed Cancel is hidden/inert.
+Search selection remounts only the search control, preserving Atelier expenses
+and query/filter state. `ExpenseSearchMobileEffect` owns gesture animations and
+cleanup; first-focus gestures wait for visibility observation when necessary.
+Scroll pointer cancellation, offscreen/hidden/dialog state, reduced motion and
+forced colors cancel decorative animations. Static native focus styling stays.
+The underline retracts on blur; Clear does not redraw the magnifier. Timing is
+in `mobileSearchTiming`. No new dependencies, migration, hosted operation or
+deployment. Real phone keyboard testing remains user-owned.
+Validation: all 30 distinct expense browser cases passed across Chromium,
+WebKit and iPhone emulation across the main run and affected reruns. The six
+new mobile cases cover independent search/filters, Atelier selection, Cancel /
+Escape / Clear focus, 320/393/1280px fit, gesture motion, stable text, ripple
+geometry, reduced motion and axe. One WebKit preview selection failed during
+the concurrent check/build window and passed in isolation; no cause is proven.
+Phone-sized screenshots reviewed. Lint, full formatting, diff checks and the
+webpack build pass. No hosted/provider tests were run.
+
+## Search light effect comparisons — Nov 5
+
+The Focus beam, Soft spotlight and Gradient rim gallery was retired during
+Nov 6 cleanup, alongside Quiet line, Liquid glass, Paper frame and Integrated
+toolbar. `ExpenseSearchEffect`, its CSS, the old input halo/icon pulse and their
+unused timing tokens were removed. Their comparison-only tests were retired.
+Mobile effects, surfaces, Clear comparisons and the approved Atelier search
+remain; the following Nov 5 notes describe historical explorations.
+
 ## Expense search alternatives — Nov 5
 
-`/design-system#expense-cards` now compares four additional receipt treatments:
-Fine perforation, Ticket stub, Layered paper and Corner fold. Their shared
-`ExpenseReceiptCard` renders the actual gallery specimens and Atelier rows.
-Cards open sample details with return focus. Preview in Atelier clears search
-and filters, shows populated mode if needed, and focuses the first receipt.
-Existing sample additions are retained when switching designs. Original receipt
-restores the earlier torn cards and remains the initial default. Choices are
-session-local; no new receipt direction has been approved for integration.
-Small cards move the amount below the title to keep text readable.
+The four receipt-card alternatives formerly at `#expense-cards` were retired
+during the Nov 6 cleanup. Their components, styles, preview switching and
+comparison-specific test were removed; Atelier keeps its approved torn shape.
 
 Atelier's hierarchy uses the bill name above a 32px title. A full-width purple
 **+ Add expense** action sits below the total/share summary, followed by the

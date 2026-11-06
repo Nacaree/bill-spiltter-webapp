@@ -4,6 +4,33 @@
   gap: 32px 24px;
   margin-bottom: 48px;
 }
+.effectsHeading {
+  margin-bottom: 24px;
+  scroll-margin-top: 120px;
+}
+.effectsHeading h3 {
+  margin: 0 0 8px;
+  color: var(--ds-text);
+  font-size: 21px;
+  letter-spacing: -0.5px;
+}
+.effectsHeading p {
+  max-width: 600px;
+  color: var(--ds-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.optionFooter a {
+  color: var(--ds-brand-ink);
+  font-size: 11px;
+  line-height: 1.5;
+  text-underline-offset: 3px;
+}
+@media (min-width: 1100px) {
+  .effectsGallery {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
 .option {
   display: flex;
   flex-direction: column;

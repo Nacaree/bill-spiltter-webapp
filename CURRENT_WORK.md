@@ -5,9 +5,9 @@
 
 ## Task
 
-Shared button soft press/release/hover now spans design system + Screen2; Atelier shimmer stays.
-Keep create-bill form; independent populated/empty previews; Receipt vignette.
-Chosen search: shared Liquid glass, purple focus border/halo and 8% icon pulse; Screen 2 pending.
+Approved Clear: Soft pop. Retired receipt variants and old search layouts/light effects.
+Keep create-bill form; independent previews; Receipt vignette. Atelier: drawer + torn cards + 15 categories + named rides.
+Approved Borderless + typing-only purple underglow + morph/press + circle-then-handle; Screen 2 pending.
 Screen2 chooser + empty receipt share 7px/2.4s float; scan stays chooser-only.
 User owns real-phone keyboard/device/screen-reader/full keyboard/Firefox checks.
 Stage 2 skipped; Stage 3 migration user-reported applied; Stage 5 readiness done.
@@ -43,7 +43,7 @@ Stage 2 skipped; Stage 3 migration user-reported applied; Stage 5 readiness done
 - User records manual/device outcomes before Stage 7 signoff; Phase 4 remains open.
 - Collect safe provider HTTP status/classification on recurrence; no proven fix.
 - Local UI only; no hosted writes/migrations. Deployment/cleanup not refreshed.
-- Nov 3: 387 offline/117 affected browser checks pass; eight hosted checks skipped.
-  Nov 5: 18 hover/drawer checks pass; shared rollout validated 62 browser/10 unit cases.
+- Nov 6: 417 offline tests pass; eight hosted tests skipped.
+  Nov 6: search cleanup passes six layout/axe/motion browser checks; named rides 30 unit + six browser.
 - Preview shares Production; no isolated backend. QR-orphan retry limit remains.
   Privacy/Help content stays off to-do list.
