@@ -18,6 +18,7 @@ import { ExpenseCategoryIcon } from "./expense-category-icon";
 import { ExpenseCategoryShowcase } from "./expense-category-showcase";
 import { ExpenseTransportShowcase } from "./expense-transport-showcase";
 import { ExpenseDetailDrawer } from "./expense-detail-drawer";
+import { ExpenseDrawerShowcase } from "./expense-drawer-showcase";
 import { getExpenseCategory } from "./expense-categories";
 import { ReceiptText } from "./icons/receipt-text";
 import {
@@ -750,12 +751,13 @@ export function ExpensesShowcase() {
       </div>
       <div id="expense-drawer" className={styles.galleryHeading}>
         <span className={styles.premiumLabel}>A CLOSER LOOK</span>
-        <p>One expense, all in one place</p>
+        <p>Expense details, with a little more character</p>
         <span>
-          View the details, make an edit, or remove an expense. Your place in
-          the bill stays.
+          Three premium drawer directions. The same details, split and actions.
+          Open each to try it; changes stay in its own sample.
         </span>
       </div>
+      <ExpenseDrawerShowcase key={`drawers-${reset}`} ready={ready} />
       <div className={styles.toolbar}>
         <div>
           <p>Details → Edit → Save. Or remove, with a moment to confirm.</p>

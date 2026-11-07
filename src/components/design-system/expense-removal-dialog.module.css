@@ -1,0 +1,121 @@
+.overlay {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  background: #21132f33;
+  animation: fadeIn var(--ds-motion-standard) var(--ds-motion-ease);
+}
+.dialog {
+  position: fixed;
+  z-index: 55;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  width: min(400px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-card-radius);
+  background: var(--ds-surface);
+  box-shadow: 0 20px 70px #21132f33;
+  color: var(--ds-text);
+  font-family: var(--ds-font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  animation: enter var(--ds-motion-reveal) var(--ds-motion-ease);
+}
+.title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: var(--ds-weight-heading);
+  line-height: 1.25;
+  letter-spacing: -0.5px;
+  overflow-wrap: anywhere;
+}
+.description {
+  margin: 14px 0 0;
+  color: var(--ds-muted);
+  line-height: 1.65;
+}
+.description strong {
+  color: var(--ds-text);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 24px;
+}
+.actions > button {
+  min-width: 0;
+  padding-inline: 10px;
+}
+.dialog button:focus-visible {
+  outline: 2px solid var(--ds-brand-ink);
+  outline-offset: 3px;
+}
+.overlay[data-state="closed"] {
+  animation: fadeOut var(--ds-motion-exit) var(--ds-motion-ease);
+}
+.dialog[data-state="closed"] {
+  animation: exit var(--ds-motion-exit) var(--ds-motion-ease);
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes exit {
+  to {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+}
+@media (max-width: 359px) {
+  .actions {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .dialog,
+  .overlay[data-state="closed"],
+  .dialog[data-state="closed"] {
+    animation: none;
+  }
+}
+@media (forced-colors: active) {
+  .overlay {
+    background: Canvas;
+    opacity: 0.5;
+  }
+  .dialog {
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+  .dialog button:focus-visible {
+    outline-color: Highlight;
+  }
+}

@@ -927,6 +927,290 @@ test("all fifteen expense categories animate and preview in Atelier", async ({
   expect(errors).toEqual([]);
 });
 
+test("premium expense drawers retain details and isolate sample edits", async ({
+  page,
+}) => {
+  await page.goto("/design-system#expense-drawer", {
+    waitUntil: "domcontentloaded",
+  });
+  for (const [id, name] of [
+    ["paper", "Paper Atelier"],
+    ["amethyst", "Amethyst Suite"],
+    ["gallery", "Quiet Gallery"],
+  ]) {
+    const option = page.locator(`[data-drawer-option="${id}"]`);
+    const launch = option.getByRole("button", { name: `Open ${name} drawer` });
+    await expect(launch).toBeEnabled();
+    await launch.click();
+    let drawer = page.getByRole("dialog", {
+      name: "Dinner at Malis",
+      exact: true,
+    });
+    for (const text of [
+      "Weekend dinner",
+      "Total expense",
+      "$72.00",
+      "Your share",
+      "$24.00",
+      "Paid by",
+      "Nary (you)",
+      "29 Oct 2026",
+      "Meals & restaurants",
+      "Split between 3 people",
+      "Sokha",
+      "Mali",
+      id === "paper" ? "View original receipt" : "Receipt attached",
+    ]) {
+      await expect(drawer).toContainText(text);
+    }
+    const receiptTrigger = drawer.getByRole("button", {
+      name: /Receipt attached|View original receipt/,
+    });
+    await receiptTrigger.scrollIntoViewIfNeeded();
+    const sourceId = await drawer.getAttribute("id");
+    const sourceBody = drawer.locator("[data-expense-paper]").locator("..");
+    const sourceScroll = await sourceBody.evaluate((el) => el.scrollTop);
+    await receiptTrigger.click();
+    const viewer = page.getByRole("dialog", {
+      name: "Receipt preview",
+      exact: true,
+    });
+    await expect(viewer).toContainText("Sample receipt");
+    await expect(viewer).not.toHaveAttribute("id", sourceId);
+    await expect(page.locator(`[id="${sourceId}"]`)).toBeVisible();
+    await expect(
+      viewer.getByRole("button", { name: "Close receipt preview" }),
+    ).toBeFocused();
+    await viewer.getByRole("button", { name: "Zoom in", exact: true }).click();
+    await viewer.getByRole("button", { name: "Zoom in", exact: true }).click();
+    await expect(
+      viewer.getByRole("status", { name: "Receipt zoom" }),
+    ).toHaveText("150%");
+    expect(
+      await viewer
+        .locator("[data-receipt-paper]")
+        .evaluate((el) => el.getBoundingClientRect().width / el.offsetWidth),
+    ).toBeCloseTo(1.5, 2);
+    await viewer.getByRole("button", { name: "Fit receipt" }).click();
+    await expect(
+      viewer.getByRole("status", { name: "Receipt zoom" }),
+    ).toHaveText("100%");
+    await page.keyboard.press("Escape");
+    await expect(viewer).toBeHidden();
+    await expect(receiptTrigger).toBeFocused();
+    expect(await sourceBody.evaluate((el) => el.scrollTop)).toBeCloseTo(
+      sourceScroll,
+      0,
+    );
+    await receiptTrigger.click();
+    await viewer.getByRole("button", { name: "Back to expense" }).click();
+    await expect(receiptTrigger).toBeFocused();
+    await drawer
+      .getByRole("button", { name: "Edit expense", exact: true })
+      .click();
+    const edit = page.getByRole("dialog", {
+      name: "Edit expense",
+      exact: true,
+    });
+    await edit
+      .getByLabel("Description", { exact: true })
+      .fill(`${name} dinner`);
+    await edit.getByLabel("Amount · USD").fill("90");
+    await edit
+      .getByLabel("Notes", { exact: false })
+      .fill("A lovely evening together.");
+    await edit.getByRole("button", { name: "Save changes" }).click();
+    drawer = page.getByRole("dialog", { name: `${name} dinner`, exact: true });
+    await expect(drawer).toContainText("$90.00");
+    await expect(drawer).toContainText("$30.00");
+    await expect(drawer).toContainText("A lovely evening together.");
+    await drawer
+      .getByRole("button", {
+        name: id === "paper" ? "Close expense details" : "Done",
+        exact: true,
+      })
+      .click();
+    await expect(launch).toBeFocused();
+    await expect(
+      page.locator('[data-expenses-preview="atelier"]'),
+    ).toContainText("$102.00");
+    await option.getByRole("button", { name: "Manual", exact: true }).click();
+    await launch.click();
+    drawer = page.getByRole("dialog", { name: "Tuk-tuk home", exact: true });
+    await expect(drawer).toContainText("Added manually · no receipt attached");
+    await expect(drawer).toContainText("$12.00");
+    await expect(drawer).toContainText("$4.00");
+    const removeAction = drawer.getByRole("button", {
+      name: "Remove expense",
+      exact: true,
+    });
+    const detailsId = await drawer.getAttribute("id");
+    await removeAction.focus();
+    await page.keyboard.press("Enter");
+    const popup = page.getByRole("alertdialog");
+    await expect(popup).toHaveAccessibleName("Remove “Tuk-tuk home”?");
+    await expect(page.locator(`[id="${detailsId}"]`)).toBeVisible();
+    const keep = popup.getByRole("button", { name: "Keep expense" });
+    await expect(keep).toBeFocused();
+    await page.keyboard.press("Shift+Tab");
+    await expect(
+      popup.getByRole("button", { name: "Remove expense" }),
+    ).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(keep).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(popup).toBeHidden();
+    await expect(removeAction).toBeFocused();
+    await expect(drawer).toContainText("$12.00");
+    await removeAction.click();
+    await expect(keep).toBeFocused();
+    await keep.click();
+    await expect(removeAction).toBeFocused();
+    await removeAction.click();
+    const confirmation = page.getByRole("alertdialog");
+    await expect(
+      confirmation.getByRole("button", { name: "Keep expense" }),
+    ).toBeFocused();
+    await confirmation
+      .getByRole("button", { name: "Remove expense", exact: true })
+      .click();
+    await option.getByRole("button", { name: "Restore sample" }).click();
+    await expect(launch).toBeVisible();
+  }
+});
+
+test("premium expense drawers fit phone and desktop and expose accessible controls", async ({
+  page,
+}, testInfo) => {
+  await page.goto("/design-system#expense-drawer", {
+    waitUntil: "domcontentloaded",
+  });
+  for (const [width, height] of [
+    [1280, 900],
+    [393, 500],
+    [320, 700],
+  ]) {
+    await page.setViewportSize({ width, height });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    for (const [id, name] of [
+      ["paper", "Paper Atelier"],
+      ["amethyst", "Amethyst Suite"],
+      ["gallery", "Quiet Gallery"],
+    ]) {
+      const launch = page
+        .locator(`[data-drawer-option="${id}"]`)
+        .getByRole("button", { name: `Open ${name} drawer` });
+      await expect(launch).toBeEnabled();
+      await launch.click();
+      const drawer = page.getByRole("dialog", {
+        name: "Dinner at Malis",
+        exact: true,
+      });
+      const bounds = await drawer.boundingBox();
+      expect(bounds.x).toBeGreaterThanOrEqual(0);
+      expect(bounds.y).toBeGreaterThanOrEqual(0);
+      expect(bounds.x + bounds.width).toBeLessThanOrEqual(width + 1);
+      expect(bounds.y + bounds.height).toBeLessThanOrEqual(height + 1);
+      expect(
+        await drawer.evaluate((el) => el.scrollWidth <= el.clientWidth + 1),
+      ).toBe(true);
+      const total = drawer.locator("[data-expense-total]");
+      await expect(total.getByText("$72.00", { exact: true })).toBeInViewport({
+        ratio: 1,
+      });
+      // WebKit rounds fully visible fractional text bounds just below 1.
+      await expect(
+        total.getByText("Your share", { exact: false }),
+      ).toBeInViewport({ ratio: 0.999 });
+      await expect(
+        drawer.getByRole("button", { name: "Edit expense", exact: true }),
+      ).toBeInViewport();
+      if (width === 320) {
+        expect(
+          (await new AxeBuilder({ page }).include('[role="dialog"]').analyze())
+            .violations,
+        ).toEqual([]);
+        await drawer.screenshot({
+          path: `test-results/premium-drawer-${id}-${testInfo.project.name}.png`,
+        });
+      }
+      if (id === "paper") {
+        await expect(
+          drawer.getByRole("button", { name: "Remove expense", exact: true }),
+        ).toBeInViewport();
+        const trigger = drawer.getByRole("button", {
+          name: "View original receipt",
+          exact: true,
+        });
+        await trigger.click();
+        const viewer = page.getByRole("dialog", {
+          name: "Receipt preview",
+          exact: true,
+        });
+        const viewerBounds = await viewer.boundingBox();
+        if (width < 640) {
+          expect(viewerBounds.x).toBe(0);
+          expect(viewerBounds.y).toBe(0);
+          expect(viewerBounds.width).toBe(width);
+          expect(viewerBounds.height).toBe(height);
+        } else {
+          expect(viewerBounds.width).toBeLessThanOrEqual(960);
+          expect(
+            Math.abs(viewerBounds.x + viewerBounds.width / 2 - width / 2),
+          ).toBeLessThan(2);
+          expect(
+            Math.abs(viewerBounds.y + viewerBounds.height / 2 - height / 2),
+          ).toBeLessThan(2);
+        }
+        await expect(
+          viewer.getByRole("button", { name: "Back to expense" }),
+        ).toBeInViewport();
+        await expect(
+          viewer.getByRole("button", { name: "Close receipt preview" }),
+        ).toBeInViewport();
+        await viewer
+          .getByRole("button", { name: "Zoom in", exact: true })
+          .click();
+        await viewer
+          .getByRole("button", { name: "Zoom in", exact: true })
+          .click();
+        const document = viewer.getByRole("region", {
+          name: "Receipt document",
+        });
+        await document.focus();
+        await page.keyboard.press("ArrowDown");
+        await expect
+          .poll(() => document.evaluate((el) => el.scrollTop))
+          .toBeGreaterThan(0);
+        await viewer.getByRole("button", { name: "Fit receipt" }).click();
+        await expect
+          .poll(() => document.evaluate((el) => el.scrollTop))
+          .toBe(0);
+        expect(
+          (
+            await new AxeBuilder({ page })
+              .include("[data-receipt-viewer]")
+              .analyze()
+          ).violations,
+        ).toEqual([]);
+        await viewer.screenshot({
+          path: `test-results/receipt-viewer-${width}-${testInfo.project.name}.png`,
+        });
+        await viewer
+          .getByRole("button", { name: "Close receipt preview" })
+          .click();
+        await expect(trigger).toBeFocused();
+      }
+      await page.keyboard.press("Escape");
+      await expect(launch).toBeFocused();
+    }
+  }
+});
+
 test("Atelier drawer edits in place, preserves the list and shows the receipt", async ({
   page,
 }) => {
@@ -952,7 +1236,8 @@ test("Atelier drawer edits in place, preserves the list and shows the receipt", 
   await drawer.getByRole("button", { name: /Receipt attached/ }).click();
   const receipt = page.getByRole("dialog", { name: "Receipt preview" });
   await expect(receipt).toContainText("Sample receipt");
-  await expect(receipt).toHaveAttribute("id", panelId);
+  await expect(receipt).not.toHaveAttribute("id", panelId);
+  await expect(page.locator(`[id="${panelId}"]`)).toBeVisible();
   await receipt.getByRole("button", { name: "Back to expense" }).click();
   await drawer
     .getByRole("button", { name: "Edit expense", exact: true })
@@ -1048,12 +1333,29 @@ test("Atelier drawer confirms removal and keeps actions reachable on small scree
     await drawer
       .getByRole("button", { name: "Remove expense", exact: true })
       .click();
-    const confirm = page.getByRole("dialog", {
-      name: "Remove expense?",
-      exact: true,
-    });
+    const confirm = page.getByRole("alertdialog");
     await expect(confirm).toContainText("Dinner at Malis");
     await expect(confirm).toContainText("$72.00");
+    const confirmBounds = await confirm.boundingBox();
+    expect(confirmBounds.width).toBeLessThanOrEqual(400);
+    expect(confirmBounds.x).toBeGreaterThanOrEqual(0);
+    expect(confirmBounds.y).toBeGreaterThanOrEqual(0);
+    expect(confirmBounds.x + confirmBounds.width).toBeLessThanOrEqual(
+      width + 1,
+    );
+    expect(confirmBounds.y + confirmBounds.height).toBeLessThanOrEqual(
+      height + 1,
+    );
+    expect(
+      Math.abs(confirmBounds.y + confirmBounds.height / 2 - height / 2),
+    ).toBeLessThan(2);
+    expect(
+      (await new AxeBuilder({ page }).include('[role="alertdialog"]').analyze())
+        .violations,
+    ).toEqual([]);
+    await confirm.screenshot({
+      path: `test-results/expense-removal-${width}-${testInfo.project.name}.png`,
+    });
     await expect(
       confirm.getByRole("button", { name: "Keep expense" }),
     ).toBeFocused();
@@ -1095,10 +1397,7 @@ test("Atelier drawer confirms removal and keeps actions reachable on small scree
   await drawer
     .getByRole("button", { name: "Remove expense", exact: true })
     .click();
-  const confirm = page.getByRole("dialog", {
-    name: "Remove expense?",
-    exact: true,
-  });
+  const confirm = page.getByRole("alertdialog");
   await confirm
     .getByRole("button", { name: "Remove expense", exact: true })
     .click();
@@ -1333,7 +1632,7 @@ test("expense concepts fit desktop and narrow screens with accessible controls",
   }
   await expect(
     page.locator("#expenses-page").getByRole("heading", { level: 3 }),
-  ).toHaveCount(21);
+  ).toHaveCount(24);
   const scan = async () =>
     expect(
       (await new AxeBuilder({ page }).include("#expenses-page").analyze())

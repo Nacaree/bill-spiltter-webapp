@@ -6,6 +6,8 @@ import { SelectControl } from "@/components/ui/select";
 import { formatMoney, moneyInputValue, splitEqually } from "@/lib/money";
 import { reviewExpenseDraft } from "@/lib/expense-draft";
 import { DialogPanel } from "./form-dialog";
+import { ExpenseRemovalDialog } from "./expense-removal-dialog";
+import { ExpenseReceiptViewer } from "./expense-receipt-viewer";
 import { DesignButton, DesignCheckbox, DesignField } from "./primitives";
 import { PersonPicker } from "./person-picker";
 import { expenseCategories, getExpenseCategory } from "./expense-categories";
@@ -43,6 +45,144 @@ function draftFor(expense) {
   };
 }
 
+export function ExpenseDetailSummary({
+  expense,
+  onReceipt,
+  onRemove,
+  removeRef,
+  receiptRef,
+  compactActions = false,
+  ref,
+}) {
+  const category = getExpenseCategory(expense.category, expense.name);
+  const Icon = category.Icon;
+  const shares =
+    expense.shares ?? splitEqually(expense.amount, participants(expense));
+  const date = expense.dateISO ?? draftFor(expense).date;
+  return (
+    <div className={`${styles.body} ${styles.summary}`} ref={ref} tabIndex={-1}>
+      <div className={styles.receiptSummary} data-expense-paper>
+        <div className={styles.amountHero} data-expense-total>
+          {compactActions ? (
+            <>
+              <div className={styles.totalColumn}>
+                <p>Total expense</p>
+                <strong>{money(expense.amount)}</strong>
+              </div>
+              <div className={styles.shareColumn}>
+                <p>Your share</p>
+                <strong>{money(expense.share)}</strong>
+              </div>
+            </>
+          ) : (
+            <>
+              <span className={styles.heroIcon} aria-hidden="true">
+                <Icon
+                  size={26}
+                  animate={false}
+                  data-expense-icon={category.icon}
+                />
+              </span>
+              <p>Total expense</p>
+              <strong>{money(expense.amount)}</strong>
+              <span>
+                Your share <b>{money(expense.share)}</b>
+              </span>
+            </>
+          )}
+        </div>
+        <dl className={styles.metadata}>
+          <div>
+            <dt>Paid by</dt>
+            <dd>
+              {expense.payer}
+              {expense.payer === "Nary" ? " (you)" : ""}
+            </dd>
+          </div>
+          <div>
+            <dt>Date</dt>
+            <dd>{formatPickerDate(date)}</dd>
+          </div>
+          <div>
+            <dt>Category</dt>
+            <dd>{category.label}</dd>
+          </div>
+        </dl>
+        {compactActions && expense.receipt && (
+          <button
+            type="button"
+            ref={receiptRef}
+            className={styles.originalReceipt}
+            onClick={onReceipt}
+          >
+            View original receipt
+          </button>
+        )}
+      </div>
+      <div className={styles.shares}>
+        <h3>
+          Split between {shares.length}{" "}
+          {shares.length === 1 ? "person" : "people"}
+        </h3>
+        {shares.map((share) => (
+          <div key={share.participantId} data-person={share.participantId}>
+            <span>
+              <i aria-hidden="true">
+                {
+                  people.find((person) => person.id === share.participantId)
+                    ?.initials
+                }
+              </i>
+              {personName(share.participantId)}
+              {share.participantId === "nary" ? " (you)" : ""}
+            </span>
+            <strong>{money(share.amountMinor)}</strong>
+          </div>
+        ))}
+      </div>
+      {expense.notes && (
+        <div className={styles.notes}>
+          <h3>Notes</h3>
+          <p>{expense.notes}</p>
+        </div>
+      )}
+      {(!compactActions || !expense.receipt) && (
+        <div className={styles.detailActions}>
+          {expense.receipt ? (
+            <button
+              type="button"
+              ref={receiptRef}
+              className={styles.receipt}
+              onClick={onReceipt}
+            >
+              <ReceiptText size={28} animate={false} aria-hidden="true" />
+              <span>
+                <strong>Receipt attached</strong>
+                <span>View sample receipt</span>
+              </span>
+              <span aria-hidden="true">↗</span>
+            </button>
+          ) : (
+            <p className={styles.manual}>
+              Added manually · no receipt attached
+            </p>
+          )}
+          {!compactActions && (
+            <button
+              type="button"
+              ref={removeRef}
+              className={styles.remove}
+              onClick={onRemove}
+            >
+              Remove expense
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ExpenseDetailDrawer({
   expense,
   open,
@@ -51,29 +191,35 @@ export function ExpenseDetailDrawer({
   onRemove,
   returnFocusRef,
   fallbackFocusRef,
+  appearance = "original",
 }) {
   const id = useId();
   const [mode, setMode] = useState("details");
   const [draft, setDraft] = useState(() => draftFor(expense));
   const [errors, setErrors] = useState({});
+  const [removing, setRemoving] = useState(false);
+  const [viewingReceipt, setViewingReceipt] = useState(false);
   const initialFocus = useRef(null);
   const description = useRef(null);
   const form = useRef(null);
   const editButton = useRef(null);
   const removeButton = useRef(null);
-  const keepButton = useRef(null);
+  const receiptButton = useRef(null);
   const reducedMotion = useDesignReducedMotion();
-  const category = getExpenseCategory(expense.category, expense.name);
   const draftCategory = getExpenseCategory(draft.category, draft.description);
   const DraftIcon = draftCategory.Icon;
-  const Icon = category.Icon;
-  const shares =
-    expense.shares ?? splitEqually(expense.amount, participants(expense));
   const review = reviewExpenseDraft(draft, people);
   const date = expense.dateISO ?? draftFor(expense).date;
 
   function changeOpen(next) {
+    if (!next) {
+      setRemoving(false);
+      setViewingReceipt(false);
+    }
     onOpenChange(next);
+  }
+  function remove() {
+    setRemoving(true);
   }
   function edit() {
     setDraft(draftFor(expense));
@@ -121,14 +267,7 @@ export function ExpenseDetailDrawer({
     });
     back();
   }
-  const title =
-    mode === "edit"
-      ? "Edit expense"
-      : mode === "remove"
-        ? "Remove expense?"
-        : mode === "receipt"
-          ? "Receipt preview"
-          : expense.name;
+  const title = mode === "edit" ? "Edit expense" : expense.name;
 
   return (
     <DialogPanel
@@ -145,10 +284,27 @@ export function ExpenseDetailDrawer({
       initialFocusRef={initialFocus}
       returnFocusRef={returnFocusRef}
       fallbackFocusRef={fallbackFocusRef}
-      className={styles.drawer}
+      className={`${styles.drawer} ${styles[appearance] ?? ""}`}
       viewportAware
       layoutKey={mode}
     >
+      <ExpenseRemovalDialog
+        expense={expense}
+        open={open && removing}
+        onOpenChange={setRemoving}
+        returnFocusRef={removeButton}
+        onConfirm={() => {
+          changeOpen(false);
+          onRemove(expense);
+        }}
+      />
+      <ExpenseReceiptViewer
+        expense={expense}
+        date={date}
+        open={open && viewingReceipt}
+        onOpenChange={setViewingReceipt}
+        returnFocusRef={receiptButton}
+      />
       {mode === "edit" ? (
         <form ref={form} className={styles.form} noValidate onSubmit={submit}>
           <div className={styles.body}>
@@ -294,159 +450,38 @@ export function ExpenseDetailDrawer({
             </DesignButton>
           </div>
         </form>
-      ) : mode === "remove" ? (
-        <>
-          <div className={styles.body} ref={initialFocus} tabIndex={-1}>
-            <div className={styles.removalSummary}>
-              <span>{expense.name}</span>
-              <strong>{money(expense.amount)}</strong>
-            </div>
-            <p className={styles.explanation}>
-              This expense and its split will be removed from the bill.
-              Everyone’s balance will update.
-            </p>
-          </div>
-          <div className={styles.footer} data-panel-footer>
-            <DesignButton
-              ref={keepButton}
-              variant="secondary"
-              onClick={() => back(removeButton)}
-            >
-              Keep expense
-            </DesignButton>
-            <DesignButton
-              variant="destructive"
-              onClick={() => {
-                changeOpen(false);
-                onRemove(expense);
-              }}
-            >
-              Remove expense
-            </DesignButton>
-          </div>
-        </>
-      ) : mode === "receipt" ? (
-        <>
-          <div className={styles.body} ref={initialFocus} tabIndex={-1}>
-            <div className={styles.paper}>
-              <ReceiptText size={32} animate={false} aria-hidden="true" />
-              <p className={styles.paperLabel}>Sample receipt</p>
-              <h3>{expense.name}</h3>
-              <p>{formatPickerDate(date)}</p>
-              <div>
-                <span>Total</span>
-                <strong>{money(expense.amount)}</strong>
-              </div>
-              <p>Thank you for sharing a good time.</p>
-            </div>
-          </div>
-          <div className={styles.footer} data-panel-footer>
-            <DesignButton
-              variant="secondary"
-              onClick={() => {
-                setMode("details");
-                requestAnimationFrame(() => initialFocus.current?.focus());
-              }}
-            >
-              Back to expense
-            </DesignButton>
-          </div>
-        </>
       ) : (
         <>
-          <div className={styles.body} ref={initialFocus} tabIndex={-1}>
-            <div className={styles.amountHero}>
-              <span className={styles.heroIcon} aria-hidden="true">
-                <Icon
-                  size={26}
-                  animate={false}
-                  data-expense-icon={category.icon}
-                />
-              </span>
-              <p>Total expense</p>
-              <strong>{money(expense.amount)}</strong>
-              <span>
-                Your share <b>{money(expense.share)}</b>
-              </span>
-            </div>
-            <dl className={styles.metadata}>
-              <div>
-                <dt>Paid by</dt>
-                <dd>
-                  {expense.payer}
-                  {expense.payer === "Nary" ? " (you)" : ""}
-                </dd>
-              </div>
-              <div>
-                <dt>Date</dt>
-                <dd>{formatPickerDate(date)}</dd>
-              </div>
-              <div>
-                <dt>Category</dt>
-                <dd>{category.label}</dd>
-              </div>
-            </dl>
-            <div className={styles.shares}>
-              <h3>
-                Split between {shares.length}{" "}
-                {shares.length === 1 ? "person" : "people"}
-              </h3>
-              {shares.map((share) => (
-                <div key={share.participantId}>
-                  <span>
-                    <i aria-hidden="true">
-                      {personName(share.participantId)?.slice(0, 1)}
-                    </i>
-                    {personName(share.participantId)}
-                    {share.participantId === "nary" ? " (you)" : ""}
-                  </span>
-                  <strong>{money(share.amountMinor)}</strong>
-                </div>
-              ))}
-            </div>
-            {expense.notes && (
-              <div className={styles.notes}>
-                <h3>Notes</h3>
-                <p>{expense.notes}</p>
-              </div>
-            )}
-            {expense.receipt ? (
-              <button
-                type="button"
-                className={styles.receipt}
-                onClick={() => {
-                  setMode("receipt");
-                  requestAnimationFrame(() => initialFocus.current?.focus());
-                }}
+          <ExpenseDetailSummary
+            expense={expense}
+            ref={initialFocus}
+            removeRef={removeButton}
+            receiptRef={receiptButton}
+            compactActions={appearance === "paper"}
+            onReceipt={() => setViewingReceipt(true)}
+            onRemove={remove}
+          />
+          <div
+            className={`${styles.footer} ${appearance === "paper" ? styles.quietFooter : ""}`}
+            data-panel-footer
+          >
+            {appearance === "paper" ? (
+              <DesignButton
+                ref={removeButton}
+                variant="secondary"
+                className={styles.removeAction}
+                onClick={remove}
               >
-                <ReceiptText size={28} animate={false} aria-hidden="true" />
-                <span>
-                  <strong>Receipt attached</strong>
-                  <span>View sample receipt</span>
-                </span>
-                <span aria-hidden="true">↗</span>
-              </button>
+                Remove expense
+              </DesignButton>
             ) : (
-              <p className={styles.manual}>
-                Added manually · no receipt attached
-              </p>
+              <DesignButton
+                variant="secondary"
+                onClick={() => changeOpen(false)}
+              >
+                Done
+              </DesignButton>
             )}
-            <button
-              type="button"
-              ref={removeButton}
-              className={styles.remove}
-              onClick={() => {
-                setMode("remove");
-                requestAnimationFrame(() => keepButton.current?.focus());
-              }}
-            >
-              Remove expense
-            </button>
-          </div>
-          <div className={styles.footer} data-panel-footer>
-            <DesignButton variant="secondary" onClick={() => changeOpen(false)}>
-              Done
-            </DesignButton>
             <DesignButton ref={editButton} icon="pencil" onClick={edit}>
               Edit expense
             </DesignButton>

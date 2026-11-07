@@ -205,18 +205,40 @@ variations, and applies only to the transport category. Cards and the details
 drawer agree; editing a transport description shows the match
 before save. The preview includes example buttons and a live name field.
 
-The [expense drawer preview](http://localhost:3000/design-system#expense-drawer)
-opens the Atelier details drawer; tapping any Atelier expense opens the same
-flow. Its header and actions stay pinned while the body scrolls. View the payer,
-date, category, split and a sample receipt; **Edit expense** switches the same
-drawer to an editable form with all 15 categories, equal-split choices, notes,
-validation, Save and Cancel. **Remove expense** switches to a confirmation
-naming the expense and amount, with Keep expense as the safe focus target.
-Save/remove update only the local preview, including totals and personal share;
-the list's query/filter and return focus are preserved. Reset restores examples.
-The rolling total has an explicit current-value accessible label. This drawer
-does not change Screen 2 or the existing main-app create-expense form.
-Its full-width purple **+ Add expense** sits below
+The [expense drawer gallery](http://localhost:3000/design-system#expense-drawer)
+compares **Paper Atelier**, **Amethyst Suite** and **Quiet Gallery**, with phone
+specimens and working previews. Each retains the total, personal share, payer,
+date, category, participant amounts, optional notes, receipt access, editing and
+removal. Receipt/manual examples, edits and Reset are independent in each preview.
+The original Atelier details launcher and expense cards remain available.
+
+**Paper Atelier is the user's preferred direction.** Its cool white paper has no
+outer border or category icon, an irregular torn edge below the metadata, and
+soft top/silhouette shadows. Total expense and personal share sit together at the
+top. The smaller purple share amount has a compact mixed-case label; narrow
+containers stack the amounts, and larger values wrap naturally. One dashed rule
+separates the amounts from Paid by, Date and Category.
+
+**View original receipt** sits inside the paper, below Category and above the
+torn edge. Manual expenses omit it. Receipt viewing uses a large centered desktop
+modal and a full-screen phone viewer with 50–200% zoom, Fit and a scrollable
+document area. Close, Escape and the purple **Back to expense** button return
+focus to the receipt action and preserve the expense drawer's scroll position.
+The studio uses illustrative sample data and makes no hosted image request.
+
+Paper Atelier's footer has clearly labelled **Remove expense** and **Edit
+expense** buttons, with no Done button, ellipsis menu or top separator. Remove
+uses a quiet red outline and opens a compact confirmation modal over the still
+visible details. Keep expense receives initial focus; Keep or Escape returns to
+the details. Confirming closes both layers and updates the local list, totals and
+personal share. Edit uses the same drawer with all 15 categories, equal-split
+choices, notes, validation, Save and Cancel. The original preview's list filters
+and return focus are preserved. Reset restores the samples.
+
+These previews do not change Screen 2, real bill actions or the existing main-app
+create-bill form. The rolling total retains its current-value accessible label.
+
+Atelier's full-width purple **+ Add expense** sits below
 the total/share summary, with a 16px gap before the glass search field.
 Its shimmer keeps the perimeter-light look of the [21st.dev / Magic UI reference](https://21st.dev/@dillionverma/components/shimmer-button),
 with a continuous constant-speed 8-second orbit. The tapered white stroke and broad purple

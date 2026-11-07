@@ -8,6 +8,66 @@ Check out/pull `main` and run `npm ci` when moving to another computer.
 The user wants migration SQL saved in `supabase/migrations/` and will apply
 hosted migrations themselves. Tell them when a new migration is required.
 
+## Expense drawer checkpoint — Nov 7
+
+The user prefers **Paper Atelier** in `/design-system#expense-drawer`.
+**Amethyst Suite** and **Quiet Gallery** remain comparison options. Each has a
+phone specimen, working drawer, independent receipt/manual samples, local edits,
+removal and Reset/Restore. The original Atelier launcher/cards remain available.
+The jump navigation includes **Expense drawers**. Gallery layout expects 24
+accessible specimen headings; the extra three are these drawer directions.
+
+Paper Atelier uses a cool white (#fbfbfd) paper surface through Category, with
+no outer border or category icon. Its 18px irregular torn edge has a silhouette
+shadow and a faint top shadow. Total expense stays large on the left. Your share
+is a compact right-aligned block: mixed-case 12px label, 4px gap and 26px semibold
+purple amount, vertically centered beside the total. Containers at 300px or less
+stack with left-aligned text; larger amounts wrap without horizontal overflow.
+One dashed rule separates the amounts from the metadata.
+
+**View original receipt** is an underlined action below Category and above the
+torn edge. The separate thumbnail is removed; manual entries omit this action.
+`ExpenseReceiptViewer` opens a large centered desktop modal or a full-screen
+phone viewer, keeping details mounted behind it. It supports 50–200% zoom,
+Fit using available width/height, and touch/keyboard scrolling. Zoom preserves
+the viewed center; Fit returns to the top. Close, Escape and the purple **Back to
+expense** button restore receipt-trigger focus and the parent's scroll position.
+The illustrative sample contains the expense name, date and total; there is no
+hosted image fetch. The old thank-you sentence is removed.
+
+**Remove expense** is an outlined red-text button beside the purple **Edit
+expense** button in the footer. There is no Done button, ellipsis menu or footer
+separator in Paper Atelier. Remove inherits shared button motion, with custom red
+surface colors and no resting shadow. `ExpenseRemovalDialog` is a compact
+centered Radix AlertDialog over the details drawer. It names the expense and
+amount and explains the balance update. Keep expense receives initial focus;
+Keep or Escape restores the Remove button. Confirming closes both layers,
+updates the local list/totals and restores the list/fallback trigger. Modal
+buttons stack at 320px. Editing stays in the existing drawer with validation,
+Save and Cancel. Search/filter state and all expense information remain.
+
+`ExpenseDetailSummary` is shared by specimens and drawers. Receipt and removal
+modals are shared across the expense-detail previews. The old receipt/removal
+modes, thumbnail/menu experiments and their unused CSS/components are removed.
+Observers clean up; reduced motion and forced colors have fallbacks. Search's
+Clear button also has the approved circular hover background and Soft pop exit.
+
+Final checkpoint checks passed: 417 offline tests, 15 affected Chromium/WebKit/
+iPhone browser cases, lint, full formatting, diff checks and the webpack build.
+Eight hosted/provider tests were skipped; local source-map uploads were disabled.
+Affected browser coverage includes receipt/manual examples, independent edits, zoom/Fit/panning, modal
+focus trapping/cancellation, parent scroll restoration, actual removal, list
+focus, 320/393/1280px layouts and axe. Short/tall phone and desktop screenshots
+were reviewed. Normal-motion Chrome/WebKit checks cover the viewer's zoom limits,
+Fit, Escape and Back. WebKit rounds a fully visible fractional label box to an
+intersection ratio just below 1; that assertion allows 0.999.
+
+This checkpoint is local design-system work. Screen 2 and real bill-action
+integration remain pending; keep the existing main-app create-bill form. No
+backend logic, hosted data, migrations, dependencies or credentials changed.
+Operational/deployment evidence below remains dated; it was not refreshed by
+these UI checks. Keep the retained operational fixture intact.
+
 Latest approved people UX: one drawer, button-to-field morph with a compact purple
 **+**, side-by-side add/copy actions, pinned header/footer, soft scroll feather and the
 studio's smooth list-entry reveal. Preserve this direction when
@@ -17,9 +77,9 @@ Design-system cleanup (Nov 6): removed Fine perforation, Ticket stub, Layered
 paper and Corner fold, including Original receipt/Preview controls, the Receipt
 cards jump link, retired components/styles and receipt-design switching state.
 Atelier uses the approved borderless torn-paper cards directly. Drawer, category,
-transport and search previews remain. The deleted comparison test is retired;
-layout coverage now expects 21 specimen headings and checks that the retired galleries
-and its navigation/control remnants are absent.
+transport and search previews remain. The deleted comparison test is retired.
+Layout coverage at that cleanup checkpoint expected 21 specimen headings and
+checked that retired galleries and their navigation/control remnants were absent.
 Cleanup verification: six Chromium/WebKit/iPhone cases pass for populated/empty
 layout and axe at 320/393/1280px, retained expense search/filter/details and
 focus restoration. The drawer launcher's accessible name now includes its
@@ -87,6 +147,9 @@ distinct reset key. Phone grid screenshot reviewed. Lint, full formatting,
 diff checks and production webpack build pass.
 
 ## Expense details drawer — Nov 6
+
+The original implementation below is historical. The Nov 7 checkpoint above
+supersedes its receipt/removal modes and the chosen Paper Atelier appearance.
 
 Transport now has three animated vehicle variants, still under the same
 Transport & taxis category. `getTransportIconName` performs local token-based

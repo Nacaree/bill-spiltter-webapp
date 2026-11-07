@@ -37,6 +37,16 @@
 .body:focus {
   outline: none;
 }
+.summary {
+  grid-auto-rows: max-content;
+  align-content: start;
+}
+.receiptSummary {
+  display: contents;
+}
+.detailActions {
+  display: contents;
+}
 .amountHero {
   position: relative;
   padding: 24px;
@@ -246,53 +256,387 @@
   color: #b52b41;
   font-size: 12px;
 }
-.removalSummary {
-  display: grid;
-  gap: 8px;
-  padding: 20px;
-  border-radius: 18px;
-  background: var(--ds-tint);
+/* Studio directions share the same details, editing and confirmation flow. */
+.paper .body,
+.amethyst .body,
+.gallery .body {
+  gap: 22px;
+}
+.paper .shares > div > span,
+.amethyst .shares > div > span,
+.gallery .shares > div > span {
+  min-width: 0;
   overflow-wrap: anywhere;
 }
-.removalSummary strong {
-  font-size: 32px;
+.paper .shares i,
+.amethyst .shares i,
+.gallery .shares i {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: -1px;
 }
-.explanation {
-  margin: 0;
-  color: var(--ds-muted);
-  line-height: 1.7;
+.paper .shares > div > strong,
+.amethyst .shares > div > strong,
+.gallery .shares > div > strong {
+  flex: 0 0 auto;
+  font-size: 15px;
+  letter-spacing: -0.4px;
 }
-.paper {
+.amethyst .heroIcon,
+.gallery .heroIcon {
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+}
+.amethyst .amountHero > strong,
+.gallery .amountHero > strong {
+  padding-right: 42px;
+  font-size: 50px;
+  font-weight: 700;
+  letter-spacing: -2.5px;
+}
+.amethyst .receipt,
+.gallery .receipt {
+  border-style: solid;
+  transition: background 160ms ease-out;
+}
+.amethyst .receipt:hover,
+.gallery .receipt:hover {
+  background: var(--ds-tint);
+}
+.paper .metadata dd,
+.amethyst .metadata dd,
+.gallery .metadata dd {
+  font-weight: 600;
+}
+/* Paper Atelier: cool white stock, ending below the expense metadata. */
+.paper .receiptSummary {
+  container: expense-receipt / inline-size;
+  position: relative;
   display: grid;
-  justify-items: center;
-  gap: 16px;
-  margin: 8px 0;
-  padding: 32px 20px;
-  border: 1px solid var(--ds-line);
-  border-radius: 16px;
-  background: var(--ds-canvas);
-  text-align: center;
+  gap: 0;
+  margin-block: 8px 18px;
+  border: 0;
+  border-radius: 18px 18px 0 0;
+  background: #fbfbfd;
+  filter: drop-shadow(0 -3px 6px #39234f0d) drop-shadow(0 5px 4px #39234f24);
 }
-.paper p,
-.paper h3 {
-  margin: 0;
+.paper .receiptSummary::after {
+  position: absolute;
+  right: 0;
+  bottom: -17px;
+  left: 0;
+  height: 18px;
+  background: #fbfbfd;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='4' viewBox='0 0 36 4' preserveAspectRatio='none'%3E%3Cpath d='M0 0H36V2.4L33.4 3.2Q33 3.4 32.6 3.1L30 1.6L27.5 3.2Q27 3.5 26.5 3.3L24 2.6L21.5 3.6Q21 3.8 20.5 3.4L18 1.8L15.5 3Q15 3.3 14.5 3L12 2.2L9.5 3.4Q9 3.7 8.5 3.3L6 2L3.4 3Q3 3.2 2.6 3L0 2.4Z'/%3E%3C/svg%3E")
+    left top / 90px 18px repeat-x;
+  content: "";
+  pointer-events: none;
 }
-.paperLabel {
-  color: var(--ds-muted);
-  font-size: 11px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-.paper > div {
+.paper .amountHero {
   display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
   justify-content: space-between;
   gap: 16px;
-  width: 100%;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px dashed var(--ds-line);
+  padding: 24px 22px 20px;
+  border-radius: 18px 18px 0 0;
+  background: transparent;
+}
+.paper .metadata {
+  margin-inline: 22px;
+  padding-block: 18px 24px;
+  border-top: 1px dashed #d8d2e1;
+}
+.paper .amountHero p {
+  margin: 0;
+  color: var(--ds-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+.totalColumn,
+.shareColumn {
+  display: flex;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+}
+.totalColumn > strong,
+.shareColumn > strong {
+  display: block;
+  font-weight: 700;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.totalColumn > strong {
+  color: var(--ds-text);
+  font-size: 50px;
+  letter-spacing: -2.5px;
+}
+.shareColumn {
+  align-self: center;
+  justify-content: flex-start;
+  gap: 4px;
+  text-align: right;
+}
+.paper .shareColumn p {
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.shareColumn > strong {
+  color: var(--ds-brand-ink);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.8px;
+}
+@container expense-receipt (max-width: 300px) {
+  .paper .amountHero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .shareColumn {
+    align-self: flex-start;
+    text-align: left;
+  }
+}
+.paper .shares {
+  gap: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+.paper .shares h3 {
+  margin-bottom: 10px;
+}
+.paper .shares > div {
+  min-height: 58px;
+  border-bottom: 1px solid var(--ds-line);
+}
+.paper .shares > div:last-child {
+  border-bottom: 0;
+}
+.paper .shares [data-person="sokha"] i {
+  background: #f9e8db;
+  color: #85502c;
+}
+.paper .shares [data-person="mali"] i {
+  background: #e5eee6;
+  color: #45674c;
+}
+.paper .receiptSummary:has(> .originalReceipt) .metadata {
+  padding-bottom: 6px;
+}
+.originalReceipt {
+  justify-self: start;
+  min-height: 44px;
+  margin: 0 22px 12px;
+  padding: 8px 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ds-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.originalReceipt:hover {
+  color: var(--ds-brand-ink);
+}
+.paper .detailActions {
+  display: block;
+}
+.paper .summary {
+  padding-bottom: 12px;
+}
+.paper .quietFooter {
+  border-top: 0;
+}
+.paper .quietFooter > button:last-child {
+  font-size: 14px;
+}
+.paper .removeAction {
+  border-color: #e8cdd4;
+  background: var(--ds-surface);
+  color: #b52b41;
+  box-shadow: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+.paper .removeAction:hover:not(:disabled) {
+  border-color: #dbb4be;
+  background: #fff6f7;
+}
+/* Amethyst Suite: a jewel-toned focal point with engraved contour lines. */
+.amethyst .amountHero {
+  isolation: isolate;
+  overflow: hidden;
+  padding: 24px;
+  border-radius: 24px;
+  background:
+    radial-gradient(ellipse at 100% 0%, #9059be 0%, transparent 65%), #4b2573;
+  color: #fff;
+  box-shadow:
+    0 12px 24px -16px #4b257399,
+    inset 0 1px 0 #ffffff30;
+}
+.amethyst .amountHero::before,
+.amethyst .amountHero::after {
+  position: absolute;
+  z-index: -1;
+  top: -98px;
+  right: -130px;
+  width: 310px;
+  height: 310px;
+  border: 1px solid #ffffff1a;
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+.amethyst .amountHero::after {
+  top: -75px;
+  right: -107px;
+  width: 264px;
+  height: 264px;
+}
+.amethyst .amountHero p {
+  color: #ece0f7;
+  font-size: 12px;
+}
+.amethyst .heroIcon {
+  background: #ffffff17;
+  color: #fff;
+  border: 1px solid #ffffff35;
+}
+.amethyst .amountHero > strong {
+  margin-bottom: 22px;
+}
+.amethyst .amountHero > span:last-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 -8px -8px;
+  padding: 12px 14px;
+  border: 1px solid #ffffff26;
+  border-radius: 14px;
+  background: #ffffff0d;
+  color: #f1e9f9;
+}
+.amethyst .amountHero b {
+  color: #fff;
+  font-size: 22px;
+  letter-spacing: -0.7px;
+}
+.amethyst .shares {
+  gap: 8px;
+  border-top: 0;
+  padding: 0;
+}
+.amethyst .shares h3 {
+  margin-bottom: 6px;
+}
+.amethyst .shares > div {
+  min-height: 56px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+}
+.amethyst .shares [data-person="nary"] {
+  border-color: #e5d9f0;
+  background: #f8f4fc;
+}
+.amethyst .shares [data-person="nary"] i {
+  background: var(--ds-brand-ink);
+  color: #fff;
+}
+.amethyst .shares [data-person="nary"] > strong {
+  color: var(--ds-brand-ink);
+  font-weight: 700;
+}
+.amethyst .receipt {
+  background: #faf8fc;
+}
+/* Quiet Gallery: open typography, restrained rules and a framed split ledger. */
+.gallery .amountHero {
+  padding: 10px 0 22px;
+  border-bottom: 1px solid var(--ds-text);
+  border-radius: 0;
+  background: transparent;
+}
+.gallery .amountHero p {
+  margin-bottom: 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+.gallery .amountHero > strong {
+  font-size: 56px;
+  letter-spacing: -3px;
+  margin-bottom: 18px;
+}
+.gallery .heroIcon {
+  top: 10px;
+  right: 0;
+  border: 1px solid var(--ds-line);
+  background: transparent;
+}
+.gallery .amountHero > span:last-child {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 99px;
+  background: var(--ds-tint);
+}
+.gallery .amountHero b {
+  font-size: 15px;
+}
+.gallery .metadata {
+  gap: 16px;
+}
+.gallery .shares {
+  gap: 0;
+  padding: 18px;
+  border: 1px solid var(--ds-line);
+  border-radius: 20px;
+}
+.gallery .shares h3 {
+  margin-bottom: 12px;
+}
+.gallery .shares > div {
+  min-height: 58px;
+  border-top: 1px solid var(--ds-line);
+}
+.gallery .shares i {
+  background: transparent;
+  color: var(--ds-muted);
+  border: 1px solid var(--ds-line);
+}
+.gallery .shares [data-person="nary"] i {
+  border-color: var(--ds-brand-ink);
+  color: var(--ds-brand-ink);
+}
+.gallery .receipt {
+  min-height: 68px;
+  padding: 12px 0;
+  border-width: 0 0 1px;
+  border-radius: 0;
+}
+.gallery .receipt:hover {
+  background: transparent;
+  color: var(--ds-text);
 }
 @media (max-width: 639px) {
   .drawer[data-viewport-aware] {
@@ -318,10 +662,53 @@
   }
 }
 @media (forced-colors: active) {
+  .paper .removeAction {
+    border-color: ButtonText;
+    color: ButtonText;
+  }
   .remove,
   .heroIcon,
   .amountHero b {
     color: ButtonText;
+  }
+  .paper .receiptSummary,
+  .paper .amountHero,
+  .amethyst .amountHero,
+  .gallery .amountHero,
+  .paper .amountHero > span:last-child,
+  .amethyst .amountHero > span:last-child,
+  .gallery .amountHero > span:last-child,
+  .amethyst .heroIcon,
+  .gallery .heroIcon,
+  .amethyst .receipt,
+  .gallery .receipt {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+    filter: none;
+  }
+  .paper .receiptSummary::after,
+  .amethyst .amountHero::before,
+  .amethyst .amountHero::after {
+    display: none;
+  }
+  .paper .amountHero p,
+  .amethyst .amountHero p,
+  .totalColumn > strong,
+  .shareColumn > strong,
+  .amethyst .amountHero b,
+  .paper .shares [data-person] i,
+  .amethyst .shares [data-person] i,
+  .amethyst .shares [data-person] > strong {
+    background: Canvas;
+    color: CanvasText;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .amethyst .receipt,
+  .gallery .receipt {
+    transition: none;
   }
 }
 @keyframes enter {

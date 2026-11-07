@@ -272,6 +272,7 @@ export function DesignReference() {
           <a href="#forms">Drawers & forms</a>
           <a href="#add-to-bill">Add to bill</a>
           <a href="#expenses-page">Expenses page</a>
+          <a href="#expense-drawer">Expense drawers</a>
           <a href="#expense-search">Expense search</a>
           <span className={styles.navCaption}>
             Made to be adjusted <span aria-hidden="true">↘</span>
