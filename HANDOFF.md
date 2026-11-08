@@ -8,6 +8,105 @@ Check out/pull `main` and run `npm ci` when moving to another computer.
 The user wants migration SQL saved in `supabase/migrations/` and will apply
 hosted migrations themselves. Tell them when a new migration is required.
 
+## Screen 2 Atelier integration — Nov 8
+
+The user explicitly clarified **Screen 2 only**. The approved Atelier Expenses
+page is now integrated into `/screen2`; live `/b/[shareToken]` pages, server
+actions, Supabase schemas and credentials are unchanged. Keep the existing
+main-app create-bill form. Real bill-action integration remains future work.
+This section supersedes earlier statements that Screen 2 Expenses is pending.
+
+Empty Expenses follow-up (Nov 8): the user supplied a receipt, upward-arrow and
+dollar-coin reference to replace the earlier wallet. `ExpenseEmptyArt` now uses
+that composition: an upright curled receipt with torn bottom, a lavender arrow
+and a warm gold dollar coin, with soft outlines/shadows matching the app.
+The arrow is smaller and raised to expose its stem, with its original lighter
+purple restored. The arrow/coin group is shifted 6px left, and the arrow alone
+is shifted a further 3px left so its center aligns exactly with the coin. Float timing and frame stay unchanged.
+Overview retains its two-paper `ReceiptVignette`. Both keep the same 140×112px
+frame and existing `ReceiptArt` animator with scanning disabled. The 7px/2.4s
+float, easing, pause behavior, reduced-motion handling, copy, spacing and layout
+are unchanged by the picture swap.
+The approved empty-state heading is **No expenses yet.** There is no divider
+below the main Add expense button in the empty state.
+The user also removed the duplicate **Add first expense** action; empty Expenses
+and the shared Atelier studio preview use the main **Add expense** button above.
+The reference-art swap passed three focused Chromium/WebKit/iPhone cases checking the
+exact float distance/duration, hidden-tab and drawer pauses, reduced motion,
+320/393/1280px reflow/axe and the local add flow. Lint/format/diff checks pass.
+The following broader evidence predates the final picture-only swap.
+Nine affected browser scenarios were verified across Chromium/WebKit/iPhone
+runs: three motion/visibility/pause/reduced-motion/add-flow cases and six existing
+empty-gallery/independent-preview cases. The new checks scroll the stable
+container and wait for drawer exit before changing motion preference. All three
+320/393/1280px layouts passed axe; screenshots under
+`/private/tmp/expenses-empty-receipt-*.png` were reviewed. Lint/format/diff and
+webpack production build checks pass. No hosted action, schema, dependency or credential change.
+
+`AtelierExpenses` is shared with the studio and accepts canonical expenses,
+participants, current identity, controlled search/filter state and Add/Open
+callbacks. It keeps the rolling full-ledger total, personal share, count,
+shimmer action, approved borderless/morph/press/trace/Soft pop search, torn cards,
+all 15 category icons and name-aware vehicles. Screen 2 uses All / Your expenses /
+Receipts; Your expenses means any assigned share, including zero-valued shares.
+Search includes name, payer and category. Filtering never changes totals.
+Dates/year/period and newest-first ordering come from actual local expense data.
+The studio retains its Paid by you filter, independent examples and comparisons.
+
+Overview’s recent rows and the Expenses cards open the shared Paper Atelier
+drawer over their originating tab via `#overview/detail-<id>` or
+`#expenses/detail-<id>`. Existing `#detail-<id>` links fall back to Expenses.
+The drawer takes actual participants/current identity and supports equal/exact
+editing. Payer IDs stay separate from labels; missing split-method metadata
+opens as exact to preserve stored allocations. Saves merge into the canonical
+record, preserving receipt flags/items and IDs while updating balances/activity.
+The Add chooser and retained manual draft remain; new participants can be selected
+in that draft without overwriting earlier selections. Add/edit offer 15 categories.
+
+Receipt viewing remains illustrative: no original-image fetch, upload or provider
+call was added. Zoom/Fit and the compact removal modal keep the details mounted.
+Closing restores the source tab/list/focus; removed or missing triggers fall back
+to See all on populated Overview, or Add expense on Expenses/empty Overview.
+The extra icon-only + in Overview’s Recent expenses header was removed at the
+user’s request; preserve the original Recent expenses + See all layout.
+This correction passed six targeted Chromium/WebKit/iPhone cases covering
+Overview removal focus and the Expenses receipt/removal flow, plus lint and
+format/diff checks. The broader verification below predates this small correction. Browser Back and embedded-frame history work independently.
+Reset restores only that preview. Old Screen 2 search/full-page details/removal
+markup and unused CSS were removed. Navigation and new expense controls wait for
+hydration so early clicks are retained through the actual interactive controls.
+
+Long category menus opt out of Radix’s appearing scroll buttons through the
+optional `SelectControl.scrollButtons` prop, using native viewport scrolling.
+This prevents Safari from jumping back to the selected item when a scroll button
+mounts. Other menus retain their default behavior. Lower-list Gifts selection
+was reproduced failing before the fix and passed in WebKit/iPhone afterward.
+
+Validation: 420 offline tests pass; eight hosted/provider tests remain skipped.
+Lint, full formatting, diff checks and the final webpack production build pass.
+Source-map uploads were disabled for local builds. The new adapter tests cover
+exact-share round trips, payer identity and retained receipt metadata. New browser
+coverage exercises filters/totals, owner/guest identity, new participants, exact
+edits, receipt/removal layers, legacy links/Back, independent embedded Reset,
+normal/reduced motion, forced colors and axe at 320/393/1280px plus short phones.
+Phone and desktop screenshots were reviewed. No hosted test, provider extraction,
+migration, credential/configuration change, commit, push or deployment ran.
+
+Browser evidence covers 147 distinct cases across Chromium, desktop WebKit and
+iPhone emulation: 129 Screen 2/expense-studio cases plus 18 shared-navigation
+cases. The consolidated 129-case run recorded 125 passes and four failures.
+The initial-focus axe case now waits for the Expenses heading to receive focus;
+its three-engine rerun passed. Reduced-motion cleanup now polls for the effect
+to finish; its WebKit rerun passed. The WebKit Clear-focus case and iPhone people
+morph case encountered document-navigation interruptions and passed isolated
+reruns. The navigation suite recorded 17/18 initially; its existing iPhone
+receipt-motion timing case passed on an isolated rerun. Product motion timings
+were not changed. These are verified scenarios across runs, not a claim of a
+single clean 147-case run. Test harnesses wait for hydrated navigation and page
+focus. Local artifacts remain under `/private/tmp/atelier-*-results` and
+`/private/tmp/atelier-*-recheck`; the ordinary design suite includes the new file.
+Operational evidence and real-device/manual signoff remain unchanged and dated.
+
 ## Expense drawer checkpoint — Nov 7
 
 The user prefers **Paper Atelier** in `/design-system#expense-drawer`.

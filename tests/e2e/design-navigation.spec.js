@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
 async function captureIconMotion(button) {
+  await expect(button).toBeEnabled();
   return button.evaluate(async (node) => {
     const moving = () =>
       Array.from(node.querySelectorAll("svg, svg *")).some((part) => {
@@ -136,6 +137,9 @@ test("chosen quiet bar icons play once, settle, and replay on later selection", 
   await page.goto("/design-system#navigation");
   const nav = page.getByRole("navigation", { name: "Quiet bar bill sections" });
   await nav.scrollIntoViewIfNeeded();
+  await expect(
+    nav.getByRole("button", { name: "Expenses", exact: true }),
+  ).toBeEnabled();
   for (const label of ["Expenses", "Settle", "Overview", "Expenses"]) {
     expect(
       await captureIconMotion(nav.getByRole("button", { name: label })),
@@ -159,6 +163,9 @@ test("icon playback waits for the highlight to finish moving", async ({
   await page.goto("/design-system#navigation");
   const nav = page.getByRole("navigation", { name: "Quiet bar bill sections" });
   await nav.scrollIntoViewIfNeeded();
+  await expect(
+    nav.getByRole("button", { name: "Expenses", exact: true }),
+  ).toBeEnabled();
   const paused = await nav.evaluate(async (node) => {
     node.querySelectorAll("button")[1].click();
     await new Promise(requestAnimationFrame);
@@ -201,6 +208,9 @@ test("receipt lifts and settles while both lines write at one pace in both surfa
     await page.goto(url);
     const nav = page.getByRole("navigation", { name: label });
     await nav.scrollIntoViewIfNeeded();
+    await expect(
+      nav.getByRole("button", { name: "Expenses", exact: true }),
+    ).toBeEnabled();
     const sequence = await nav.evaluate(async (node) => {
       const directions = Array.from(
         node.querySelectorAll("[data-receipt-detail]"),
@@ -276,6 +286,9 @@ test("quiet bar slides one icon highlight and follows the latest selection", asy
   await page.goto("/design-system#navigation");
   const nav = page.getByRole("navigation", { name: "Quiet bar bill sections" });
   await nav.scrollIntoViewIfNeeded();
+  await expect(
+    nav.getByRole("button", { name: "Expenses", exact: true }),
+  ).toBeEnabled();
   const motion = await nav.evaluate(async (node) => {
     const indicator = node.querySelector('[data-navigation-indicator="quiet"]');
     const center = () => {

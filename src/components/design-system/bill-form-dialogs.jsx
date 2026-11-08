@@ -218,7 +218,10 @@ export function ExpenseFormDialog({
           <summary>Category & notes</summary>
           <div className={system.field}>
             <label htmlFor={`${id}-category`}>Category</label>
+            {/* Keep long category menus on native scroll; appearing Radix scroll
+                buttons can refocus the selected item and jump backward in Safari. */}
             <SelectControl
+              scrollButtons={false}
               id={`${id}-category`}
               value={value.category}
               onValueChange={(category) => onValueChange({ category })}

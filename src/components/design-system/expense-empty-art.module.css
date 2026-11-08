@@ -1,0 +1,67 @@
+.scene,
+.picture {
+  display: block;
+  width: 140px;
+  height: 112px;
+}
+.picture {
+  overflow: visible;
+}
+.shadow {
+  filter: drop-shadow(0 7px 7px #37235012);
+}
+.paper {
+  fill: var(--ds-surface);
+  stroke: var(--ds-line);
+  stroke-linejoin: round;
+}
+.curl {
+  fill: var(--ds-tint);
+  stroke: var(--ds-line);
+  stroke-linejoin: round;
+}
+.lines {
+  stroke: color-mix(in srgb, var(--ds-brand) 34%, var(--ds-surface));
+  stroke-width: 2.5px;
+  stroke-linecap: round;
+}
+.arrow {
+  fill: color-mix(in srgb, var(--ds-brand) 17%, var(--ds-surface));
+  stroke: color-mix(in srgb, var(--ds-brand) 43%, var(--ds-surface));
+  stroke-width: 2.5px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.coinRim {
+  fill: #f8e8b7;
+  stroke: #e7d19a;
+  stroke-width: 1.2px;
+}
+.coin {
+  fill: #fff5d8;
+  stroke: #e4cd94;
+  stroke-width: 1.2px;
+}
+.mark {
+  stroke: #947142;
+  stroke-width: 2.2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+@media (forced-colors: active) {
+  .shadow {
+    filter: none;
+  }
+  .paper,
+  .curl,
+  .arrow,
+  .coinRim,
+  .coin {
+    fill: Canvas;
+    stroke: CanvasText;
+  }
+  .lines,
+  .mark {
+    stroke: CanvasText;
+  }
+}

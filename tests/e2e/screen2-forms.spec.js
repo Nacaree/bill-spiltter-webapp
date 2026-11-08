@@ -165,7 +165,9 @@ test("exact splits validate totals and preserve details through editing", async 
   await form.getByLabel("Mali’s share", { exact: true }).fill("3");
   await form.getByText("Category & notes", { exact: true }).click();
   await form.getByRole("combobox", { name: "Category", exact: true }).click();
-  await page.getByRole("option", { name: "Transport", exact: true }).click();
+  await page
+    .getByRole("option", { name: "Transport & taxis", exact: true })
+    .click();
   await form.getByLabel("Notes", { exact: true }).fill("Keep these details");
   await form.getByRole("button", { name: "Add expense", exact: true }).click();
   await expect(form).toBeHidden();
@@ -178,15 +180,16 @@ test("exact splits validate totals and preserve details through editing", async 
   await expect(edit.getByLabel("Nary’s share", { exact: true })).toHaveValue(
     "4.00",
   );
-  await edit.getByText("Category & notes", { exact: true }).click();
   await expect(
     edit.getByRole("combobox", { name: "Category", exact: true }),
   ).toContainText("Transport");
-  await expect(edit.getByLabel("Notes", { exact: true })).toHaveValue(
-    "Keep these details",
-  );
+  await expect(edit.getByLabel(/^Notes/)).toHaveValue("Keep these details");
   await edit.getByLabel("Description", { exact: true }).fill("Updated coffee");
   await edit.getByRole("button", { name: "Save changes", exact: true }).click();
+  await expect(
+    page.getByRole("dialog", { name: "Updated coffee", exact: true }),
+  ).toContainText("$10.00");
+  await page.getByRole("button", { name: "Close expense details" }).click();
   await expect(
     page.getByRole("button", { name: /Updated coffee/ }),
   ).toContainText("$10.00");
@@ -415,6 +418,7 @@ test("studio and Screen2 use responsive forms with a visible action footer", asy
     await page.goto("/design-system#forms");
     const trigger = page.getByRole("button", {
       name: "Preview expense drawer",
+      exact: true,
     });
     await trigger.click();
     const form = page.getByRole("dialog", {

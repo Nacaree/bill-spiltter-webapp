@@ -11,9 +11,14 @@ import QRCode from "qrcode";
 import { AnimatePresence, motion } from "motion/react";
 import { DialogPanel } from "@/components/design-system/form-dialog";
 import dialogStyles from "@/components/design-system/form-dialog.module.css";
+import { AtelierExpenses } from "@/components/design-system/atelier-expenses";
+import { ExpenseDetailDrawer } from "@/components/design-system/expense-detail-drawer";
+import { ExpenseCategoryIcon } from "@/components/design-system/expense-category-icon";
+import { expenseCategories } from "@/components/design-system/expense-categories";
+import { expenseForPreview, applyExpensePreview } from "@/lib/expense-preview";
 import { ExpenseFormDialog } from "@/components/design-system/bill-form-dialogs";
 import { BillEntryChoices } from "@/components/design-system/bill-entry-choices";
-import { ReceiptArt } from "@/components/design-system/receipt-art";
+import { ReceiptVignette } from "@/components/design-system/receipt-vignette";
 import systemStyles from "@/components/design-system/system.module.css";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -34,10 +39,6 @@ import {
   billNavigationItems,
 } from "@/components/design-system/bill-navigation";
 import { Coffee } from "@/components/design-system/icons/animate-ui/coffee";
-import { Route } from "@/components/design-system/icons/animate-ui/route";
-import { ShoppingBag } from "@/components/design-system/icons/animate-ui/shopping-bag";
-import { Tag } from "@/components/design-system/icons/animate-ui/tag";
-import { FileText } from "@/components/design-system/icons/animate-ui/file-text";
 import { Clock3 } from "@/components/design-system/icons/animate-ui/clock-3";
 import { calculateBalances, suggestTransfers } from "@/lib/balances";
 import { formatMoney, parseMoneyToMinor, splitEqually } from "@/lib/money";
@@ -51,6 +52,10 @@ import {
 import styles from "./mobile-bill.module.css";
 import { PeopleList } from "./people-list";
 
+const subscribeReady = () => () => {};
+const clientReady = () => true;
+const serverReady = () => false;
+
 const money = (value) => formatMoney(Math.abs(value), "USD");
 function previewMinor(value) {
   try {
@@ -63,7 +68,7 @@ const emptyDraft = {
   description: "",
   amount: "",
   paidBy: "nary",
-  category: "Food & drinks",
+  category: "Meals & restaurants",
   date: "2026-10-29",
   people: ["nary", "sokha", "mali"],
   method: "equal",
@@ -357,15 +362,7 @@ function InlinePersonForm({
   );
 }
 
-function ExpenseRow({ expense, people, currentId, onOpen }) {
-  const reducedMotion = useDesignReducedMotion();
-  const [iconActive, setIconActive] = useState(false);
-  const CategoryIcon =
-    {
-      "Food & drinks": Coffee,
-      Transport: Route,
-      Shopping: ShoppingBag,
-    }[expense.category] ?? Tag;
+function ExpenseRow({ expense, people, currentId, onOpen, ready }) {
   const payer = people.find(
     (person) => person.id === expense.paid_by_participant_id,
   );
@@ -375,27 +372,16 @@ function ExpenseRow({ expense, people, currentId, onOpen }) {
   return (
     <button
       type="button"
+      disabled={!ready}
       className={styles.expenseRow}
       onClick={onOpen}
-      onPointerEnter={(event) => {
-        if (event.pointerType === "mouse") setIconActive(true);
-      }}
-      onPointerLeave={() => setIconActive(false)}
-      onFocus={() => setIconActive(true)}
-      onBlur={() => setIconActive(false)}
     >
-      <span
+      <ExpenseCategoryIcon
+        category={expense.category}
+        name={expense.description}
+        size={20}
         className={styles.categoryIcon}
-        title={expense.category}
-        data-category={expense.category}
-        aria-hidden="true"
-      >
-        <CategoryIcon
-          size={20}
-          strokeWidth={1.6}
-          animate={reducedMotion === false && iconActive}
-        />
-      </span>
+      />
       <span className={styles.expenseText}>
         <strong title={expense.description}>{expense.description}</strong>
         <small>
@@ -412,6 +398,7 @@ function ExpenseRow({ expense, people, currentId, onOpen }) {
 }
 
 export function MobileBill({ initialState = "populated", embedded = false }) {
+  const ready = useSyncExternalStore(subscribeReady, clientReady, serverReady);
   const reducedMotion = useDesignReducedMotion();
   const startsEmpty = initialState === "empty";
   const initialPeople = startsEmpty ? examplePeople.slice(0, 1) : examplePeople;
@@ -422,9 +409,15 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
   );
   const [routeView, routeOverlay] = route.split("/");
   // Keep existing bookmarked manual-entry links working with the shared drawer.
-  const view = routeView === "new" ? "expenses" : routeView;
-  const overlay = routeView === "new" ? "expense" : routeOverlay;
-  const sheetOpen = Boolean(overlay) && overlay !== "expense";
+  const legacyDetail = routeView.startsWith("detail-");
+  const view = routeView === "new" || legacyDetail ? "expenses" : routeView;
+  const overlay = legacyDetail
+    ? routeView
+    : routeView === "new"
+      ? "expense"
+      : routeOverlay;
+  const detailOpen = Boolean(overlay?.startsWith("detail-"));
+  const sheetOpen = Boolean(overlay) && overlay !== "expense" && !detailOpen;
   const [lastSheetOverlay, setLastSheetOverlay] = useState(overlay);
   if (sheetOpen && lastSheetOverlay !== overlay) setLastSheetOverlay(overlay);
   // Keep the outgoing panel's contents intact during its exit animation.
@@ -481,6 +474,8 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
   const heading = useRef(null);
   const receiptInput = useRef(null);
   const expenseReturnFocus = useRef(null);
+  const detailReturnFocus = useRef(null);
+  const expenseFallbackFocus = useRef(null);
   const sheetReturnFocus = useRef(null);
   const previousView = useRef(null);
   const [previewHistory, setPreviewHistory] = useState([]);
@@ -507,9 +502,20 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
         : "expenses";
   const fullScreen =
     !billNavigationItems.some(({ id }) => id === view) || deleted;
-  const detail = view.startsWith("detail-")
-    ? expenses.find((item) => item.id === view.slice(7))
+  const requestedDetail = detailOpen
+    ? expenses.find((item) => item.id === overlay.slice(7))
     : null;
+  // Retain the outgoing expense through the drawer's exit and removal focus handoff.
+  const [retainedDetail, setRetainedDetail] = useState(null);
+  if (requestedDetail && requestedDetail !== retainedDetail)
+    setRetainedDetail(requestedDetail);
+  const detail = requestedDetail ?? retainedDetail;
+  const [detailSession, setDetailSession] = useState({ open: false, run: 0 });
+  if (detailSession.open !== detailOpen)
+    setDetailSession({
+      open: detailOpen,
+      run: detailSession.run + (detailOpen ? 1 : 0),
+    });
   const transfer = view.startsWith("pay-")
     ? transfers.find(
         (item) =>
@@ -528,19 +534,19 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
   };
   const title = deleted
     ? "This bill is closed"
-    : (detail?.description ??
-      (view.startsWith("pay-")
-        ? isSender
-          ? "Pay your share"
-          : "Record a payment"
-        : (titles[view] ?? "Weekend dinner")));
+    : view.startsWith("pay-")
+      ? isSender
+        ? "Pay your share"
+        : "Record a payment"
+      : (titles[view] ?? "Weekend dinner");
 
   useEffect(() => {
     if (previousView.current === view) return;
     previousView.current = view;
     window.scrollTo({ top: 0, behavior: "instant" });
-    if (overlay !== "expense") heading.current?.focus({ preventScroll: true });
-  }, [view, overlay]);
+    if (overlay !== "expense" && !detailOpen)
+      heading.current?.focus({ preventScroll: true });
+  }, [view, overlay, detailOpen]);
 
   useEffect(() => {
     if (!notice) return;
@@ -568,6 +574,8 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
     const nextOverlay = next.split("/")[1];
     if (nextOverlay && !overlay) {
       sheetReturnFocus.current = trigger ?? document.activeElement;
+      if (nextOverlay.startsWith("detail-"))
+        detailReturnFocus.current = trigger ?? document.activeElement;
       if (nextOverlay === "add")
         expenseReturnFocus.current = trigger ?? document.activeElement;
     }
@@ -633,6 +641,8 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
 
   function saveExpense({ amountMinor, shares }) {
     const expense = {
+      ...expenses.find((item) => item.id === draft.editing),
+      split_method: draft.method,
       id: draft.editing ?? `expense_${crypto.randomUUID()}`,
       description: draft.description.trim(),
       amount_minor: amountMinor,
@@ -659,26 +669,20 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
     navigate("expenses", true);
   }
 
-  function editExpense(event) {
-    expenseReturnFocus.current = event.currentTarget;
-    setDraft({
-      description: detail.description,
-      amount: (detail.amount_minor / 100).toFixed(2),
-      paidBy: detail.paid_by_participant_id,
-      category: detail.category,
-      date: detail.date,
-      people: detail.shares.map((row) => row.participantId),
-      method: "exact",
-      exact: Object.fromEntries(
-        detail.shares.map((row) => [
-          row.participantId,
-          (row.amountMinor / 100).toFixed(2),
-        ]),
+  function saveDetail(edited) {
+    setExpenses((current) =>
+      current.map((item) =>
+        item.id === edited.id ? applyExpensePreview(item, edited) : item,
       ),
-      notes: detail.notes ?? "",
-      editing: detail.id,
-    });
-    navigate(`${view}/expense`);
+    );
+    addActivity(`Updated ${edited.name}`);
+    setNotice("Expense updated. Balances are up to date.");
+  }
+
+  function removeDetail(expense) {
+    setExpenses((current) => current.filter((item) => item.id !== expense.id));
+    addActivity(`Removed ${expense.name}`);
+    setNotice("Expense removed. Balances updated.");
   }
 
   function confirmReceipt(event) {
@@ -706,7 +710,7 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
           description: "Lunch at Malis",
           amount_minor: amount,
           paid_by_participant_id: currentId,
-          category: "Food & drinks",
+          category: "Meals & restaurants",
           date: "2026-10-29",
           receipt: true,
           receiptLines: parts,
@@ -813,14 +817,6 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
     navigate("overview", true);
   }
 
-  const visibleExpenses = expenses.filter(
-    (item) =>
-      (filter === "All" ||
-        (filter === "Receipts"
-          ? item.receipt
-          : item.shares.some((share) => share.participantId === currentId))) &&
-      item.description.toLowerCase().includes(query.toLowerCase()),
-  );
   const personalTransfers = transfers.filter(
     (item) =>
       item.fromParticipantId === currentId ||
@@ -1017,6 +1013,7 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
                 <h2>Recent expenses</h2>
                 {expenses.length > 0 ? (
                   <Button
+                    ref={expenseFallbackFocus}
                     type="button"
                     variant="ghost"
                     icon="arrow"
@@ -1035,7 +1032,14 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
                       expense={item}
                       people={people}
                       currentId={currentId}
-                      onOpen={() => navigate(`detail-${item.id}`)}
+                      ready={ready}
+                      onOpen={(event) =>
+                        navigate(
+                          `overview/detail-${item.id}`,
+                          false,
+                          event.currentTarget,
+                        )
+                      }
                     />
                   ))}
                 </div>
@@ -1044,21 +1048,7 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
                   className={styles.receiptEmpty}
                   aria-labelledby="screen2-empty-expenses-title"
                 >
-                  <ReceiptArt
-                    className={styles.receiptIllustration}
-                    playing={!overlay}
-                    scanning={false}
-                  >
-                    <span
-                      className={`${styles.receiptPaper} ${styles.receiptPaperBack}`}
-                    />
-                    <span className={styles.receiptPaper} data-receipt-paper>
-                      <FileText size={20} strokeWidth={1.5} animate={false} />
-                      <span className={styles.receiptRule} />
-                      <span className={styles.receiptRule} />
-                      <span className={styles.receiptRule} />
-                    </span>
-                  </ReceiptArt>
+                  <ReceiptVignette playing={!overlay} />
                   <h3 id="screen2-empty-expenses-title">
                     A little receipt.
                     <br />A lot less math.
@@ -1073,6 +1063,7 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
                     variant="ghost"
                     icon="arrow"
                     iconPosition="end"
+                    ref={expenseFallbackFocus}
                     className={styles.emptyExpenseAction}
                     onClick={(event) =>
                       navigate("overview/add", false, event.currentTarget)
@@ -1110,88 +1101,27 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
               </section>
             </>
           ) : view === "expenses" ? (
-            <>
-              <p className={styles.subtitle}>
-                Every little cost, in one place.
-              </p>
-              <div className={styles.expenseSummary}>
-                <span>{expenses.length} expenses</span>
-                <strong>
-                  {money(total)} <small>total</small>
-                </strong>
-              </div>
-              <Button
-                icon="plus"
-                className={styles.fullButton}
-                onClick={(event) =>
-                  navigate("expenses/add", false, event.currentTarget)
-                }
-              >
-                Add expense
-              </Button>
-              <label className={styles.search}>
-                <span className="sr-only">Search expenses</span>
-                <input
-                  type="search"
-                  placeholder="Search expenses"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                />
-              </label>
-              <div
-                className={styles.filters}
-                role="group"
-                aria-label="Filter expenses"
-              >
-                {["All", "Your expenses", "Receipts"].map((item) => (
-                  <button
-                    key={item}
-                    aria-pressed={filter === item}
-                    onClick={() => setFilter(item)}
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-              {visibleExpenses.length ? (
-                <>
-                  <p className={styles.listDate}>OCTOBER 2026</p>
-                  <div className={styles.expenseList}>
-                    {visibleExpenses.map((item) => (
-                      <ExpenseRow
-                        key={item.id}
-                        expense={item}
-                        people={people}
-                        currentId={currentId}
-                        onOpen={() => navigate(`detail-${item.id}`)}
-                      />
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div className={styles.empty}>
-                  <h2>
-                    {expenses.length ? "No matching expenses" : "A fresh start"}
-                  </h2>
-                  <p>
-                    {expenses.length
-                      ? "Try another search or filter."
-                      : "Add an expense or scan a receipt to start sharing costs."}
-                  </p>
-                  {expenses.length ? (
-                    <Button
-                      variant="secondary"
-                      onClick={() => {
-                        setQuery("");
-                        setFilter("All");
-                      }}
-                    >
-                      Clear filters
-                    </Button>
-                  ) : null}
-                </div>
-              )}
-            </>
+            <AtelierExpenses
+              expenses={expenses}
+              participants={people}
+              currentParticipantId={currentId}
+              query={query}
+              onQueryChange={setQuery}
+              filter={filter}
+              onFilterChange={setFilter}
+              addButtonRef={expenseFallbackFocus}
+              playing={!overlay}
+              onAdd={(event) =>
+                navigate("expenses/add", false, event.currentTarget)
+              }
+              onOpen={(expense, event) =>
+                navigate(
+                  `expenses/detail-${expense.id}`,
+                  false,
+                  event.currentTarget,
+                )
+              }
+            />
           ) : view === "settle" ? (
             <>
               <p className={styles.subtitle}>Clear balances. Happy friends.</p>
@@ -1512,69 +1442,6 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
                 </p>
               </form>
             )
-          ) : detail ? (
-            <>
-              <div className={styles.detailAmount}>
-                {money(detail.amount_minor)}
-              </div>
-              <div className={styles.detailMeta}>
-                <span>
-                  Paid by{" "}
-                  <strong>
-                    {findPerson(detail.paid_by_participant_id)?.display_name}
-                  </strong>
-                </span>
-                <span>
-                  {detail.date} · {detail.category}
-                </span>
-              </div>
-              <section className={styles.detailPanel}>
-                <h2>Who shared this</h2>
-                <ul className={styles.shareBreakdown}>
-                  {detail.shares.map((item) => (
-                    <li key={item.participantId}>
-                      <Avatar person={findPerson(item.participantId)} small />
-                      <span>
-                        {findPerson(item.participantId)?.display_name}
-                        {item.participantId === currentId ? " (you)" : ""}
-                      </span>
-                      <strong>{money(item.amountMinor)}</strong>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-              {detail.receipt ? (
-                <section className={styles.receiptNote}>
-                  <span>≋</span>
-                  <p>
-                    <strong>Added from a receipt</strong>
-                    <small>
-                      The confirmed items are included in this expense.
-                    </small>
-                  </p>
-                </section>
-              ) : null}
-              {detail.notes ? (
-                <p className={styles.detailNotes}>{detail.notes}</p>
-              ) : null}
-              <Button
-                icon="plus"
-                variant="secondary"
-                className={styles.fullButton}
-                onClick={editExpense}
-              >
-                Edit expense
-              </Button>
-              <Button
-                variant="ghost"
-                className={styles.removeButton}
-                onClick={(event) =>
-                  navigate(`${view}/remove`, false, event.currentTarget)
-                }
-              >
-                Remove expense
-              </Button>
-            </>
           ) : transfer ? (
             <form
               id="screen2-payment-form"
@@ -1752,6 +1619,24 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
           ) : null}
         </div>
 
+        {detail && (
+          <ExpenseDetailDrawer
+            key={`${detail.id}-${detailSession.run}`}
+            expense={expenseForPreview(detail, people, currentId)}
+            people={people}
+            currentParticipantId={currentId}
+            allowExact
+            appearance="paper"
+            open={detailOpen && Boolean(requestedDetail)}
+            onOpenChange={(open) => {
+              if (!open) back(view);
+            }}
+            onSave={saveDetail}
+            onRemove={removeDetail}
+            returnFocusRef={detailReturnFocus}
+            fallbackFocusRef={expenseFallbackFocus}
+          />
+        )}
         <ExpenseFormDialog
           open={overlay === "expense"}
           onOpenChange={(open) => {
@@ -1762,7 +1647,7 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
           people={people}
           onSave={saveExpense}
           allowExact
-          categoryOptions={["Food & drinks", "Transport", "Shopping", "Other"]}
+          categoryOptions={expenseCategories.map(({ label }) => label)}
           title={draft.editing ? "Edit expense" : "Add an expense"}
           submitLabel={draft.editing ? "Save changes" : "Add expense"}
           submitIcon={draft.editing ? "check" : "plus"}
@@ -1772,11 +1657,7 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
         />
         <Sheet
           open={sheetOpen}
-          kind={
-            sheetOverlay === "remove" || sheetOverlay === "delete"
-              ? "confirm"
-              : "options"
-          }
+          kind={sheetOverlay === "delete" ? "confirm" : "options"}
           returnFocusRef={sheetReturnFocus}
           restoreFocus={overlay !== "expense"}
           title={
@@ -1785,7 +1666,6 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
               menu: "Bill menu",
               people: "The people at your table",
               qr: "Your payment QR",
-              remove: "Remove this expense?",
               delete: "Delete this bill?",
             }[sheetOverlay] ?? "Bill options"
           }
@@ -1989,32 +1869,6 @@ export function MobileBill({ initialState = "populated", embedded = false }) {
               >
                 {qrEnabled ? "Remove payment QR" : "Use example QR"}
               </Button>
-            </>
-          ) : null}
-          {sheetOverlay === "remove" ? (
-            <>
-              <p className={styles.sheetDescription}>
-                Remove {detail?.description} from the bill? Everyone’s balance
-                will update.
-              </p>
-              <div className={styles.confirmButtons}>
-                <Button variant="secondary" onClick={dismiss}>
-                  Keep expense
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    setExpenses((current) =>
-                      current.filter((item) => item.id !== detail?.id),
-                    );
-                    addActivity(`Removed ${detail?.description}`);
-                    setNotice("Expense removed. Balances updated.");
-                    navigate("expenses", true);
-                  }}
-                >
-                  Remove expense
-                </Button>
-              </div>
             </>
           ) : null}
           {sheetOverlay === "delete" ? (

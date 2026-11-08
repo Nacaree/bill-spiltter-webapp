@@ -620,7 +620,8 @@
   width: 28px;
   transform: rotate(8deg);
 }
-.empty h5 {
+.empty h5,
+.empty h2 {
   margin: 0;
   font-size: 22px;
   letter-spacing: -0.7px;
@@ -989,32 +990,19 @@
 .atelier .empty {
   margin-top: 24px;
   padding: 30px 0;
-  border-top: 1px solid var(--ds-line);
 }
-.atelier .emptyArt {
-  width: 66px;
-  height: 66px;
-  margin-bottom: 22px;
-  border-radius: 50%;
-  background: var(--ds-canvas);
+.atelier .empty p {
+  max-width: 260px;
+  margin: 10px 0 16px;
+  color: var(--ds-muted);
+  font-size: 14px;
+  line-height: 1.65;
 }
-.atelier .emptyArt::before,
-.atelier .emptyArt::after {
-  display: none;
-}
-.atelier .emptyArt svg {
-  transform: none;
-  width: 24px;
-}
-.atelier .empty h5 {
+.atelier .empty h5,
+.atelier .empty h2 {
   max-width: 240px;
   font-size: 25px;
   letter-spacing: -1px;
-}
-.atelier .empty > button {
-  background: transparent;
-  color: var(--ds-brand-ink);
-  box-shadow: none;
 }
 .atelier .navigation {
   border-top: 1px solid var(--ds-line);

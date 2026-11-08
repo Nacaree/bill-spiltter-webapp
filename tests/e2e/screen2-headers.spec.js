@@ -190,7 +190,9 @@ test("shared chooser, expense, confirmation and studio headers use the same titl
     page.getByRole("dialog", { name: "Delete this bill?", exact: true }),
   );
   await page.goto("/design-system#forms");
-  await page.getByRole("button", { name: "Preview expense drawer" }).click();
+  await page
+    .getByRole("button", { name: "Preview expense drawer", exact: true })
+    .click();
   await expectDialogAlignment(
     page.getByRole("dialog", { name: "Add an expense", exact: true }),
   );

@@ -16,30 +16,40 @@ import { useDesignReducedMotion } from "./use-design-reduced-motion";
 import system from "./system.module.css";
 import styles from "./expense-detail-drawer.module.css";
 
-const people = [
+const samplePeople = [
   { id: "nary", name: "Nary", initials: "NA" },
   { id: "sokha", name: "Sokha", initials: "SO", tone: "peach" },
   { id: "mali", name: "Mali", initials: "MA", tone: "green" },
 ];
 const money = (amount) => formatMoney(amount, "USD");
-const personName = (id) => people.find((person) => person.id === id)?.name;
-function participants(expense) {
+function participants(expense, people) {
   return (
     expense.people ??
+    expense.shares?.map((share) => share.participantId) ??
     people
       .slice(0, expense.share * 2 === expense.amount ? 2 : 3)
       .map((person) => person.id)
   );
 }
-function draftFor(expense) {
+function draftFor(expense, people) {
   return {
     description: expense.name,
     amount: moneyInputValue(expense.amount, "USD"),
     paidBy:
-      people.find((person) => person.name === expense.payer)?.id ?? "nary",
+      expense.payerId ??
+      people.find(
+        (person) => (person.name ?? person.display_name) === expense.payer,
+      )?.id ??
+      people[0]?.id,
     date: expense.dateISO ?? `2026-10-${expense.date.slice(0, 2)}`,
-    people: participants(expense),
-    method: "equal",
+    people: participants(expense, people),
+    method: expense.method ?? (expense.shares ? "exact" : "equal"),
+    exact: Object.fromEntries(
+      (expense.shares ?? []).map((share) => [
+        share.participantId,
+        moneyInputValue(share.amountMinor, "USD"),
+      ]),
+    ),
     category: getExpenseCategory(expense.category).label,
     notes: expense.notes ?? "",
   };
@@ -47,6 +57,8 @@ function draftFor(expense) {
 
 export function ExpenseDetailSummary({
   expense,
+  people = samplePeople,
+  currentParticipantId = "nary",
   onReceipt,
   onRemove,
   removeRef,
@@ -54,11 +66,19 @@ export function ExpenseDetailSummary({
   compactActions = false,
   ref,
 }) {
+  const personName = (id) => {
+    const person = people.find((person) => person.id === id);
+    return person?.name ?? person?.display_name;
+  };
+  const payerId =
+    expense.payerId ??
+    people.find((person) => personName(person.id) === expense.payer)?.id;
   const category = getExpenseCategory(expense.category, expense.name);
   const Icon = category.Icon;
   const shares =
-    expense.shares ?? splitEqually(expense.amount, participants(expense));
-  const date = expense.dateISO ?? draftFor(expense).date;
+    expense.shares ??
+    splitEqually(expense.amount, participants(expense, people));
+  const date = expense.dateISO ?? draftFor(expense, people).date;
   return (
     <div className={`${styles.body} ${styles.summary}`} ref={ref} tabIndex={-1}>
       <div className={styles.receiptSummary} data-expense-paper>
@@ -96,7 +116,7 @@ export function ExpenseDetailSummary({
             <dt>Paid by</dt>
             <dd>
               {expense.payer}
-              {expense.payer === "Nary" ? " (you)" : ""}
+              {payerId === currentParticipantId ? " (you)" : ""}
             </dd>
           </div>
           <div>
@@ -134,7 +154,7 @@ export function ExpenseDetailSummary({
                 }
               </i>
               {personName(share.participantId)}
-              {share.participantId === "nary" ? " (you)" : ""}
+              {share.participantId === currentParticipantId ? " (you)" : ""}
             </span>
             <strong>{money(share.amountMinor)}</strong>
           </div>
@@ -192,10 +212,17 @@ export function ExpenseDetailDrawer({
   returnFocusRef,
   fallbackFocusRef,
   appearance = "original",
+  people = samplePeople,
+  currentParticipantId = "nary",
+  allowExact = false,
 }) {
   const id = useId();
+  const personName = (id) => {
+    const person = people.find((person) => person.id === id);
+    return person?.name ?? person?.display_name;
+  };
   const [mode, setMode] = useState("details");
-  const [draft, setDraft] = useState(() => draftFor(expense));
+  const [draft, setDraft] = useState(() => draftFor(expense, people));
   const [errors, setErrors] = useState({});
   const [removing, setRemoving] = useState(false);
   const [viewingReceipt, setViewingReceipt] = useState(false);
@@ -209,7 +236,7 @@ export function ExpenseDetailDrawer({
   const draftCategory = getExpenseCategory(draft.category, draft.description);
   const DraftIcon = draftCategory.Icon;
   const review = reviewExpenseDraft(draft, people);
-  const date = expense.dateISO ?? draftFor(expense).date;
+  const date = expense.dateISO ?? draftFor(expense, people).date;
 
   function changeOpen(next) {
     if (!next) {
@@ -222,7 +249,7 @@ export function ExpenseDetailDrawer({
     setRemoving(true);
   }
   function edit() {
-    setDraft(draftFor(expense));
+    setDraft(draftFor(expense, people));
     setErrors({});
     setMode("edit");
     requestAnimationFrame(() =>
@@ -248,9 +275,12 @@ export function ExpenseDetailDrawer({
       name: draft.description.trim(),
       amount: review.amountMinor,
       payer: personName(draft.paidBy),
+      payerId: draft.paidBy,
+      method: draft.method,
       share:
-        review.shares.find((share) => share.participantId === "nary")
-          ?.amountMinor ?? 0,
+        review.shares.find(
+          (share) => share.participantId === currentParticipantId,
+        )?.amountMinor ?? 0,
       people: [...draft.people],
       shares: review.shares,
       category: draft.category,
@@ -351,7 +381,14 @@ export function ExpenseDetailDrawer({
               people={people}
               value={draft.paidBy}
               onValueChange={(paidBy) => setDraft({ ...draft, paidBy })}
+              aria-invalid={Boolean(errors.paidBy)}
+              aria-describedby={errors.paidBy ? `${id}-payer-error` : undefined}
             />
+            {errors.paidBy && (
+              <p id={`${id}-payer-error`} className={styles.error} role="alert">
+                {errors.paidBy}
+              </p>
+            )}
             <DatePicker
               id={`${id}-date`}
               label="Expense date"
@@ -363,6 +400,7 @@ export function ExpenseDetailDrawer({
             <div className={system.field}>
               <label htmlFor={`${id}-category`}>Category</label>
               <SelectControl
+                scrollButtons={false}
                 id={`${id}-category`}
                 value={draft.category}
                 onValueChange={(category) => setDraft({ ...draft, category })}
@@ -375,10 +413,16 @@ export function ExpenseDetailDrawer({
             <fieldset
               className={styles.split}
               tabIndex={-1}
-              aria-invalid={Boolean(errors.people)}
-              aria-describedby={errors.people ? `${id}-split-error` : undefined}
+              aria-invalid={Boolean(errors.people || errors.splitTotal)}
+              aria-describedby={
+                errors.people || errors.splitTotal
+                  ? `${id}-split-error`
+                  : undefined
+              }
             >
-              <legend>Split equally with</legend>
+              <legend>
+                {allowExact ? "Split with" : "Split equally with"}
+              </legend>
               <div className={styles.choices}>
                 {people.map((person) => (
                   <DesignCheckbox
@@ -393,21 +437,71 @@ export function ExpenseDetailDrawer({
                       })
                     }
                   >
-                    {person.name}
-                    {person.id === "nary" ? " (you)" : ""}
+                    {personName(person.id)}
+                    {person.id === currentParticipantId ? " (you)" : ""}
                   </DesignCheckbox>
                 ))}
               </div>
-              {errors.people && (
+              {(errors.people || errors.splitTotal) && (
                 <p
                   id={`${id}-split-error`}
                   className={styles.error}
                   role="alert"
                 >
-                  {errors.people}
+                  {errors.people || errors.splitTotal}
                 </p>
               )}
             </fieldset>
+            {allowExact && (
+              <div
+                className={styles.choices}
+                role="group"
+                aria-label="Split method"
+              >
+                {[
+                  ["equal", "Split equally"],
+                  ["exact", "Exact amounts"],
+                ].map(([method, label]) => (
+                  <DesignButton
+                    key={method}
+                    variant="secondary"
+                    aria-pressed={draft.method === method}
+                    onClick={() =>
+                      setDraft({
+                        ...draft,
+                        method,
+                        exact: Object.fromEntries(
+                          review.shares.map((share) => [
+                            share.participantId,
+                            moneyInputValue(share.amountMinor, "USD"),
+                          ]),
+                        ),
+                      })
+                    }
+                  >
+                    {label}
+                  </DesignButton>
+                ))}
+              </div>
+            )}
+            {allowExact &&
+              draft.method === "exact" &&
+              draft.people.map((personId) => (
+                <DesignField
+                  key={personId}
+                  id={`${id}-exact-${personId}`}
+                  label={`${personName(personId)}’s share`}
+                  inputMode="decimal"
+                  value={draft.exact?.[personId] ?? ""}
+                  error={errors.exact?.[personId]}
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      exact: { ...draft.exact, [personId]: event.target.value },
+                    })
+                  }
+                />
+              ))}
             <div
               className={styles.sharePreview}
               aria-label="Updated split"
@@ -454,6 +548,8 @@ export function ExpenseDetailDrawer({
         <>
           <ExpenseDetailSummary
             expense={expense}
+            people={people}
+            currentParticipantId={currentParticipantId}
             ref={initialFocus}
             removeRef={removeButton}
             receiptRef={receiptButton}

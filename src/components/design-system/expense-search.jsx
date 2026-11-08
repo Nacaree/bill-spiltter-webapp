@@ -25,7 +25,7 @@ import {
 const subscribe = () => () => {};
 const clientReady = () => true;
 const serverReady = () => false;
-const filters = ["All", "Paid by you", "Receipts"];
+const defaultFilters = ["All", "Paid by you", "Receipts"];
 
 export function ExpenseSearchIcon({ animate = false, customTrace = false }) {
   if (customTrace) return <SearchTrace animate={animate} />;
@@ -50,6 +50,7 @@ export function ExpenseSearch({
   onValueChange,
   filter,
   onFilterChange,
+  filters = defaultFilters,
   label = "Search Atelier expenses",
   id,
 }) {

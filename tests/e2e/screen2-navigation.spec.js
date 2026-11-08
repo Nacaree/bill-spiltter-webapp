@@ -43,6 +43,9 @@ test("Quiet bar fits both bill states and preserves routes, keyboard use and his
         height: getComputedStyle(node, "::before").height,
       }));
       expect(chip).toEqual({ width: "44px", height: "32px" });
+      await expect(
+        nav.getByRole("button", { name: "Expenses", exact: true }),
+      ).toBeEnabled();
       await nav.getByRole("button", { name: "Expenses", exact: true }).focus();
       await page.keyboard.press("Enter");
       await expect(
@@ -81,6 +84,9 @@ test("Screen 2 waits for the highlight before playing the receipt icon", async (
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/screen2?preview=populated");
   const nav = page.getByRole("navigation", { name: "Bill sections" });
+  await expect(
+    nav.getByRole("button", { name: "Expenses", exact: true }),
+  ).toBeEnabled();
   const waiting = await nav.evaluate(async (node) => {
     node.querySelectorAll("button")[1].click();
     await new Promise(requestAnimationFrame);

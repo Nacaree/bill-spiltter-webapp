@@ -1,0 +1,58 @@
+.art {
+  position: relative;
+  top: 8px;
+  display: block;
+  width: 140px;
+  height: 112px;
+  margin-bottom: 16px;
+  color: color-mix(in srgb, var(--ds-brand) 45%, var(--ds-surface));
+}
+.paper {
+  position: absolute;
+  top: 3px;
+  left: 40px;
+  width: 64px;
+  height: 86px;
+  border: 1px solid var(--ds-line);
+  border-radius: 9px;
+  padding: 14px 12px;
+  background: var(--ds-surface);
+  box-shadow: 0 8px 14px rgba(55, 35, 80, 0.08);
+  transform: rotate(9deg);
+}
+.back {
+  top: 7px;
+  left: 29px;
+  background: var(--ds-tint);
+  transform: rotate(-13deg);
+}
+.paper svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  margin-bottom: 10px;
+  color: var(--ds-brand-ink);
+}
+.rule {
+  display: block;
+  height: 3px;
+  margin-top: 5px;
+  border-radius: 3px;
+  background: var(--ds-line);
+}
+.rule:last-child {
+  width: 60%;
+}
+@media (forced-colors: active) {
+  .paper {
+    border-color: CanvasText;
+    background: Canvas;
+    box-shadow: none;
+  }
+  .paper svg {
+    color: CanvasText;
+  }
+  .rule {
+    background: CanvasText;
+  }
+}

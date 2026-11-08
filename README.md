@@ -178,8 +178,9 @@ the [premium directions](http://localhost:3000/design-system#expenses-premium):
 **The Collection** (featured expense/card grid). Switch
 between populated and empty bills, search/filter each list, open expense details,
 or add a local sample through the shared chooser. Reset restores the selected
-starting state. These are comparison concepts awaiting selection; Screen 2's
-Expenses page is unchanged. The gallery uses sample data with no hosted writes.
+starting state. Atelier is approved and now shared with Screen 2’s Expenses tab;
+the other directions remain comparison concepts. The gallery uses sample data
+with no hosted writes.
 
 The user prefers Atelier, now revised with receipt-style expense cards, category
 icons and date/source footers. Its original receipt cards have no outer border.
@@ -194,7 +195,8 @@ amounts. Dinner uses utensils, coffee uses a cup and transport uses a car.
 Icons use the Animate UI runtime, with native presets where available and local
 Motion presets for the additional Lucide shapes. Each plays once on view entry,
 card hover, focus and press; offscreen, hidden-page, open-dialog, reduced-motion
-and forced-color states stop playback. Screen 2's category form is unchanged.
+and forced-color states stop playback. Screen 2’s local add/edit forms offer
+the same 15 categories.
 
 The [transport icon preview](http://localhost:3000/design-system#expense-transport-icons)
 adds animated car, tuk-tuk and motorbike variants within **Transport & taxis**.
@@ -235,8 +237,10 @@ personal share. Edit uses the same drawer with all 15 categories, equal-split
 choices, notes, validation, Save and Cancel. The original preview's list filters
 and return focus are preserved. Reset restores the samples.
 
-These previews do not change Screen 2, real bill actions or the existing main-app
-create-bill form. The rolling total retains its current-value accessible label.
+Screen 2 now uses Paper Atelier for expense details, with its own local ledger
+and participant identity. Real bill-action integration remains pending; keep
+the existing main-app create-bill form. The rolling total retains its
+current-value accessible label.
 
 Atelier's full-width purple **+ Add expense** sits below
 the total/share summary, with a 16px gap before the glass search field.
@@ -264,7 +268,8 @@ that slides with a spring, plus a small label lift; reduced motion stays still.
 The original Quiet line, Liquid glass, Paper frame and Integrated toolbar
 comparisons have been retired, together with Focus beam, Soft spotlight and
 Gradient rim. Their gallery controls, decorative layers, old halo/icon pulse
-and unused timing tokens were removed. Full Screen 2 integration stays pending.
+and unused timing tokens were removed. Screen 2 now shares the approved
+Atelier search; integration with real bill actions remains pending.
 
 The [mobile search comparison](http://localhost:3000/design-system#expense-search-mobile)
 adds **Tap ripple**, **Glass press**, **Center-out underline**, **Magnifier draw**
@@ -340,9 +345,31 @@ action and a compact clock/activity message. The illustration is decorative and
 animated with Receipt spotlight's shared 7px/2.4-second float, with steady detail
 lines. It pauses offscreen, in hidden tabs and while a drawer is open;
 reduced motion keeps it still. Adding the first expense replaces it with the ledger and activity rows.
+The Expenses empty state follows the user’s receipt, upward-arrow and dollar-coin
+reference, with soft purple details, a warm gold coin and the same gentle
+7px/2.4-second float. It pauses behind
+drawers, offscreen and in hidden tabs; reduced motion keeps it still. The shared
+Atelier studio preview uses the same illustration and quieter supporting text.
 Screen 2's action buttons use the studio's shared lighting, corners and control
 height across overview, expense/payment, drawer and receipt flows. The receipt
 picker uses the shared upload-icon button with native keyboard file selection.
+
+Screen 2’s **Expenses** tab shares Atelier’s summary, full-width shimmer action,
+borderless search and torn-paper cards with the studio. **All / Your expenses /
+Receipts** filter the local list; Your expenses means an assigned share for the
+current owner/settler. Search includes expense name, payer and category, while
+totals always use the complete ledger. Dates and period labels follow the data.
+
+Cards on Overview and Expenses open the shared **Paper Atelier** drawer above
+that tab. Editing supports all 15 categories, actual participants and equal/exact
+shares; Save preserves receipt metadata and updates balances/activity, while
+Cancel discards edits. Original-receipt viewing remains illustrative in this
+prototype, using the approved zoom/Fit viewer. Removal uses the compact modal.
+Closing restores the list, scroll and focus. Removal falls back to See all on
+a populated Overview, or Add expense on Expenses and an empty Overview.
+Existing `#detail-<id>` links open over Expenses. Browser Back and embedded-frame
+history close the drawer without coupling the previews. Reset restores the
+selected preview’s starting data. No hosted writes or provider calls occur.
 
 Its balance card shares NumberFlow (`@number-flow/react`) with the
 [balance animation preview](http://localhost:3000/design-system#balance-motion).

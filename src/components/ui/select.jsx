@@ -76,6 +76,7 @@ export function SelectControl({
   children,
   options: suppliedOptions,
   person = false,
+  scrollButtons = true,
   name,
   id: suppliedId,
   value,
@@ -174,9 +175,11 @@ export function SelectControl({
             className={cn(system.glass, styles.menu)}
             style={themeStyle}
           >
-            <Select.ScrollUpButton className={styles.scrollButton}>
-              <span aria-hidden="true">⌃</span>
-            </Select.ScrollUpButton>
+            {scrollButtons && (
+              <Select.ScrollUpButton className={styles.scrollButton}>
+                <span aria-hidden="true">⌃</span>
+              </Select.ScrollUpButton>
+            )}
             <Select.Viewport>
               {options
                 .filter((option) => option.value || !option.disabled)
@@ -211,9 +214,11 @@ export function SelectControl({
                   </Select.Item>
                 ))}
             </Select.Viewport>
-            <Select.ScrollDownButton className={styles.scrollButton}>
-              <span aria-hidden="true">⌄</span>
-            </Select.ScrollDownButton>
+            {scrollButtons && (
+              <Select.ScrollDownButton className={styles.scrollButton}>
+                <span aria-hidden="true">⌄</span>
+              </Select.ScrollDownButton>
+            )}
           </Select.Content>
         </Select.Portal>
       </Select.Root>

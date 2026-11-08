@@ -8,8 +8,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { BrandMark } from "@/components/ui/brand-mark";
-import { AnimatedMoney } from "@/components/ui/animated-money";
-import { formatMoney } from "@/lib/money";
+import { formatMoney, splitEqually } from "@/lib/money";
 import { DesignButton } from "./primitives";
 import { DialogPanel } from "./form-dialog";
 import { BillEntryChoices } from "./bill-entry-choices";
@@ -21,12 +20,9 @@ import { ExpenseDetailDrawer } from "./expense-detail-drawer";
 import { ExpenseDrawerShowcase } from "./expense-drawer-showcase";
 import { getExpenseCategory } from "./expense-categories";
 import { ReceiptText } from "./icons/receipt-text";
-import {
-  ExpenseSearch,
-  ExpenseSearchIcon as SearchIcon,
-} from "./expense-search";
+import { ExpenseSearchIcon as SearchIcon } from "./expense-search";
 import { ExpenseSearchShowcase } from "./expense-search-showcase";
-import { ButtonStrokeShimmer } from "./button-stroke-shimmer";
+import { AtelierExpenses } from "./atelier-expenses";
 import { sampleExpenses } from "./expense-preview-data";
 import styles from "./expenses-showcase.module.css";
 
@@ -55,7 +51,7 @@ const directions = [
     description: "An editorial ledger. Generous space. Beautifully quiet.",
     note: "An oversized total above roomy, paper-edged expense cards.",
     premium: true,
-    emptyTitle: "Make room for a good time.",
+    emptyTitle: "No expenses yet.",
   },
   {
     id: "amethyst",
@@ -116,19 +112,6 @@ function ExpenseConcept({
         .includes(query.trim().toLowerCase()),
   );
   const dates = [...new Set(visible.map((item) => item.date))];
-  const months = [
-    ...new Set(expenses.map((item) => item.dateISO?.slice(0, 7) ?? "2026-10")),
-  ];
-  const periodLabel =
-    months.length === 1
-      ? new Intl.DateTimeFormat("en-GB", {
-          month: "long",
-          year: "numeric",
-          timeZone: "UTC",
-        })
-          .format(new Date(`${months[0]}-01T12:00:00Z`))
-          .toUpperCase()
-      : "ALL EXPENSES";
 
   useImperativeHandle(
     ref,
@@ -221,7 +204,7 @@ function ExpenseConcept({
             <strong>{money(item.amount)}</strong>
             <span>Your share {money(item.share)}</span>
           </span>
-          {(direction.id === "journal" || isEditorial) && (
+          {direction.id === "journal" && (
             <span className={styles.paperFooter}>
               <span>
                 {item.date} {item.year ?? 2026}
@@ -284,231 +267,219 @@ function ExpenseConcept({
               ? "Good times. All accounted for."
               : "Every little cost, in one place."}
           </p>
-          {direction.premium ? (
-            <div className={styles.premiumSummary}>
-              {isAmethyst && (
-                <span className={styles.heroContours} aria-hidden="true">
-                  <i />
-                  <i />
-                  <i />
-                  <i />
-                </span>
-              )}
-              <div className={styles.premiumKicker}>
-                <span>
-                  {isEditorial
-                    ? "Total spent"
-                    : isAmethyst
-                      ? "A WEEKEND, WELL SHARED"
-                      : "THE SHARED EDIT"}
-                </span>
-                {!isEditorial && (
-                  <span>
-                    {String(expenses.length).padStart(2, "0")}{" "}
-                    {isCollection ? "moments" : "expenses"}
-                  </span>
-                )}
-              </div>
-              <div className={styles.premiumAmount}>
-                <strong>
-                  {isEditorial ? (
-                    <AnimatedMoney amountMinor={total} />
-                  ) : (
-                    money(total)
+          {isEditorial ? (
+            <AtelierExpenses
+              expenses={expenses.map((item) => ({
+                id: item.id,
+                description: item.name,
+                amount_minor: item.amount,
+                paid_by_participant_id:
+                  item.payerId ?? (item.payer === "Nary" ? "nary" : "sokha"),
+                date: item.dateISO ?? `2026-10-${item.date.slice(0, 2)}`,
+                shares:
+                  item.shares ??
+                  splitEqually(
+                    item.amount,
+                    item.people ??
+                      (item.share * 2 === item.amount
+                        ? ["nary", "sokha"]
+                        : ["nary", "sokha", "mali"]),
+                  ),
+                category: item.category,
+                receipt: item.receipt,
+              }))}
+              participants={[
+                { id: "nary", display_name: "Nary" },
+                { id: "sokha", display_name: "Sokha" },
+                { id: "mali", display_name: "Mali" },
+              ]}
+              currentParticipantId="nary"
+              query={query}
+              onQueryChange={setQuery}
+              filter={filter}
+              onFilterChange={setFilter}
+              filters={["All", "Paid by you", "Receipts"]}
+              onAdd={openAdd}
+              addButtonRef={addButton}
+              playing={!adding && !detailOpen}
+              onOpen={(expense, event) => {
+                returnFocus.current = event.currentTarget;
+                setDetail(expenses.find((item) => item.id === expense.id));
+                setDetailSession((value) => value + 1);
+                setDetailOpen(true);
+              }}
+              emptyHeading="h5"
+              searchId="atelier-expense-search"
+              listId="atelier-expense-list"
+              searchDesign={searchDesign}
+              searchEffect={searchEffect}
+              searchSurface={searchSurface}
+              searchClearMotion={searchClearMotion}
+            />
+          ) : (
+            <>
+              {direction.premium ? (
+                <div className={styles.premiumSummary}>
+                  {isAmethyst && (
+                    <span className={styles.heroContours} aria-hidden="true">
+                      <i />
+                      <i />
+                      <i />
+                      <i />
+                    </span>
                   )}
-                </strong>
-                <span>USD</span>
-              </div>
-              {isAmethyst ? (
-                <div className={styles.personalSummary}>
-                  <span>
-                    Your share<strong>{money(personalShare)}</strong>
-                  </span>
-                  <span>
-                    People sharing
-                    <strong>
-                      3 <small>together</small>
-                    </strong>
-                  </span>
-                </div>
-              ) : (
-                <div className={styles.personalLine}>
-                  {isEditorial ? (
-                    <>
+                  <div className={styles.premiumKicker}>
+                    <span>
+                      {isAmethyst
+                        ? "A WEEKEND, WELL SHARED"
+                        : "THE SHARED EDIT"}
+                    </span>
+                    <span>
+                      {String(expenses.length).padStart(2, "0")}{" "}
+                      {isCollection ? "moments" : "expenses"}
+                    </span>
+                  </div>
+                  <div className={styles.premiumAmount}>
+                    <strong>{money(total)}</strong>
+                    <span>USD</span>
+                  </div>
+                  {isAmethyst ? (
+                    <div className={styles.personalSummary}>
                       <span>
-                        Your share <strong>{money(personalShare)}</strong>
+                        Your share<strong>{money(personalShare)}</strong>
                       </span>
                       <span>
-                        {expenses.length}{" "}
-                        {expenses.length === 1 ? "expense" : "expenses"}
+                        People sharing
+                        <strong>
+                          3 <small>together</small>
+                        </strong>
                       </span>
-                    </>
+                    </div>
                   ) : (
-                    <>
+                    <div className={styles.personalLine}>
                       <span>Your part of the good times</span>
                       <strong>{money(personalShare)}</strong>
-                    </>
+                    </div>
+                  )}
+                  {!isCollection && (
+                    <DesignButton
+                      ref={addButton}
+                      icon="plus"
+                      onClick={openAdd}
+                      className={styles.premiumAdd}
+                    >
+                      Add expense
+                    </DesignButton>
                   )}
                 </div>
+              ) : direction.id === "snapshot" ? (
+                <div className={styles.summary}>
+                  <div className={styles.summaryTop}>
+                    <span>Total spent</span>
+                    <span>{expenses.length} expenses · USD</span>
+                  </div>
+                  <strong className={styles.summaryAmount}>
+                    {money(total)}
+                  </strong>
+                  {total > 0 ? (
+                    <>
+                      <div className={styles.breakdown} aria-hidden="true">
+                        <span style={{ width: `${(food / total) * 100}%` }} />
+                        <span />
+                      </div>
+                      <div className={styles.legend}>
+                        <span>
+                          <i />
+                          Food & drinks <strong>{money(food)}</strong>
+                        </span>
+                        <span>
+                          <i />
+                          Transport <strong>{money(total - food)}</strong>
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <p className={styles.summaryHint}>
+                      The first little cost starts the story.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className={styles.runningTotal}>
+                  <span>{expenses.length} expenses</span>
+                  <span>
+                    <strong>{money(total)}</strong> total
+                  </span>
+                </div>
               )}
-              {!isCollection && !isEditorial && (
+              {direction.id === "snapshot" && (
                 <DesignButton
-                  ref={addButton}
                   icon="plus"
                   onClick={openAdd}
-                  className={styles.premiumAdd}
+                  className={styles.addWide}
+                  ref={addButton}
                 >
                   Add expense
                 </DesignButton>
               )}
-            </div>
-          ) : direction.id === "snapshot" ? (
-            <div className={styles.summary}>
-              <div className={styles.summaryTop}>
-                <span>Total spent</span>
-                <span>{expenses.length} expenses · USD</span>
-              </div>
-              <strong className={styles.summaryAmount}>{money(total)}</strong>
-              {total > 0 ? (
+              {expenses.length > 0 && (
                 <>
-                  <div className={styles.breakdown} aria-hidden="true">
-                    <span style={{ width: `${(food / total) * 100}%` }} />
-                    <span />
-                  </div>
-                  <div className={styles.legend}>
-                    <span>
-                      <i />
-                      Food & drinks <strong>{money(food)}</strong>
+                  <label className={styles.search} htmlFor={`${id}-search`}>
+                    <SearchIcon />
+                    <span className={styles.srOnly}>
+                      Search {direction.name.toLowerCase()} expenses
                     </span>
-                    <span>
-                      <i />
-                      Transport <strong>{money(total - food)}</strong>
-                    </span>
+                    <input
+                      id={`${id}-search`}
+                      type="search"
+                      placeholder="Find an expense"
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                    />
+                  </label>
+                  <div
+                    className={styles.filters}
+                    role="group"
+                    aria-label="Filter expenses"
+                  >
+                    {["All", "Paid by you", "Receipts"].map((value) => (
+                      <button
+                        key={value}
+                        type="button"
+                        aria-pressed={filter === value}
+                        onClick={() => setFilter(value)}
+                      >
+                        {value}
+                      </button>
+                    ))}
                   </div>
                 </>
-              ) : (
-                <p className={styles.summaryHint}>
-                  The first little cost starts the story.
-                </p>
               )}
-            </div>
-          ) : (
-            <div className={styles.runningTotal}>
-              <span>{expenses.length} expenses</span>
-              <span>
-                <strong>{money(total)}</strong> total
-              </span>
-            </div>
-          )}
-          {direction.id === "snapshot" && (
-            <DesignButton
-              icon="plus"
-              onClick={openAdd}
-              className={styles.addWide}
-              ref={addButton}
-            >
-              Add expense
-            </DesignButton>
-          )}
-          {isEditorial && (
-            <div className={styles.atelierTools}>
-              <DesignButton
-                ref={addButton}
-                icon="plus"
-                onClick={openAdd}
-                className={styles.stackAdd}
-              >
-                {(icon) => (
-                  <>
-                    <ButtonStrokeShimmer playing={!adding && !detailOpen} />
-                    {icon}
-                    <span>Add expense</span>
-                  </>
-                )}
-              </DesignButton>
-              {expenses.length > 0 && (
-                <ExpenseSearch
-                  key={`${searchDesign}-${searchEffect}-${searchSurface}-${searchClearMotion}`}
-                  id="atelier-expense-search"
-                  design={searchDesign}
-                  effect={searchEffect}
-                  surface={searchSurface}
-                  clearMotion={searchClearMotion}
-                  value={query}
-                  onValueChange={setQuery}
-                  filter={filter}
-                  onFilterChange={setFilter}
-                />
-              )}
-            </div>
-          )}
-          {expenses.length > 0 && !isEditorial && (
-            <>
-              <label className={styles.search} htmlFor={`${id}-search`}>
-                <SearchIcon />
-                <span className={styles.srOnly}>
-                  Search {direction.name.toLowerCase()} expenses
-                </span>
-                <input
-                  id={`${id}-search`}
-                  type="search"
-                  placeholder="Find an expense"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                />
-              </label>
-              <div
-                className={styles.filters}
-                role="group"
-                aria-label="Filter expenses"
-              >
-                {["All", "Paid by you", "Receipts"].map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    aria-pressed={filter === value}
-                    onClick={() => setFilter(value)}
-                  >
-                    {value}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-          {visible.length > 0 ? (
-            <div
-              className={styles.ledger}
-              id={isEditorial ? "atelier-expense-list" : undefined}
-            >
-              {direction.id === "daily" ? (
-                dates.map((date) => (
-                  <div key={date} className={styles.day}>
-                    <div className={styles.dayHeading}>
-                      <span>{date} 2026</span>
-                      <span>
-                        {money(
-                          visible
+              {visible.length > 0 ? (
+                <div className={styles.ledger}>
+                  {direction.id === "daily" ? (
+                    dates.map((date) => (
+                      <div key={date} className={styles.day}>
+                        <div className={styles.dayHeading}>
+                          <span>{date} 2026</span>
+                          <span>
+                            {money(
+                              visible
+                                .filter((item) => item.date === date)
+                                .reduce((sum, item) => sum + item.amount, 0),
+                            )}
+                          </span>
+                        </div>
+                        <ul>
+                          {visible
                             .filter((item) => item.date === date)
-                            .reduce((sum, item) => sum + item.amount, 0),
-                        )}
-                      </span>
-                    </div>
-                    <ul>
-                      {visible.filter((item) => item.date === date).map(row)}
-                    </ul>
-                  </div>
-                ))
-              ) : (
-                <>
-                  <div className={styles.listHeading}>
-                    {isEditorial ? (
-                      months.length === 1 ? (
-                        <time dateTime={months[0]}>{periodLabel}</time>
-                      ) : (
-                        <span>{periodLabel}</span>
-                      )
-                    ) : (
-                      <>
+                            .map(row)}
+                        </ul>
+                      </div>
+                    ))
+                  ) : (
+                    <>
+                      <div className={styles.listHeading}>
                         <span>
                           {query || filter !== "All"
                             ? `${visible.length} matching expenses`
@@ -519,53 +490,53 @@ function ExpenseConcept({
                                 : "THE LITTLE DETAILS"}
                         </span>
                         <span>OCT 2026</span>
-                      </>
-                    )}
-                  </div>
-                  <ul>{visible.map(row)}</ul>
-                </>
+                      </div>
+                      <ul>{visible.map(row)}</ul>
+                    </>
+                  )}
+                </div>
+              ) : expenses.length > 0 ? (
+                <div className={styles.noResults}>
+                  <strong>No expenses found</strong>
+                  <p>Try another name or show everything.</p>
+                  <DesignButton
+                    variant="ghost"
+                    onClick={() => {
+                      setQuery("");
+                      setFilter("All");
+                    }}
+                  >
+                    Clear filters
+                  </DesignButton>
+                </div>
+              ) : (
+                <div className={styles.empty}>
+                  <span className={styles.emptyArt} aria-hidden="true">
+                    <ReceiptText size={36} animate={false} />
+                  </span>
+                  <h5>
+                    {direction.emptyTitle ??
+                      (direction.id === "daily"
+                        ? "Your first little cost"
+                        : direction.id === "snapshot"
+                          ? "Start small. Share fairly."
+                          : "A story worth sharing")}
+                  </h5>
+                  <p>
+                    {direction.id === "journal"
+                      ? "Dinner, the ride home, one more coffee. Keep the little things together."
+                      : "Add an expense or bring a receipt. We’ll help with everyone’s share."}
+                  </p>
+                  <DesignButton
+                    variant={direction.id === "snapshot" ? "ghost" : "primary"}
+                    icon="plus"
+                    onClick={openAdd}
+                  >
+                    Add first expense
+                  </DesignButton>
+                </div>
               )}
-            </div>
-          ) : expenses.length > 0 ? (
-            <div className={styles.noResults}>
-              <strong>No expenses found</strong>
-              <p>Try another name or show everything.</p>
-              <DesignButton
-                variant="ghost"
-                onClick={() => {
-                  setQuery("");
-                  setFilter("All");
-                }}
-              >
-                Clear filters
-              </DesignButton>
-            </div>
-          ) : (
-            <div className={styles.empty}>
-              <span className={styles.emptyArt} aria-hidden="true">
-                <ReceiptText size={36} animate={false} />
-              </span>
-              <h5>
-                {direction.emptyTitle ??
-                  (direction.id === "daily"
-                    ? "Your first little cost"
-                    : direction.id === "snapshot"
-                      ? "Start small. Share fairly."
-                      : "A story worth sharing")}
-              </h5>
-              <p>
-                {direction.id === "journal"
-                  ? "Dinner, the ride home, one more coffee. Keep the little things together."
-                  : "Add an expense or bring a receipt. We’ll help with everyone’s share."}
-              </p>
-              <DesignButton
-                variant={direction.id === "snapshot" ? "ghost" : "primary"}
-                icon="plus"
-                onClick={openAdd}
-              >
-                Add first expense
-              </DesignButton>
-            </div>
+            </>
           )}
           {isCollection && (
             <DesignButton

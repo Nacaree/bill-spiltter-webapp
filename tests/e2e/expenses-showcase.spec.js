@@ -611,9 +611,11 @@ test("mobile search gestures animate from touch and retain stable text and focus
         "display",
         "none",
       );
-      expect(
-        await bar.evaluate((el) => el.getAnimations({ subtree: true }).length),
-      ).toBe(0);
+      await expect
+        .poll(() =>
+          bar.evaluate((el) => el.getAnimations({ subtree: true }).length),
+        )
+        .toBe(0);
     }
     await page.emulateMedia({ reducedMotion: "no-preference" });
   }

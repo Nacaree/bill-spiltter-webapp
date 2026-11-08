@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { cn } from "@/lib/cn";
 import { House } from "./icons/animate-ui/house";
 import { ReceiptText } from "./icons/receipt-text";
@@ -8,6 +8,10 @@ import { Wallet } from "./icons/animate-ui/wallet";
 import { navigationIconTiming } from "./motion-tokens";
 import { useDesignReducedMotion } from "./use-design-reduced-motion";
 import styles from "./bill-navigation.module.css";
+
+const subscribe = () => () => {};
+const clientReady = () => true;
+const serverReady = () => false;
 
 export const billNavigationItems = [
   { id: "overview", label: "Overview", Icon: House, iconDuration: 0.6 },
@@ -55,6 +59,7 @@ export function BillNavigation({
   className,
   label = "Bill sections",
 }) {
+  const ready = useSyncExternalStore(subscribe, clientReady, serverReady);
   const [hasSelected, setHasSelected] = useState(false);
   const highlight = useRef(null);
   const reducedMotion = useDesignReducedMotion();
@@ -81,6 +86,7 @@ export function BillNavigation({
             <button
               key={item.id}
               type="button"
+              disabled={!ready}
               className={styles.destination}
               aria-current={selected ? "page" : undefined}
               onClick={() => {
