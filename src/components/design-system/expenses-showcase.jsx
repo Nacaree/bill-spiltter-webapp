@@ -17,6 +17,7 @@ import { ExpenseCategoryIcon } from "./expense-category-icon";
 import { ExpenseCategoryShowcase } from "./expense-category-showcase";
 import { ExpenseTransportShowcase } from "./expense-transport-showcase";
 import { ExpenseDetailDrawer } from "./expense-detail-drawer";
+import { ExpenseEmptyArt } from "./expense-empty-art";
 import { ExpenseDrawerShowcase } from "./expense-drawer-showcase";
 import { getExpenseCategory } from "./expense-categories";
 import { ReceiptText } from "./icons/receipt-text";
@@ -497,16 +498,11 @@ function ExpenseConcept({
                 </div>
               ) : expenses.length > 0 ? (
                 <div className={styles.noResults}>
+                  <ExpenseEmptyArt playing={!adding && !detailOpen} />
                   <strong>No expenses found</strong>
                   <p>Try another name or show everything.</p>
-                  <DesignButton
-                    variant="ghost"
-                    onClick={() => {
-                      setQuery("");
-                      setFilter("All");
-                    }}
-                  >
-                    Clear filters
+                  <DesignButton variant="ghost" onClick={() => setQuery("")}>
+                    Clear search
                   </DesignButton>
                 </div>
               ) : (

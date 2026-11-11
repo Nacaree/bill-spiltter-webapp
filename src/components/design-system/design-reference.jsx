@@ -15,6 +15,7 @@ import {
 } from "./primitives";
 import { FormShowcase } from "./form-showcase";
 import { AddBillShowcase } from "./add-bill-showcase";
+import { ReceiptScanShowcase } from "./receipt-scan-showcase";
 import { ExpensesShowcase } from "./expenses-showcase";
 import { DatePickerShowcase } from "./date-picker-showcase";
 import { DesignCopyButton } from "./copy-button";
@@ -271,6 +272,7 @@ export function DesignReference() {
           <a href="#patterns">In context</a>
           <a href="#forms">Drawers & forms</a>
           <a href="#add-to-bill">Add to bill</a>
+          <a href="#receipt-scanning">Receipt scanning</a>
           <a href="#expenses-page">Expenses page</a>
           <a href="#expense-drawer">Expense drawers</a>
           <a href="#expense-search">Expense search</a>
@@ -678,6 +680,14 @@ export function DesignReference() {
                 description="Explore Atelier’s expense drawer, category icons and search bars, alongside six Expenses page layouts. Try the sample controls in context."
               />
               <ExpensesShowcase />
+            </section>
+            <section id="receipt-scanning" className={styles.section}>
+              <SectionHeading
+                number="10"
+                title="A receipt, a few possibilities"
+                description="Three full-page scanning directions. Compare adding a photo, watching it scan, and checking the items before sharing."
+              />
+              <ReceiptScanShowcase />
             </section>
           </div>
 

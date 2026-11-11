@@ -72,9 +72,8 @@ export function AtelierExpenses({
           .toUpperCase()
       : "ALL EXPENSES";
 
-  function clearFilters() {
+  function clearSearch() {
     onQueryChange("");
-    onFilterChange("All");
   }
 
   return (
@@ -186,10 +185,11 @@ export function AtelierExpenses({
         </div>
       ) : items.length > 0 ? (
         <div className={styles.noResults}>
+          <ExpenseEmptyArt playing={playing} />
           <strong>No expenses found</strong>
           <p>Try another name or show everything.</p>
-          <DesignButton variant="ghost" onClick={clearFilters}>
-            Clear filters
+          <DesignButton variant="ghost" onClick={clearSearch}>
+            Clear search
           </DesignButton>
         </div>
       ) : (
