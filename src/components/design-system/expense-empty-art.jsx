@@ -4,6 +4,34 @@ import { ReceiptArt } from "./receipt-art";
 import frame from "./receipt-vignette.module.css";
 import styles from "./expense-empty-art.module.css";
 
+export function ExpenseNotFoundArt({ playing = true }) {
+  return (
+    <ReceiptArt className={frame.art} playing={playing} scanning={false}>
+      <span className={styles.scene} data-receipt-paper>
+        <svg
+          className={styles.picture}
+          viewBox="0 0 140 112"
+          fill="none"
+          aria-hidden="true"
+        >
+          <g className={styles.shadow}>
+            {/* Tabler Icons: zoom-question, MIT; see icons/tabler-LICENSE.txt. */}
+            <g
+              className={styles.searchQuestion}
+              transform="translate(22 8) scale(4)"
+            >
+              <path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+              <path d="M21 21l-6 -6" />
+              <path d="M10 13l0 .01" />
+              <path d="M10 10a1.5 1.5 0 1 0 -1.14 -2.474" />
+            </g>
+          </g>
+        </svg>
+      </span>
+    </ReceiptArt>
+  );
+}
+
 export function ExpenseEmptyArt({ playing = true }) {
   return (
     <ReceiptArt className={frame.art} playing={playing} scanning={false}>

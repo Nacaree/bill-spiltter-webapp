@@ -10,6 +10,12 @@
 .shadow {
   filter: drop-shadow(0 7px 7px #37235012);
 }
+.searchQuestion {
+  stroke: var(--ds-brand);
+  stroke-width: 2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 .paper {
   fill: var(--ds-surface);
   stroke: var(--ds-line);
@@ -58,6 +64,9 @@
   .coinRim,
   .coin {
     fill: Canvas;
+    stroke: CanvasText;
+  }
+  .searchQuestion {
     stroke: CanvasText;
   }
   .lines,

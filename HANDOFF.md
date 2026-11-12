@@ -10,6 +10,27 @@ hosted migrations themselves. Tell them when a new migration is required.
 
 ## Screen 2 Atelier integration — Nov 8
 
+Nov 11 picture follow-up: **No expenses found** uses the user's selected option A,
+Tabler's outline `zoom-question` in brand purple, shared by Screen 2, Atelier and
+the expense comparison previews. The four original paths are preserved; source
+and MIT license are recorded in icons/README.md and icons/tabler-LICENSE.txt.
+**No expenses yet.** keeps its receipt/arrow/coin artwork. Both reuse the existing
+140×112 frame and `ReceiptArt` float, with no copy, layout or timing changes.
+The selected Tabler icon was visually reviewed on a phone-sized viewport; its
+original paths, 7px float over 2400ms and reduced-motion stillness were verified.
+The focused search/empty-state checks pass in Chromium, WebKit and iPhone (six
+cases), after correcting an obsolete Clear filters test selector to Clear search.
+Changed-file lint, formatting and diff checks pass.
+
+Nov 11 receipt-camera spacing: the **Ready for a close-up** studio preview now
+fits its content instead of reserving a 700/780px minimum height. Its empty upload
+helper is hidden, leaving 25px from the receipt scene to the primary button.
+Chrome and WebKit checks pass at 320/393/1280px, including Scanning and Review
+controls with no horizontal overflow; phone screenshots were reviewed.
+Receipt footer actions use shared `DesignButton` throughout. Removed local radius,
+text-size and padding overrides so they inherit 22px corners, 14px text, 18px side
+padding, 48px minimum height and the standard soft feedback.
+
 The user explicitly clarified **Screen 2 only**. The approved Atelier Expenses
 page is now integrated into `/screen2`; live `/b/[shareToken]` pages, server
 actions, Supabase schemas and credentials are unchanged. Keep the existing

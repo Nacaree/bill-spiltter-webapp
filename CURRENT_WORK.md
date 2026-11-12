@@ -9,7 +9,7 @@ Screen 2 Expenses now shares Atelier’s summary, torn cards, search and Paper A
 Local ledger only; main-app create-bill and real bill actions stay unchanged. All 15 categories + named rides.
 Drawer uses actual people/current identity, equal/exact shares, illustrative receipt viewer and compact removal.
 Save preserves receipt metadata; balances/activity update. Overview keeps Recent expenses + See all, with no extra +. Removal focus uses See all there; Add on Expenses/empty Overview.
-Empty Expenses heading: “No expenses yet.” It has one main Add expense action; the duplicate Add first expense link is removed. It uses the user’s receipt/arrow/dollar-coin reference with the existing 7px/2.4s float; paused behind drawers/offscreen/hidden tabs and still for reduced motion.
+Empty Expenses heading: “No expenses yet.” It has one main Add expense action; the duplicate Add first expense link is removed. It uses the user’s receipt/arrow/dollar-coin reference. “No expenses found” uses the selected Tabler outline search/question icon in purple (Nov 11). Both retain the 7px/2.4s float; paused behind drawers/offscreen/hidden tabs and still for reduced motion.
 User owns real-phone keyboard/device/screen-reader/full keyboard/Firefox checks.
 Stage 2 skipped; Stage 3 migration user-reported applied; Stage 5 readiness done.
 
@@ -43,7 +43,7 @@ Stage 2 skipped; Stage 3 migration user-reported applied; Stage 5 readiness done
   queue/hash/UI verification is valid even when the detailed log window is missed.
 - User records manual/device outcomes before Stage 7 signoff; Phase 4 remains open.
 - Collect safe provider HTTP status/classification on recurrence; no proven fix.
-- Local UI only; no hosted writes/migrations. Deployment/cleanup not refreshed.
+- Local UI only; no hosted writes/migrations. Deployment/cleanup not refreshed. Nov 11: receipt-camera studio preview fits content, with a 25px scene-to-button gap and shared DesignButton sizing/feedback; Chrome/WebKit phone/desktop checks pass.
 - Nov 8: 420 offline pass / eight hosted skipped; 147 distinct browser scenarios verified across runs with targeted rechecks (details in HANDOFF). Lint/format/diff/webpack build pass.
 - Preview shares Production; no isolated backend. QR-orphan retry limit remains.
   Privacy/Help content stays off to-do list.

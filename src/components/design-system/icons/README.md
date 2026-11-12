@@ -42,6 +42,12 @@ their default animation definitions and a shared interaction wrapper.
   Animate UI registry on November 1, 2026. They use the same license and
   TypeScript-only adaptation. The receipt vignette and empty activity line
   keep these decorative icons still.
+- **No expenses found (November 11, 2026):** the user selected Tabler's outline
+  `zoom-question` from the sourced options. `ExpenseNotFoundArt` preserves its
+  four original paths and rounded 2px stroke from
+  `https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline/zoom-question.svg`.
+  It is scaled into the existing 140×112 frame in brand purple and uses the
+  shared `ReceiptArt` float. [MIT license](tabler-LICENSE.txt).
 - **Manual-entry pencil:** pencil-line was fetched from the official Animate UI
   registry at `https://animate-ui.com/r/icons-lucide-pencil-line.json` on
   November 4, 2026. The same license and TypeScript-only adaptation apply.

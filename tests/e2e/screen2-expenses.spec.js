@@ -51,7 +51,10 @@ test("Atelier searches payer/category and filters by assigned shares without fil
       "$102.00",
     );
   }
-  await list.getByRole("button", { name: "Clear filters" }).click();
+  await list
+    .getByRole("button", { name: "Clear search", exact: true })
+    .last()
+    .click();
   const form = await addManual(page);
   await form.getByRole("checkbox", { name: "Sokha", exact: true }).uncheck();
   await form.getByRole("checkbox", { name: "Mali", exact: true }).uncheck();

@@ -9,7 +9,7 @@ import { ExpenseCategoryIcon } from "./expense-category-icon";
 import { getExpenseCategory } from "./expense-categories";
 import { ExpenseSearch } from "./expense-search";
 import { ButtonStrokeShimmer } from "./button-stroke-shimmer";
-import { ExpenseEmptyArt } from "./expense-empty-art";
+import { ExpenseEmptyArt, ExpenseNotFoundArt } from "./expense-empty-art";
 import styles from "./expenses-showcase.module.css";
 
 const money = (amount) => formatMoney(amount, "USD");
@@ -185,7 +185,7 @@ export function AtelierExpenses({
         </div>
       ) : items.length > 0 ? (
         <div className={styles.noResults}>
-          <ExpenseEmptyArt playing={playing} />
+          <ExpenseNotFoundArt playing={playing} />
           <strong>No expenses found</strong>
           <p>Try another name or show everything.</p>
           <DesignButton variant="ghost" onClick={clearSearch}>
